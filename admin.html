@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Add Article - GyanTech Blog</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif}
+body{background:#f4f6f9;color:#333}
+header{background:#1e293b;color:#fff;padding:1rem 2rem;display:flex;justify-content:space-between;align-items:center}
+header h1{color:#38bdf8;font-size:1.5rem}
+nav a{color:#fff;text-decoration:none;margin-left:1.5rem}
+.container{max-width:800px;margin:2rem auto;padding:0 1rem}
+.box{background:#fff;padding:2rem;border-radius:8px;box-shadow:0 4px 6px rgba(0,0,0,.05)}
+h2{color:#0f172a;margin-bottom:1.5rem}
+label{display:block;font-weight:600;margin:1rem 0 .4rem}
+input,textarea{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:5px;font-size:1rem}
+textarea{min-height:180px;resize:vertical}
+button{margin-top:1.2rem;background:#0284c7;color:#fff;border:0;padding:.7rem 1.2rem;border-radius:5px;font-weight:bold;cursor:pointer}
+button:hover{background:#0369a1}
+.message{margin-top:1rem;color:#15803d;font-weight:600}
+.note{margin-top:1rem;color:#64748b;font-size:.9rem}
+</style>
+</head>
+<body>
+<header>
+  <h1>GyanTech Blog</h1>
+  <nav><a href="articles.html">← Articles</a></nav>
+</header>
+
+<div class="container">
+<div class="box">
+<h2>➕ Upload / Add New Article</h2>
+<form id="articleForm">
+<label>Article Title</label>
+<input id="title" required placeholder="Example: Internet Kaise Kaam Karta Hai?">
+
+<label>Author Name</label>
+<input id="author" value="Admin" required>
+
+<label>Article Date</label>
+<input id="date" type="date" required>
+
+<label>Article Content</label>
+<textarea id="content" required placeholder="Yahan apna poora article likho..."></textarea>
+
+<button type="submit">Publish Article</button>
+</form>
+<div id="message" class="message"></div>
+<p class="note">Note: Ye version browser ke localStorage me articles save karta hai. Public website par sab users ko permanently articles dikhane ke liye backend/database lagana hoga.</p>
+</div>
+</div>
+
+<script>
+document.getElementById("date").value=new Date().toISOString().split("T")[0];
+
+document.getElementById("articleForm").addEventListener("submit",function(e){
+  e.preventDefault();
+
+  const articles=JSON.parse(localStorage.getItem("gyantech_articles") || "[]");
+  const rawDate=document.getElementById("date").value;
+  const date=new Date(rawDate+"T00:00:00").toLocaleDateString("en-IN",{
+    day:"numeric",month:"short",year:"numeric"
+  });
+
+  articles.unshift({
+    title:document.getElementById("title").value.trim(),
+    author:document.getElementById("author").value.trim(),
+    date:date,
+    content:document.getElementById("content").value.trim()
+  });
+
+  localStorage.setItem("gyantech_articles",JSON.stringify(articles));
+  document.getElementById("message").textContent="✅ Article successfully publish ho gaya!";
+  document.getElementById("articleForm").reset();
+  document.getElementById("date").value=new Date().toISOString().split("T")[0];
+});
+</script>
+</body>
+</html>

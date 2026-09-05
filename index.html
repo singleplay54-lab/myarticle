@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mera Tech Blog - Articles</title>
+    <style>
+        /* CSS Formatting */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f9;
+            color: #333;
+            line-height: 1.6;
+            scroll-behavior: smooth;
+        }
+
+        /* Header Navigation */
+        header {
+            background-color: #1e293b;
+            color: #fff;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            color: #38bdf8;
+        }
+
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            margin-left: 1.5rem;
+            font-weight: 500;
+        }
+
+        nav a:hover {
+            color: #38bdf8;
+        }
+
+        /* Container Layout */
+        .container {
+            max-width: 1100px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+
+        /* Articles Section */
+        .article-card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .article-card h2 {
+            margin-bottom: 0.5rem;
+            color: #0f172a;
+        }
+
+        .article-meta {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-bottom: 1rem;
+        }
+
+        .article-card p {
+            margin-bottom: 1rem;
+            color: #475569;
+        }
+
+        .read-btn {
+            background-color: #0284c7;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .read-btn:hover {
+            background-color: #0369a1;
+        }
+
+        /* Sidebar Section */
+        .sidebar-widget {
+            background: #fff;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .sidebar-widget h3 {
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #0284c7;
+            padding-bottom: 0.3rem;
+        }
+
+        .sidebar-widget ul {
+            list-style: none;
+        }
+
+        .sidebar-widget ul li {
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-widget ul li a {
+            color: #0284c7;
+            text-decoration: none;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 1.5rem;
+            background-color: #1e293b;
+            color: #94a3b8;
+            margin-top: 2rem;
+        }
+
+        /* Responsive Mobile Layout */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>GyanTech Blog</h1>
+        <nav>
+            <a href="#home">Home</a>
+            <a href="articles.html">Articles</a>
+            <a href="#about">About</a>
+            <a href="#contact">Contact</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        
+        <main id="home">
+            <article class="article-card">
+                <h2>Welcome to GyanTech Blog</h2>
+                <p>Technology, coding, AI aur web development se related simple aur useful information yahan milegi.</p>
+            </article>
+
+            <article class="article-card">
+                <h2>AI Aur Machine Learning Ka Bhavishya</h2>
+                <div class="article-meta">Published on Sept 4, 2026 | By Tech Team</div>
+                <p>Artificial Intelligence humare kaam karne ke tareeqe ko tezi se badal raha hai. Aaj ke samay me AI tools ka istemal software development, content writing aur design me sabse zyada ho raha hai...</p>
+                <button class="read-btn" onclick="alert('Poora article jaldi hi upload hoga!')">Read More</button>
+            </article>
+
+            <article class="article-card">
+                <h2>2026 Me Web Development Kaise Seekhein?</h2>
+                <div class="article-meta">Published on Sept 1, 2026 | By Admin</div>
+                <p>Agar aap web development me apna career shuru karna chahte hain, toh sabse pehle HTML, CSS aur JavaScript se shuruat karein. Iske baad aap React ya Vue jaise frameworks seekh sakte hain...</p>
+                <button class="read-btn" onclick="alert('Poora article jaldi hi upload hoga!')">Read More</button>
+            </article>
+        </main>
+
+        <aside>
+            <div class="sidebar-widget">
+                <h3>Popular Categories</h3>
+                <ul>
+                    <li><a href="#">Technology</a></li>
+                    <li><a href="#">Web Development</a></li>
+                    <li><a href="#">Artificial Intelligence</a></li>
+                    <li><a href="#">Mobile Apps</a></li>
+                </ul>
+            </div>
+
+            <div class="sidebar-widget">
+                <h3>About Us</h3>
+                <p>Yeh ek simple article platform hai jahan aapko latest technology aur coding ke baare me jankari milti hai.</p>
+            </div>
+        </aside>
+
+    </div>
+
+    <section id="about" class="container" style="display:block; max-width:1100px;">
+        <div class="sidebar-widget">
+            <h2>About Us</h2>
+            <p>
+                GyanTech Blog ek simple article platform hai jahan technology,
+                artificial intelligence, web development aur coding se related
+                useful information share ki jaati hai.
+            </p>
+            <p style="margin-top:1rem;">
+                Hamara aim hai ki difficult technology topics ko simple language
+                me samjhaya ja sake.
+            </p>
+        </div>
+    </section>
+
+    <section id="contact" class="container" style="display:block; max-width:1100px;">
+        <div class="sidebar-widget">
+            <h2>Contact Us</h2>
+            <p>Aap humse neeche diye gaye details par contact kar sakte hain.</p>
+            <p style="margin-top:1rem;"><strong>Email:</strong> gyantech@example.com</p>
+            <p><strong>Phone:</strong> +91 XXXXX XXXXX</p>
+
+            <form style="margin-top:1rem;" onsubmit="event.preventDefault(); alert('Thank you! Aapka message receive ho gaya.');">
+                <input type="text" placeholder="Your Name" required
+                       style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #cbd5e1; border-radius:4px;">
+                <input type="email" placeholder="Your Email" required
+                       style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #cbd5e1; border-radius:4px;">
+                <textarea placeholder="Your Message" required rows="5"
+                          style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #cbd5e1; border-radius:4px;"></textarea>
+                <button type="submit" class="read-btn">Send Message</button>
+            </form>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2026 GyanTech Blog. All rights reserved.</p>
+    </footer>
+
+</body>
+</html>

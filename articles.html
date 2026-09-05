@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Articles - GyanTech Blog</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif}
+body{background:#f4f6f9;color:#333;line-height:1.6}
+header{background:#1e293b;color:#fff;padding:1rem 2rem;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:1000}
+header h1{font-size:1.5rem;color:#38bdf8}
+nav a{color:#fff;text-decoration:none;margin-left:1.5rem;font-weight:500}
+nav a:hover{color:#38bdf8}
+.container{max-width:1100px;margin:2rem auto;padding:0 1rem}
+.article-card,.admin-box{background:#fff;border-radius:8px;padding:1.5rem;margin-bottom:1.5rem;box-shadow:0 4px 6px rgba(0,0,0,.05)}
+.article-card h2{margin-bottom:.5rem;color:#0f172a}
+.meta{font-size:.85rem;color:#64748b;margin-bottom:1rem}
+.article-card p{margin-bottom:1rem;color:#475569;white-space:pre-wrap}
+.btn{background:#0284c7;color:white;border:none;padding:.6rem 1rem;border-radius:4px;cursor:pointer;font-weight:bold}
+.btn:hover{background:#0369a1}
+.admin-link{display:inline-block;margin-bottom:1rem;color:#0284c7;text-decoration:none}
+.empty{text-align:center;padding:2rem;color:#64748b}
+footer{text-align:center;padding:1.5rem;background:#1e293b;color:#94a3b8;margin-top:2rem}
+</style>
+</head>
+<body>
+<header>
+  <h1>GyanTech Blog</h1>
+  <nav>
+    <a href="index_updated.html">Home</a>
+    <a href="articles.html">Articles</a>
+    <a href="index_updated.html#about">About</a>
+    <a href="index_updated.html#contact">Contact</a>
+  </nav>
+</header>
+
+<div class="container">
+  <div class="admin-box">
+    <h2>Articles</h2>
+    <p style="margin:.5rem 0 1rem;color:#64748b">Yahan aapke published articles dikhेंगे.</p>
+    <a class="admin-link" href="admin.html">➕ Add / Upload New Article</a>
+  </div>
+
+  <div id="articleList"></div>
+</div>
+
+<footer><p>&copy; 2026 GyanTech Blog. All rights reserved.</p></footer>
+
+<script>
+const defaultArticles = [
+  {
+    title:"AI Aur Machine Learning Ka Bhavishya",
+    date:"Sept 4, 2026",
+    author:"Tech Team",
+    content:"Artificial Intelligence humare kaam karne ke tareeqe ko tezi se badal raha hai. Aaj ke samay me AI tools ka istemal software development, content writing aur design me sabse zyada ho raha hai."
+  },
+  {
+    title:"2026 Me Web Development Kaise Seekhein?",
+    date:"Sept 1, 2026",
+    author:"Admin",
+    content:"Agar aap web development me apna career shuru karna chahte hain, toh sabse pehle HTML, CSS aur JavaScript se shuruat karein. Iske baad aap React ya Vue jaise frameworks seekh sakte hain."
+  }
+];
+
+function getArticles(){
+  const saved = JSON.parse(localStorage.getItem("gyantech_articles") || "null");
+  if(saved === null){
+    localStorage.setItem("gyantech_articles", JSON.stringify(defaultArticles));
+    return defaultArticles;
+  }
+  return saved;
+}
+
+function showArticles(){
+  const list=document.getElementById("articleList");
+  const articles=getArticles();
+  list.innerHTML="";
+  if(!articles.length){
+    list.innerHTML='<div class="article-card empty">Abhi koi article nahi hai.</div>';
+    return;
+  }
+  articles.forEach(a=>{
+    const card=document.createElement("article");
+    card.className="article-card";
+    card.innerHTML=`
+      <h2></h2>
+      <div class="meta"></div>
+      <p></p>
+    `;
+    card.querySelector("h2").textContent=a.title;
+    card.querySelector(".meta").textContent=`Published on ${a.date} | By ${a.author}`;
+    card.querySelector("p").textContent=a.content;
+    list.appendChild(card);
+  });
+}
+showArticles();
+</script>
+</body>
+</html>
