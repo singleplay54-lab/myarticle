@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin - GyanTech Blog</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif}
+body{background:#f4f6f9;color:#333}
+header{background:#1e293b;color:#fff;padding:1rem 2rem;display:flex;justify-content:space-between;align-items:center}
+header h1{color:#38bdf8;font-size:1.5rem}
+nav a{color:#fff;text-decoration:none;margin-left:1.5rem}
+.container{max-width:850px;margin:2rem auto;padding:0 1rem}
+.box,.article{background:#fff;padding:1.5rem;border-radius:8px;margin-bottom:1.5rem;box-shadow:0 4px 6px rgba(0,0,0,.05)}
+h2{color:#0f172a;margin-bottom:1rem}
+label{display:block;font-weight:600;margin:1rem 0 .4rem}
+input,textarea{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:5px;font-size:1rem}
+textarea{min-height:180px;resize:vertical}
+button{background:#0284c7;color:#fff;border:0;padding:.65rem 1rem;border-radius:5px;font-weight:bold;cursor:pointer;margin-top:1rem;margin-right:.5rem}
+button:hover{background:#0369a1}
+.danger{background:#dc2626}.danger:hover{background:#b91c1c}
+.secondary{background:#64748b}
+.hidden{display:none}
+.msg{margin-top:1rem;font-weight:600}
+.small{color:#64748b;font-size:.9rem}
+.article h3{color:#0f172a;margin-bottom:.3rem}
+.article p{white-space:pre-wrap;color:#475569;margin-top:.7rem}
+</style>
+</head>
+<body>
+<header>
+<h1>GyanTech Admin</h1>
+<nav><a href="/articles">← Articles</a></nav>
+</header>
+<div class="container">
+
+<div id="loginBox" class="box">
+<h2>🔐 Admin Login</h2>
+<p class="small">Sirf admin password se articles manage kiye ja sakte hain.</p>
+<form id="loginForm">
+<label>Password</label>
+<input id="loginPassword" type="password" required placeholder="Admin password">
+<button type="submit">Login</button>
+</form>
+<div id="loginMsg" class="msg"></div>
+</div>
+
+<div id="panel" class="hidden">
+<div class="box">
+<h2>➕ Publish Article</h2>
+<form id="articleForm">
+<input id="editId" type="hidden">
+<label>Article Title</label>
+<input id="title" required placeholder="Example: Internet Kaise Kaam Karta Hai?">
+<label>Author</label>
+<input id="author" value="Admin" required>
+<label>Article Content</label>
+<textarea id="content" required placeholder="Yahan poora article likho..."></textarea>
+<button id="saveBtn" type="submit">Publish Article</button>
+<button id="cancelBtn" type="button" class="secondary hidden">Cancel Edit</button>
+</form>
+<div id="msg" class="msg"></div>
+</div>
+
+<div class="box">
+<h2>📚 Manage Articles</h2>
+<div id="manageList"></div>
+<button id="logout" class="secondary">Logout</button>
+</div>
+</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+
+async function api(url, options={}){
+  const res=await fetch(url,{...options,headers:{"Content-Type":"application/json",...(options.headers||{})}});
+  const data=await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error(data.error||"Something went wrong");
+  return data;
+}
+
+async function checkLogin(){
+  try{
+    await api("/api/admin/check");
+    $("loginBox").classList.add("hidden");
+    $("panel").classList.remove("hidden");
+    loadManage();
+  }catch{}
+}
+
+$("loginForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  try{
+    await api("/api/login",{method:"POST",body:JSON.stringify({password:$("loginPassword").value})});
+    $("loginMsg").textContent="✅ Login successful.";
+    $("loginBox").classList.add("hidden");
+    $("panel").classList.remove("hidden");
+    loadManage();
+  }catch(err){$("loginMsg").textContent="❌ "+err.message}
+});
+
+$("articleForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const id=$("editId").value;
+  const body=JSON.stringify({
+    title:$("title").value.trim(),
+    author:$("author").value.trim(),
+    content:$("content").value.trim()
+  });
+  try{
+    if(id) await api("/api/articles/"+id,{method:"PUT",body});
+    else await api("/api/articles",{method:"POST",body});
+    $("msg").textContent=id?"✅ Article updated.":"✅ Article published.";
+    resetForm();
+    loadManage();
+  }catch(err){$("msg").textContent="❌ "+err.message}
+});
+
+async function loadManage(){
+  try{
+    const articles=await api("/api/articles");
+    const list=$("manageList");
+    if(!articles.length){list.innerHTML="<p class='small'>No articles yet.</p>";return}
+    list.innerHTML="";
+    articles.forEach(a=>{
+      const div=document.createElement("div");
+      div.className="article";
+      div.innerHTML="<h3></h3><p></p><button class='edit'>Edit</button><button class='danger delete'>Delete</button>";
+      div.querySelector("h3").textContent=a.title;
+      div.querySelector("p").textContent=a.content.slice(0,180)+(a.content.length>180?"...":"");
+      div.querySelector(".edit").onclick=()=>startEdit(a);
+      div.querySelector(".delete").onclick=()=>deleteArticle(a.id);
+      list.appendChild(div);
+    });
+  }catch(err){$("manageList").textContent=err.message}
+}
+
+function startEdit(a){
+  $("editId").value=a.id;
+  $("title").value=a.title;
+  $("author").value=a.author;
+  $("content").value=a.content;
+  $("saveBtn").textContent="Update Article";
+  $("cancelBtn").classList.remove("hidden");
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function resetForm(){
+  $("articleForm").reset();
+  $("author").value="Admin";
+  $("editId").value="";
+  $("saveBtn").textContent="Publish Article";
+  $("cancelBtn").classList.add("hidden");
+}
+$("cancelBtn").onclick=resetForm;
+
+async function deleteArticle(id){
+  if(!confirm("Is article ko delete karna hai?")) return;
+  try{
+    await api("/api/articles/"+id,{method:"DELETE"});
+    loadManage();
+  }catch(err){alert(err.message)}
+}
+
+$("logout").onclick=async()=>{
+  await api("/api/logout",{method:"POST"});
+  location.reload();
+};
+
+checkLogin();
+</script>
+</body>
+</html>
