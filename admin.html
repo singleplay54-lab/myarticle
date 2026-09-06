@@ -1,25 +1,18 @@
 <!doctype html>
 <html lang="en">
-
 <head>
-
 <meta charset="utf-8">
-
-<meta
-  name="viewport"
-  content="width=device-width,initial-scale=1"
->
-
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Admin Dashboard — GyanTech</title>
 
 <style>
-
 *{
   box-sizing:border-box;
+  margin:0;
+  padding:0;
 }
 
 body{
-  margin:0;
   font-family:Segoe UI,Arial,sans-serif;
   background:#f5f7fb;
   color:#0f172a;
@@ -52,10 +45,6 @@ header{
   margin-left:20px;
 }
 
-.nav a:hover{
-  color:#38bdf8;
-}
-
 .container{
   max-width:1200px;
   margin:30px auto;
@@ -63,11 +52,11 @@ header{
 }
 
 .box{
-  background:white;
+  background:#fff;
   border:1px solid #e2e8f0;
   border-radius:18px;
   padding:25px;
-  margin-bottom:22px;
+  margin-bottom:28px;
   box-shadow:0 6px 25px rgba(15,23,42,.05);
 }
 
@@ -76,23 +65,25 @@ header{
   margin:70px auto;
 }
 
-h1,h2,h3{
-  margin-top:0;
+h2,h3{
+  margin:0 0 12px;
 }
 
 .subtitle{
   color:#64748b;
+  line-height:1.5;
 }
 
 label{
   display:block;
-  margin:17px 0 7px;
+  margin:18px 0 7px;
   font-weight:700;
 }
 
 input,
 textarea,
 select{
+  display:block;
   width:100%;
   padding:12px 13px;
   border:1px solid #cbd5e1;
@@ -106,11 +97,10 @@ input:focus,
 textarea:focus,
 select:focus{
   border-color:#0284c7;
-  box-shadow:0 0 0 3px rgba(2,132,199,.1);
 }
 
 textarea{
-  min-height:300px;
+  min-height:280px;
   resize:vertical;
 }
 
@@ -159,7 +149,7 @@ button:hover{
   display:grid;
   grid-template-columns:repeat(4,1fr);
   gap:16px;
-  margin-bottom:22px;
+  margin-bottom:28px;
 }
 
 .stat{
@@ -180,21 +170,33 @@ button:hover{
   margin-top:5px;
 }
 
+/* EDITOR LAYOUT */
+
 .editorGrid{
   display:grid;
-  grid-template-columns:2fr 1fr;
-  gap:25px;
+  grid-template-columns:minmax(0,2fr) minmax(280px,1fr);
+  gap:28px;
+  align-items:start;
 }
 
-.sideBox{
+.editorMain,
+.editorSide{
+  min-width:0;
+}
+
+.editorSide{
   background:#f8fafc;
   border:1px solid #e2e8f0;
   border-radius:13px;
-  padding:18px;
-  height:max-content;
+  padding:20px;
+}
+
+.editorSide h3{
+  margin-bottom:10px;
 }
 
 .preview{
+  width:100%;
   margin-top:12px;
   border-radius:10px;
   overflow:hidden;
@@ -202,6 +204,7 @@ button:hover{
 }
 
 .preview img{
+  display:block;
   width:100%;
   max-height:220px;
   object-fit:cover;
@@ -211,17 +214,19 @@ button:hover{
   display:flex;
   align-items:center;
   gap:9px;
-  margin-top:17px;
+  margin-top:18px;
 }
 
 .checkbox input{
   width:auto;
+  margin:0;
 }
 
 .toolbar{
   display:flex;
   gap:10px;
-  margin-bottom:18px;
+  align-items:center;
+  margin:0 0 20px;
 }
 
 .toolbar input{
@@ -231,8 +236,9 @@ button:hover{
 .article{
   border:1px solid #e2e8f0;
   border-radius:14px;
-  padding:19px;
-  margin-top:14px;
+  padding:20px;
+  margin-bottom:15px;
+  background:#fff;
 }
 
 .articleTop{
@@ -248,7 +254,13 @@ button:hover{
 .articleMeta{
   color:#64748b;
   font-size:.85rem;
-  margin-top:8px;
+  margin-top:5px;
+}
+
+.articleDescription{
+  color:#64748b;
+  line-height:1.5;
+  margin-top:12px;
 }
 
 .badge{
@@ -259,7 +271,7 @@ button:hover{
   border-radius:999px;
   font-size:.78rem;
   font-weight:700;
-  margin:8px 5px 0 0;
+  margin:10px 5px 0 0;
 }
 
 .badgeDraft{
@@ -272,15 +284,13 @@ button:hover{
   color:#6d28d9;
 }
 
-.articleButtons{
-  margin-top:10px;
-}
-
 .empty{
   text-align:center;
   color:#64748b;
   padding:35px;
 }
+
+/* MOBILE */
 
 @media(max-width:850px){
 
@@ -312,6 +322,11 @@ button:hover{
 
   .toolbar{
     flex-direction:column;
+    align-items:stretch;
+  }
+
+  .toolbar button{
+    width:100%;
   }
 
   .articleTop{
@@ -319,49 +334,30 @@ button:hover{
   }
 
 }
-
 </style>
-
 </head>
-
 
 <body>
 
-
 <header>
-
   <div class="nav">
 
-    <a
-      href="/"
-      class="logo"
-    >
+    <a href="/" class="logo">
       GyanTech Blog
     </a>
 
     <nav>
-
-      <a href="/">
-        Home
-      </a>
-
-      <a href="/articles">
-        Articles
-      </a>
-
+      <a href="/">Home</a>
+      <a href="/articles">Articles</a>
     </nav>
 
   </div>
-
 </header>
 
 
 <!-- LOGIN -->
 
-<div
-  id="loginBox"
-  class="box login"
->
+<div id="loginBox" class="box login">
 
   <h2>🔐 Admin Login</h2>
 
@@ -371,9 +367,7 @@ button:hover{
 
   <form id="loginForm">
 
-    <label>
-      Admin Password
-    </label>
+    <label>Admin Password</label>
 
     <input
       id="loginPassword"
@@ -388,20 +382,14 @@ button:hover{
 
   </form>
 
-  <div
-    id="loginMsg"
-    class="msg"
-  ></div>
+  <div id="loginMsg" class="msg"></div>
 
 </div>
 
 
 <!-- DASHBOARD -->
 
-<main
-  id="dashboard"
-  class="container hidden"
->
+<main id="dashboard" class="container hidden">
 
 
   <!-- STATS -->
@@ -409,72 +397,29 @@ button:hover{
   <section class="stats">
 
     <div class="stat">
-
-      <div class="statTitle">
-        Total Articles
-      </div>
-
-      <div
-        id="totalStat"
-        class="statNumber"
-      >
-        0
-      </div>
-
+      <div class="statTitle">Total Articles</div>
+      <div id="totalStat" class="statNumber">0</div>
     </div>
 
-
     <div class="stat">
-
-      <div class="statTitle">
-        Published
-      </div>
-
-      <div
-        id="publishedStat"
-        class="statNumber"
-      >
-        0
-      </div>
-
+      <div class="statTitle">Published</div>
+      <div id="publishedStat" class="statNumber">0</div>
     </div>
 
-
     <div class="stat">
-
-      <div class="statTitle">
-        Drafts
-      </div>
-
-      <div
-        id="draftStat"
-        class="statNumber"
-      >
-        0
-      </div>
-
+      <div class="statTitle">Drafts</div>
+      <div id="draftStat" class="statNumber">0</div>
     </div>
 
-
     <div class="stat">
-
-      <div class="statTitle">
-        Total Views
-      </div>
-
-      <div
-        id="viewsStat"
-        class="statNumber"
-      >
-        0
-      </div>
-
+      <div class="statTitle">Total Views</div>
+      <div id="viewsStat" class="statNumber">0</div>
     </div>
 
   </section>
 
 
-  <!-- EDITOR -->
+  <!-- ARTICLE EDITOR -->
 
   <section class="box">
 
@@ -498,9 +443,9 @@ button:hover{
       <div class="editorGrid">
 
 
-        <!-- MAIN EDITOR -->
+        <!-- LEFT -->
 
-        <div>
+        <div class="editorMain">
 
           <label>
             Article Title
@@ -530,16 +475,16 @@ button:hover{
 
           <textarea
             id="excerpt"
-            style="min-height:110px"
+            style="min-height:120px"
             placeholder="Short description of your article..."
           ></textarea>
 
         </div>
 
 
-        <!-- SETTINGS -->
+        <!-- RIGHT -->
 
-        <div class="sideBox">
+        <div class="editorSide">
 
           <h3>
             Article Settings
@@ -612,7 +557,7 @@ button:hover{
 
             <img
               id="previewImg"
-              alt="Preview"
+              alt="Image preview"
             >
 
           </div>
@@ -672,6 +617,11 @@ button:hover{
       📚 Manage Articles
     </h2>
 
+    <p class="subtitle" style="margin-bottom:20px;">
+      Search and manage all your articles.
+    </p>
+
+
     <div class="toolbar">
 
       <input
@@ -684,7 +634,7 @@ button:hover{
         type="button"
         class="secondary"
       >
-        Refresh
+        🔄 Refresh
       </button>
 
     </div>
@@ -708,40 +658,27 @@ button:hover{
 
   </section>
 
-
 </main>
 
 
 <script>
 
-
-/* =========================
-   HELPERS
-========================= */
-
 const $ =
   id => document.getElementById(id);
 
 
-async function api(
-  url,
-  options={}
-){
+/* API */
+
+async function api(url,options={}){
 
   const response =
-    await fetch(
-      url,
-      {
-        ...options,
-
-        headers:{
-          "Content-Type":
-            "application/json",
-
-          ...(options.headers || {})
-        }
+    await fetch(url,{
+      ...options,
+      headers:{
+        "Content-Type":"application/json",
+        ...(options.headers || {})
       }
-    );
+    });
 
 
   const data =
@@ -765,26 +702,23 @@ async function api(
 }
 
 
+/* SECURITY */
+
 function escapeHTML(value){
 
   return String(value ?? "")
-    .replace(
-      /[&<>"']/g,
-      m => ({
-        "&":"&amp;",
-        "<":"&lt;",
-        ">":"&gt;",
-        '"':"&quot;",
-        "'":"&#039;"
-      }[m])
-    );
+    .replace(/[&<>"']/g,m => ({
+      "&":"&amp;",
+      "<":"&lt;",
+      ">":"&gt;",
+      '"':"&quot;",
+      "'":"&#039;"
+    }[m]));
 
 }
 
 
-/* =========================
-   LOGIN CHECK
-========================= */
+/* LOGIN CHECK */
 
 async function checkLogin(){
 
@@ -796,7 +730,11 @@ async function checkLogin(){
       );
 
 
-    if(!data.authenticated){
+    if(data.authenticated){
+
+      showDashboard();
+
+    }else{
 
       $("loginBox")
         .classList
@@ -806,12 +744,7 @@ async function checkLogin(){
         .classList
         .add("hidden");
 
-      return;
-
     }
-
-
-    showDashboard();
 
   }catch{
 
@@ -819,10 +752,16 @@ async function checkLogin(){
       .classList
       .remove("hidden");
 
+    $("dashboard")
+      .classList
+      .add("hidden");
+
   }
 
 }
 
+
+/* SHOW DASHBOARD */
 
 function showDashboard(){
 
@@ -839,9 +778,7 @@ function showDashboard(){
 }
 
 
-/* =========================
-   LOGIN
-========================= */
+/* LOGIN */
 
 $("loginForm")
   .addEventListener(
@@ -861,11 +798,10 @@ $("loginForm")
           "/api/login",
           {
             method:"POST",
-
             body:JSON.stringify({
               password:
                 $("loginPassword")
-                .value
+                  .value
             })
           }
         );
@@ -894,9 +830,7 @@ $("loginForm")
   );
 
 
-/* =========================
-   DASHBOARD
-========================= */
+/* DASHBOARD */
 
 async function loadDashboard(){
 
@@ -908,9 +842,7 @@ async function loadDashboard(){
 }
 
 
-/* =========================
-   STATS
-========================= */
+/* STATS */
 
 async function loadStats(){
 
@@ -947,9 +879,7 @@ async function loadStats(){
 }
 
 
-/* =========================
-   IMAGE PREVIEW
-========================= */
+/* IMAGE PREVIEW */
 
 $("image_url")
   .addEventListener(
@@ -971,7 +901,8 @@ $("image_url")
       }
 
 
-      $("previewImg").src = url;
+      $("previewImg").src =
+        url;
 
       $("imagePreview")
         .classList
@@ -994,9 +925,7 @@ $("previewImg")
   );
 
 
-/* =========================
-   SAVE ARTICLE
-========================= */
+/* SAVE ARTICLE */
 
 $("articleForm")
   .addEventListener(
@@ -1014,46 +943,46 @@ $("articleForm")
 
         title:
           $("title")
-          .value
-          .trim(),
+            .value
+            .trim(),
 
         author:
           $("author")
-          .value
-          .trim(),
+            .value
+            .trim(),
 
         content:
           $("content")
-          .value
-          .trim(),
+            .value
+            .trim(),
 
         excerpt:
           $("excerpt")
-          .value
-          .trim(),
+            .value
+            .trim(),
 
         category:
           $("category")
-          .value
-          .trim(),
+            .value
+            .trim(),
 
         tags:
           $("tags")
-          .value
-          .trim(),
+            .value
+            .trim(),
 
         image_url:
           $("image_url")
-          .value
-          .trim(),
+            .value
+            .trim(),
 
         status:
           $("status")
-          .value,
+            .value,
 
         featured:
           $("featured")
-          .checked
+            .checked
 
       };
 
@@ -1113,9 +1042,7 @@ $("articleForm")
   );
 
 
-/* =========================
-   LOAD ARTICLES
-========================= */
+/* ARTICLES */
 
 let allArticles = [];
 
@@ -1138,8 +1065,7 @@ async function loadManage(){
   }catch(error){
 
     $("manageList")
-      .innerHTML =
-      `
+      .innerHTML = `
         <div class="empty">
           ❌ ${escapeHTML(
             error.message
@@ -1152,13 +1078,9 @@ async function loadManage(){
 }
 
 
-/* =========================
-   RENDER ARTICLES
-========================= */
+/* RENDER */
 
-function renderArticles(
-  articles
-){
+function renderArticles(articles){
 
   const list =
     $("manageList");
@@ -1166,12 +1088,11 @@ function renderArticles(
 
   if(!articles.length){
 
-    list.innerHTML =
-      `
-        <div class="empty">
-          No articles found.
-        </div>
-      `;
+    list.innerHTML = `
+      <div class="empty">
+        No articles found.
+      </div>
+    `;
 
     return;
 
@@ -1182,20 +1103,12 @@ function renderArticles(
     articles
       .map(article => {
 
-        const statusClass =
-          article.status === "draft"
-          ? "badgeDraft"
-          : "";
+        const draft =
+          article.status === "draft";
 
 
-        const featuredBadge =
-          article.featured
-          ? `
-            <span class="badge badgeFeatured">
-              ⭐ Featured
-            </span>
-          `
-          : "";
+        const featured =
+          article.featured;
 
 
         return `
@@ -1237,35 +1150,53 @@ function renderArticles(
 
             <div>
 
-              <span class="badge ${statusClass}">
+              <span class="badge ${
+                draft
+                ? "badgeDraft"
+                : ""
+              }">
+
                 ${escapeHTML(
                   article.status ||
                   "published"
                 )}
+
               </span>
 
 
               <span class="badge">
+
                 ${escapeHTML(
                   article.category ||
                   "Technology"
                 )}
+
               </span>
 
 
               <span class="badge">
+
                 👁
                 ${article.views || 0}
                 views
+
               </span>
 
 
-              ${featuredBadge}
+              ${
+                featured
+                ? `
+                  <span class="badge badgeFeatured">
+                    ⭐ Featured
+                  </span>
+                `
+                : ""
+              }
 
             </div>
 
 
-            <p class="subtitle">
+            <p class="articleDescription">
 
               ${escapeHTML(
                 (
@@ -1288,7 +1219,7 @@ function renderArticles(
             </p>
 
 
-            <div class="articleButtons">
+            <div>
 
               <button
                 onclick="startEdit(${article.id})"
@@ -1306,7 +1237,7 @@ function renderArticles(
 
 
               ${
-                article.status === "published"
+                !draft
                 ? `
                   <a
                     href="/article/${encodeURIComponent(
@@ -1337,9 +1268,7 @@ function renderArticles(
 }
 
 
-/* =========================
-   SEARCH
-========================= */
+/* SEARCH */
 
 $("adminSearch")
   .addEventListener(
@@ -1371,6 +1300,7 @@ $("adminSearch")
             )
             .toLowerCase()
             .includes(search)
+
             ||
 
             String(
@@ -1378,6 +1308,7 @@ $("adminSearch")
             )
             .toLowerCase()
             .includes(search)
+
             ||
 
             String(
@@ -1396,16 +1327,14 @@ $("adminSearch")
   );
 
 
-/* =========================
-   EDIT
-========================= */
+/* EDIT */
 
 window.startEdit =
   function(id){
 
     const article =
       allArticles.find(
-        x => x.id === id
+        item => item.id === id
       );
 
 
@@ -1492,9 +1421,7 @@ window.startEdit =
   };
 
 
-/* =========================
-   RESET
-========================= */
+/* RESET */
 
 function resetForm(){
 
@@ -1505,36 +1432,26 @@ function resetForm(){
   $("editId")
     .value = "";
 
-
   $("author")
-    .value =
-    "Admin";
-
+    .value = "Admin";
 
   $("category")
-    .value =
-    "Technology";
-
+    .value = "Technology";
 
   $("status")
-    .value =
-    "published";
-
+    .value = "published";
 
   $("editorTitle")
     .textContent =
     "✍️ Create New Article";
 
-
   $("saveBtn")
     .textContent =
     "Publish Article";
 
-
   $("cancelBtn")
     .classList
     .add("hidden");
-
 
   $("imagePreview")
     .classList
@@ -1550,16 +1467,14 @@ $("cancelBtn")
   );
 
 
-/* =========================
-   DELETE
-========================= */
+/* DELETE */
 
 window.deleteArticle =
   async function(id){
 
     const article =
       allArticles.find(
-        x => x.id === id
+        item => item.id === id
       );
 
 
@@ -1605,9 +1520,7 @@ window.deleteArticle =
   };
 
 
-/* =========================
-   REFRESH
-========================= */
+/* REFRESH */
 
 $("refreshBtn")
   .addEventListener(
@@ -1616,9 +1529,7 @@ $("refreshBtn")
   );
 
 
-/* =========================
-   LOGOUT
-========================= */
+/* LOGOUT */
 
 $("logout")
   .addEventListener(
@@ -1644,9 +1555,7 @@ $("logout")
   );
 
 
-/* =========================
-   START
-========================= */
+/* START */
 
 checkLogin();
 
