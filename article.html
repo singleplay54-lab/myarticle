@@ -1,30 +1,11 @@
 <!doctype html>
 <html lang="en">
+
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
-<!-- Dynamic SEO defaults; JavaScript replaces these with article data -->
-<title>Article — GyanTech Blog</title>
-<meta id="metaDescription" name="description" content="Read technology, coding and web development articles on GyanTech Blog.">
-<meta name="robots" content="index,follow,max-image-preview:large">
-<meta name="author" content="GyanTech Blog">
-<link id="canonical" rel="canonical" href="https://gyantech-blog.onrender.com/">
-
-<!-- Open Graph -->
-<meta id="ogTitle" property="og:title" content="GyanTech Blog">
-<meta id="ogDescription" property="og:description" content="Technology, coding and web development articles from GyanTech Blog.">
-<meta property="og:type" content="article">
-<meta id="ogUrl" property="og:url" content="https://gyantech-blog.onrender.com/">
-<meta id="ogImage" property="og:image" content="https://gyantech-blog.onrender.com/">
-<meta property="og:site_name" content="GyanTech Blog">
-<meta property="og:locale" content="en_IN">
-
-<!-- Twitter / X -->
-<meta name="twitter:card" content="summary_large_image">
-<meta id="twitterTitle" name="twitter:title" content="GyanTech Blog">
-<meta id="twitterDescription" name="twitter:description" content="Technology, coding and web development articles from GyanTech Blog.">
-<meta id="twitterImage" name="twitter:image" content="https://gyantech-blog.onrender.com/">
+<title>Article — GyanTech</title>
 
 <style>
 *{box-sizing:border-box}
@@ -55,21 +36,28 @@ h1{margin:0 0 14px;font-size:clamp(2rem,5vw,3rem);line-height:1.2;color:#0f172a}
 .content img{max-width:100%;height:auto;display:block;margin:20px auto;border-radius:12px}
 .content pre{overflow:auto;background:#0f172a;color:#e2e8f0;padding:16px;border-radius:10px}
 .content code{background:#f1f5f9;padding:2px 5px;border-radius:4px}
+
 .tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:30px;padding-top:20px;border-top:1px solid #e2e8f0}
 .tag{background:#f1f5f9;color:#475569;padding:5px 10px;border-radius:999px;font-size:.8rem;font-weight:700}
+
+/* Share section */
+.share-box{margin-top:32px;padding:22px;border:1px solid #e2e8f0;border-radius:16px;background:#f8fafc}
+.share-title{margin:0 0 14px;font-size:1.05rem;font-weight:800;color:#0f172a}
+.share-buttons{display:flex;flex-wrap:wrap;gap:10px}
+.share-btn{border:0;border-radius:10px;padding:10px 15px;font:inherit;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:7px;transition:.2s;box-shadow:0 2px 8px rgba(15,23,42,.06)}
+.share-btn:hover{transform:translateY(-1px);filter:brightness(.97)}
+.share-whatsapp{background:#dcfce7;color:#166534}
+.share-facebook{background:#dbeafe;color:#1d4ed8}
+.share-x{background:#e2e8f0;color:#0f172a}
+.share-copy{background:#e0f2fe;color:#0369a1}
+.share-status{margin:10px 0 0;color:#64748b;font-size:.82rem;min-height:20px}
+
 .back{display:inline-block;margin-bottom:18px;color:#0284c7;text-decoration:none;font-weight:700}
 .loading,.error{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:40px 25px;text-align:center;color:#64748b}
 .error{color:#b91c1c}
-.share-box{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px;padding-top:22px;border-top:1px solid #e2e8f0}
-.share-label{width:100%;font-weight:800;color:#0f172a;margin-bottom:2px}
-.share-btn{border:0;border-radius:9px;padding:9px 14px;font-weight:700;cursor:pointer;text-decoration:none;font-size:.9rem}
-.share-whatsapp{background:#dcfce7;color:#166534}
-.share-telegram{background:#e0f2fe;color:#0369a1}
-.share-facebook{background:#dbeafe;color:#1d4ed8}
-.share-copy{background:#f1f5f9;color:#334155}
-.share-btn:hover{filter:brightness(.97);transform:translateY(-1px)}
 .hidden{display:none!important}
 footer{text-align:center;padding:30px 20px;color:#64748b;font-size:.9rem}
+
 @media(max-width:650px){
   .nav-inner{flex-direction:column;align-items:flex-start}
   .nav-links{gap:14px}
@@ -77,6 +65,8 @@ footer{text-align:center;padding:30px 20px;color:#64748b;font-size:.9rem}
   .article-body{padding:25px 20px}
   h1{font-size:2rem}
   .content{font-size:1rem}
+  .share-buttons{display:grid;grid-template-columns:1fr 1fr}
+  .share-btn{justify-content:center}
 }
 </style>
 </head>
@@ -102,159 +92,200 @@ footer{text-align:center;padding:30px 20px;color:#64748b;font-size:.9rem}
 
     <div class="article-body">
       <div id="category" class="category hidden"></div>
+
       <h1 id="title"></h1>
+
       <div id="meta" class="meta"></div>
+
       <div id="excerpt" class="excerpt hidden"></div>
+
       <div id="content" class="content"></div>
+
       <div id="tags" class="tags hidden"></div>
 
-      <div class="share-box">
-        <div class="share-label">📤 Share this article</div>
-        <a id="whatsappShare" class="share-btn share-whatsapp" target="_blank" rel="noopener noreferrer">WhatsApp</a>
-        <a id="telegramShare" class="share-btn share-telegram" target="_blank" rel="noopener noreferrer">Telegram</a>
-        <a id="facebookShare" class="share-btn share-facebook" target="_blank" rel="noopener noreferrer">Facebook</a>
-        <button id="copyShare" class="share-btn share-copy" type="button">🔗 Copy Link</button>
-      </div>
+      <section class="share-box" aria-label="Share article">
+        <h2 class="share-title">🔗 Share this article</h2>
+
+        <div class="share-buttons">
+          <a id="whatsappShare"
+             class="share-btn share-whatsapp"
+             href="#"
+             target="_blank"
+             rel="noopener noreferrer">
+            🟢 WhatsApp
+          </a>
+
+          <a id="facebookShare"
+             class="share-btn share-facebook"
+             href="#"
+             target="_blank"
+             rel="noopener noreferrer">
+            🔵 Facebook
+          </a>
+
+          <a id="xShare"
+             class="share-btn share-x"
+             href="#"
+             target="_blank"
+             rel="noopener noreferrer">
+            𝕏 Share
+          </a>
+
+          <button id="copyShare"
+                  class="share-btn share-copy"
+                  type="button">
+            🔗 Copy Link
+          </button>
+        </div>
+
+        <p id="shareStatus" class="share-status"></p>
+      </section>
+
     </div>
   </article>
 
   <div id="error" class="error hidden"></div>
 </main>
 
-<footer><p>&copy; 2026 GyanTech Blog. All rights reserved.</p></footer>
+<footer>
+  <p>&copy; 2026 GyanTech Blog. All rights reserved.</p>
+</footer>
 
 <script>
 const $ = id => document.getElementById(id);
 
 function escapeHTML(value){
   return String(value ?? "")
-    .replace(/[&<>"']/g,m => ({
-      "&":"&amp;","<":"&lt;",">":"&gt;",
-      '"':"&quot;","'":"&#039;"
+    .replace(/[&<>"']/g, m => ({
+      "&":"&amp;",
+      "<":"&lt;",
+      ">":"&gt;",
+      '"':"&quot;",
+      "'":"&#039;"
     }[m]));
 }
 
 function sanitizeHTML(html){
-  const template=document.createElement("template");
-  template.innerHTML=String(html||"");
+  const template = document.createElement("template");
+  template.innerHTML = String(html || "");
 
-  const allowed=new Set([
+  const allowed = new Set([
     "P","BR","H2","H3","STRONG","B","EM","I","U",
     "UL","OL","LI","BLOCKQUOTE","A","IMG","CODE","PRE"
   ]);
 
-  template.content.querySelectorAll("*").forEach(el=>{
+  const elements = template.content.querySelectorAll("*");
+
+  elements.forEach(el => {
+
     if(!allowed.has(el.tagName)){
-      const parent=el.parentNode;
-      while(el.firstChild) parent.insertBefore(el.firstChild,el);
+      const parent = el.parentNode;
+
+      while(el.firstChild){
+        parent.insertBefore(el.firstChild, el);
+      }
+
       el.remove();
       return;
     }
 
-    [...el.attributes].forEach(attr=>{
-      const name=attr.name.toLowerCase();
+    [...el.attributes].forEach(attr => {
 
-      if(el.tagName==="A" && name==="href"){
-        if(!/^https?:\/\//i.test(attr.value.trim())) el.removeAttribute(attr.name);
-      }else if(el.tagName==="IMG" && ["src","alt"].includes(name)){
-        if(name==="src" && !/^https?:\/\//i.test(attr.value.trim())){
+      const name = attr.name.toLowerCase();
+
+      if(el.tagName === "A" && name === "href"){
+
+        const value = attr.value.trim();
+
+        if(!/^https?:\/\//i.test(value)){
           el.removeAttribute(attr.name);
         }
+
+      }else if(
+        el.tagName === "IMG" &&
+        ["src","alt"].includes(name)
+      ){
+
+        if(
+          name === "src" &&
+          !/^https?:\/\//i.test(attr.value.trim())
+        ){
+          el.removeAttribute(attr.name);
+        }
+
       }else{
+
         el.removeAttribute(attr.name);
+
       }
+
     });
 
-    if(el.tagName==="A"){
+    if(el.tagName === "A"){
       el.setAttribute("target","_blank");
       el.setAttribute("rel","noopener noreferrer");
     }
+
   });
 
   return template.innerHTML;
 }
 
 function getSlug(){
-  const parts=location.pathname.split("/").filter(Boolean);
-  return parts.length>=2
-    ? decodeURIComponent(parts[parts.length-1])
+
+  const parts =
+    location.pathname
+      .split("/")
+      .filter(Boolean);
+
+  return parts.length >= 2
+    ? decodeURIComponent(parts[parts.length - 1])
     : "";
 }
 
-function makeAbsoluteUrl(url){
-  try{
-    return new URL(url,location.origin).href;
-  }catch{
-    return "";
-  }
-}
+function setupShare(article){
 
-function setMeta(article){
-  const title=(article.title||"Article")+" — GyanTech Blog";
-  const description=String(
-    article.excerpt ||
-    String(article.content||"").replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim() ||
-    "Read technology, coding and web development articles on GyanTech Blog."
-  ).slice(0,160);
+  const shareURL = location.href;
+  const shareTitle = article.title || "GyanTech Blog";
 
-  const url=location.href;
-  const image=makeAbsoluteUrl(article.image_url||"");
+  $("whatsappShare").href =
+    "https://wa.me/?text=" +
+    encodeURIComponent(
+      shareTitle + " - " + shareURL
+    );
 
-  document.title=title;
-  $("metaDescription").setAttribute("content",description);
-  $("canonical").setAttribute("href",url);
+  $("facebookShare").href =
+    "https://www.facebook.com/sharer/sharer.php?u=" +
+    encodeURIComponent(shareURL);
 
-  $("ogTitle").setAttribute("content",title);
-  $("ogDescription").setAttribute("content",description);
-  $("ogUrl").setAttribute("content",url);
+  $("xShare").href =
+    "https://twitter.com/intent/tweet?text=" +
+    encodeURIComponent(shareTitle) +
+    "&url=" +
+    encodeURIComponent(shareURL);
 
-  $("twitterTitle").setAttribute("content",title);
-  $("twitterDescription").setAttribute("content",description);
+  $("copyShare").onclick = async () => {
 
-  if(image){
-    $("ogImage").setAttribute("content",image);
-    $("twitterImage").setAttribute("content",image);
-  }
+    try{
 
-  const oldSchema=document.getElementById("articleSchema");
-  if(oldSchema) oldSchema.remove();
+      await navigator.clipboard.writeText(shareURL);
 
-  const schema={
-    "@context":"https://schema.org",
-    "@type":"Article",
-    "headline":String(article.title||"Article"),
-    "description":description,
-    "url":url,
-    "author":{
-      "@type":"Person",
-      "name":String(article.author||"Admin")
-    },
-    "publisher":{
-      "@type":"Organization",
-      "name":"GyanTech Blog"
+      $("shareStatus").textContent =
+        "✅ Article link copied!";
+
+    }catch{
+
+      $("shareStatus").textContent =
+        "Please copy the URL from your browser.";
+
     }
+
   };
-
-  if(article.created_at) schema.datePublished=article.created_at;
-  if(article.updated_at) schema.dateModified=article.updated_at;
-  if(image) schema.image=[image];
-
-  const script=document.createElement("script");
-  script.id="articleSchema";
-  script.type="application/ld+json";
-  script.textContent=JSON.stringify(schema);
-  document.head.appendChild(script);
-
-  const encodedTitle=encodeURIComponent(article.title||"");
-  const encodedUrl=encodeURIComponent(url);
-
-  $("whatsappShare").href=`https://wa.me/?text=${encodedTitle}%20${encodedUrl}`;
-  $("telegramShare").href=`https://t.me/share/url?url=${encodedUrl}&text=${encodedTitle}`;
-  $("facebookShare").href=`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
 }
 
 async function loadArticle(){
-  const slug=getSlug();
+
+  const slug = getSlug();
 
   if(!slug){
     showError("Article not found.");
@@ -262,98 +293,172 @@ async function loadArticle(){
   }
 
   try{
-    const response=await fetch(
-      "/api/articles/"+encodeURIComponent(slug)
-    );
 
-    const data=await response.json().catch(()=>({}));
+    const response =
+      await fetch(
+        "/api/articles/" +
+        encodeURIComponent(slug)
+      );
+
+    const data =
+      await response
+        .json()
+        .catch(() => ({}));
 
     if(!response.ok){
-      throw new Error(data.error||"Article not found.");
+      throw new Error(
+        data.error ||
+        "Article not found."
+      );
     }
 
     renderArticle(data);
+
   }catch(error){
+
     console.error(error);
-    showError(error.message||"Unable to load article.");
+
+    showError(
+      error.message ||
+      "Unable to load article."
+    );
+
   }
 }
 
 function renderArticle(article){
-  $("loading").classList.add("hidden");
-  $("error").classList.add("hidden");
-  $("articleCard").classList.remove("hidden");
 
-  setMeta(article);
+  $("loading")
+    .classList.add("hidden");
 
-  $("title").textContent=article.title||"Untitled Article";
+  $("error")
+    .classList.add("hidden");
+
+  $("articleCard")
+    .classList.remove("hidden");
+
+  document.title =
+    (article.title || "Article") +
+    " — GyanTech";
+
+  $("title").textContent =
+    article.title ||
+    "Untitled Article";
 
   if(article.category){
-    $("category").textContent=article.category;
-    $("category").classList.remove("hidden");
+
+    $("category").textContent =
+      article.category;
+
+    $("category")
+      .classList
+      .remove("hidden");
+
   }
 
-  const author=article.author||"Admin";
-  const date=article.created_at
-    ? new Date(article.created_at).toLocaleDateString("en-IN",{
-        day:"numeric",month:"short",year:"numeric"
-      })
-    : "";
-  const views=Number(article.views||0);
+  const author =
+    article.author || "Admin";
 
-  $("meta").textContent=
-    `By ${author}`+
-    (date?` · ${date}`:"")+
+  const date =
+    article.created_at
+      ? new Date(article.created_at)
+          .toLocaleDateString(
+            "en-IN",
+            {
+              day:"numeric",
+              month:"short",
+              year:"numeric"
+            }
+          )
+      : "";
+
+  const views =
+    Number(article.views || 0);
+
+  $("meta").textContent =
+    `By ${author}` +
+    (date ? ` · ${date}` : "") +
     ` · 👁 ${views} views`;
 
   if(article.excerpt){
-    $("excerpt").textContent=article.excerpt;
-    $("excerpt").classList.remove("hidden");
+
+    $("excerpt").textContent =
+      article.excerpt;
+
+    $("excerpt")
+      .classList
+      .remove("hidden");
+
   }
 
-  $("content").innerHTML=sanitizeHTML(article.content||"");
+  $("content").innerHTML =
+    sanitizeHTML(
+      article.content || ""
+    );
 
   if(article.tags){
-    const tags=String(article.tags)
-      .split(",").map(tag=>tag.trim()).filter(Boolean);
+
+    const tags =
+      String(article.tags)
+        .split(",")
+        .map(tag => tag.trim())
+        .filter(Boolean);
 
     if(tags.length){
-      $("tags").innerHTML=tags
-        .map(tag=>`<span class="tag">#${escapeHTML(tag)}</span>`)
-        .join("");
-      $("tags").classList.remove("hidden");
+
+      $("tags").innerHTML =
+        tags
+          .map(tag =>
+            `<span class="tag">#${escapeHTML(tag)}</span>`
+          )
+          .join("");
+
+      $("tags")
+        .classList
+        .remove("hidden");
+
     }
+
   }
 
   if(article.image_url){
-    const image=makeAbsoluteUrl(article.image_url);
-    if(image){
-      $("heroImage").src=image;
-      $("heroImage").alt=article.title||"Article image";
-      $("heroImage").classList.remove("hidden");
-    }
+
+    $("heroImage").src =
+      article.image_url;
+
+    $("heroImage").alt =
+      article.title ||
+      "Article image";
+
+    $("heroImage")
+      .classList
+      .remove("hidden");
+
   }
+
+  setupShare(article);
 }
 
-$("copyShare").addEventListener("click",async()=>{
-  try{
-    await navigator.clipboard.writeText(location.href);
-    $("copyShare").textContent="✅ Link Copied";
-    setTimeout(()=>$("copyShare").textContent="🔗 Copy Link",1800);
-  }catch{
-    $("copyShare").textContent="Copy failed";
-    setTimeout(()=>$("copyShare").textContent="🔗 Copy Link",1800);
-  }
-});
-
 function showError(message){
-  $("loading").classList.add("hidden");
-  $("articleCard").classList.add("hidden");
-  $("error").textContent="❌ "+message;
-  $("error").classList.remove("hidden");
+
+  $("loading")
+    .classList
+    .add("hidden");
+
+  $("articleCard")
+    .classList
+    .add("hidden");
+
+  $("error").textContent =
+    "❌ " + message;
+
+  $("error")
+    .classList
+    .remove("hidden");
 }
 
 loadArticle();
 </script>
+
 </body>
 </html>
