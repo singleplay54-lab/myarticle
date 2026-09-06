@@ -222,11 +222,68 @@ button:hover{
   margin:0;
 }
 
-.toolbar{
+/* RICH TEXT EDITOR */
+
+.richToolbar{
   display:flex;
-  gap:10px;
-  align-items:center;
-  margin:0 0 20px;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:10px;
+  padding:10px;
+  background:#f8fafc;
+  border:1px solid #e2e8f0;
+  border-radius:10px;
+}
+
+.richToolbar button{
+  margin:0;
+  padding:8px 12px;
+  background:#e2e8f0;
+  color:#0f172a;
+  font-weight:700;
+}
+
+.richToolbar button:hover{
+  background:#cbd5e1;
+}
+
+.richEditor{
+  width:100%;
+  min-height:320px;
+  padding:15px;
+  border:1px solid #cbd5e1;
+  border-radius:9px;
+  background:white;
+  line-height:1.7;
+  font-size:1rem;
+  outline:none;
+  overflow-y:auto;
+}
+
+.richEditor:focus{
+  border-color:#0284c7;
+}
+
+.richEditor h2{
+  margin:20px 0 10px;
+}
+
+.richEditor h3{
+  margin:16px 0 8px;
+}
+
+.richEditor blockquote{
+  border-left:4px solid #0284c7;
+  padding-left:15px;
+  margin:15px 0;
+  color:#475569;
+  font-style:italic;
+}
+
+.richEditor ul,
+.richEditor ol{
+  padding-left:25px;
+  margin:10px 0;
 }
 
 .toolbar input{
@@ -458,15 +515,25 @@ button:hover{
           >
 
 
-          <label>
-            Article Content
-          </label>
+          <div id="contentEditor" class="richEditor" contenteditable="true">
+  Write your complete article here...
+</div>
 
-          <textarea
-            id="content"
-            required
-            placeholder="Write your complete article here..."
-          ></textarea>
+<textarea id="content" class="hidden"></textarea>
+
+<div class="richToolbar">
+  <button type="button" onclick="formatText('bold')"><b>B</b></button>
+  <button type="button" onclick="formatText('italic')"><i>I</i></button>
+  <button type="button" onclick="formatText('underline')"><u>U</u></button>
+
+  <button type="button" onclick="formatText('formatBlock','H2')">H2</button>
+  <button type="button" onclick="formatText('formatBlock','H3')">H3</button>
+
+  <button type="button" onclick="formatText('insertUnorderedList')">• List</button>
+  <button type="button" onclick="formatText('insertOrderedList')">1. List</button>
+
+  <button type="button" onclick="formatText('formatBlock','BLOCKQUOTE')">❝ Quote</button>
+</div>
 
 
           <label>
@@ -665,6 +732,22 @@ button:hover{
 
 const $ =
   id => document.getElementById(id);
+
+
+/* RICH TEXT EDITOR */
+
+function formatText(command, value = null){
+  document.execCommand(command, false, value);
+  syncEditor();
+  $("contentEditor").focus();
+}
+
+function syncEditor(){
+  $("content").value =
+    $("contentEditor").innerHTML;
+}
+
+$("contentEditor").addEventListener("input", syncEditor);
 
 
 /* API */
@@ -1353,6 +1436,9 @@ window.startEdit =
       article.author || "Admin";
 
     $("content").value =
+      article.content || "";
+
+    $("contentEditor").innerHTML =
       article.content || "";
 
     $("excerpt").value =
