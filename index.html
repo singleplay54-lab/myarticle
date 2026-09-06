@@ -2,242 +2,1072 @@
 <html lang="en">
 
 <head>
+
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1"
+>
 
 <meta
   name="description"
   content="GyanTech Blog — AI, coding, web development and technology explained simply."
 >
 
-<title>GyanTech Blog</title>
+<meta
+  name="theme-color"
+  content="#0f172a"
+>
+
+<title>GyanTech Blog — Technology Explained Simply</title>
 
 <style>
+
+/* =========================
+   RESET
+========================= */
 
 *{
   box-sizing:border-box;
 }
 
-body{
-  margin:0;
-  font-family:Segoe UI,Arial,sans-serif;
-  background:#f5f7fb;
-  color:#10203a;
+html{
+  scroll-behavior:smooth;
 }
 
-/* HEADER */
+body{
+  margin:0;
+  font-family:
+    Inter,
+    Segoe UI,
+    Arial,
+    sans-serif;
+  background:#f5f7fb;
+  color:#10203a;
+  line-height:1.6;
+}
+
+a{
+  text-decoration:none;
+}
+
+img{
+  max-width:100%;
+  display:block;
+}
+
+
+/* =========================
+   HEADER
+========================= */
 
 header{
   background:#0f172a;
-  color:#fff;
+  color:white;
+  position:sticky;
+  top:0;
+  z-index:100;
+  border-bottom:1px solid rgba(255,255,255,.08);
 }
 
 .nav{
-  max-width:1180px;
+  max-width:1200px;
   margin:auto;
-  padding:17px 20px;
+  padding:16px 20px;
+
   display:flex;
-  justify-content:space-between;
   align-items:center;
+  justify-content:space-between;
 }
 
 .logo{
   color:#38bdf8;
-  font-weight:800;
-  font-size:1.5rem;
-  text-decoration:none;
+  font-size:1.55rem;
+  font-weight:900;
+  letter-spacing:-.5px;
 }
 
 .links{
   display:flex;
-  gap:20px;
+  align-items:center;
+  gap:24px;
 }
 
 .links a{
   color:#e2e8f0;
-  text-decoration:none;
-  font-size:1rem;
+  font-size:.95rem;
+  font-weight:600;
 }
 
 .links a:hover{
   color:#38bdf8;
 }
 
-/* HERO */
+.adminLink{
+  background:#0284c7;
+  color:white !important;
+  padding:8px 13px;
+  border-radius:8px;
+}
+
+.adminLink:hover{
+  background:#0369a1;
+}
+
+
+/* =========================
+   HERO
+========================= */
 
 .hero{
-  max-width:1180px;
+  max-width:1200px;
   margin:30px auto;
   padding:0 20px;
 }
 
 .heroBox{
-  padding:48px 30px;
-  border-radius:20px;
-  background:linear-gradient(135deg,#dff6ff,#fff);
-  border:1px solid #e2e8f0;
+  min-height:390px;
+
+  display:flex;
+  align-items:center;
+
+  padding:55px;
+
+  border-radius:25px;
+
+  background:
+    radial-gradient(
+      circle at 85% 20%,
+      rgba(56,189,248,.28),
+      transparent 35%
+    ),
+    linear-gradient(
+      135deg,
+      #dff6ff,
+      #ffffff
+    );
+
+  border:1px solid #dbeafe;
+
+  overflow:hidden;
 }
 
-.heroBox h1{
-  font-size:clamp(2rem,5vw,3.5rem);
-  line-height:1.1;
-  margin:0 0 15px;
+.heroContent{
+  max-width:720px;
 }
 
-.heroBox p{
+.heroLabel{
+  display:inline-block;
+
+  background:#e0f2fe;
+  color:#0369a1;
+
+  padding:6px 11px;
+
+  border-radius:999px;
+
+  font-size:.82rem;
+  font-weight:800;
+
+  margin-bottom:15px;
+}
+
+.hero h1{
+  margin:0;
+
+  font-size:
+    clamp(
+      2.4rem,
+      6vw,
+      4.5rem
+    );
+
+  line-height:1.02;
+
+  letter-spacing:-2px;
+}
+
+.hero p{
   color:#64748b;
-  font-size:1.1rem;
-  line-height:1.6;
-  margin-bottom:25px;
+
+  font-size:1.15rem;
+
+  max-width:650px;
+
+  margin:20px 0 28px;
+}
+
+.heroButtons{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
 }
 
 .btn{
-  display:inline-block;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+
   background:#0284c7;
-  color:#fff;
-  padding:11px 16px;
-  border-radius:8px;
-  text-decoration:none;
-  font-weight:700;
+  color:white;
+
+  padding:12px 18px;
+
+  border-radius:9px;
+
+  font-weight:800;
+
   border:0;
+
   cursor:pointer;
+
+  transition:.2s;
 }
 
 .btn:hover{
   background:#0369a1;
+  transform:translateY(-1px);
 }
 
-/* ARTICLES */
+.btnSecondary{
+  background:white;
+  color:#0369a1;
+  border:1px solid #bae6fd;
+}
 
-.wrap{
-  max-width:1180px;
-  margin:35px auto;
+.btnSecondary:hover{
+  background:#f0f9ff;
+}
+
+
+/* =========================
+   MAIN
+========================= */
+
+.container{
+  max-width:1200px;
+  margin:0 auto;
   padding:0 20px;
 }
 
-.sectionTitle{
-  font-size:1.8rem;
+.section{
+  margin-top:55px;
+}
+
+.sectionHeader{
+  display:flex;
+  align-items:end;
+  justify-content:space-between;
+
+  gap:20px;
+
   margin-bottom:20px;
 }
 
-.grid{
+.sectionHeader h2{
+  margin:0;
+
+  font-size:1.8rem;
+
+  letter-spacing:-.5px;
+}
+
+.sectionHeader p{
+  margin:5px 0 0;
+
+  color:#64748b;
+}
+
+.viewAll{
+  color:#0369a1;
+  font-weight:800;
+  white-space:nowrap;
+}
+
+
+/* =========================
+   FEATURED
+========================= */
+
+.featured{
   display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:18px;
-}
 
-.card{
-  background:#fff;
+  grid-template-columns:
+    minmax(0,1.3fr)
+    minmax(0,1fr);
+
+  gap:22px;
+
+  background:white;
+
   border:1px solid #e2e8f0;
-  border-radius:14px;
-  padding:20px;
-  transition:.2s;
+
+  border-radius:20px;
+
+  overflow:hidden;
+
+  box-shadow:
+    0 10px 35px
+    rgba(15,23,42,.06);
 }
 
-.card:hover{
-  transform:translateY(-3px);
-  box-shadow:0 8px 25px rgba(15,23,42,.08);
+.featuredImage{
+  min-height:320px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #dbeafe,
+      #f0f9ff
+    );
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  overflow:hidden;
 }
 
-.card h2{
-  margin:14px 0 8px;
-  font-size:1.25rem;
-  line-height:1.35;
+.featuredImage img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
 }
 
-.pill{
+.imagePlaceholder{
+  font-size:4rem;
+  opacity:.45;
+}
+
+.featuredContent{
+  padding:35px;
+
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+
+.category{
   display:inline-block;
+
+  width:max-content;
+
   background:#e0f2fe;
   color:#0369a1;
-  border-radius:99px;
-  padding:4px 9px;
+
+  padding:5px 10px;
+
+  border-radius:999px;
+
   font-size:.78rem;
-  font-weight:600;
+  font-weight:800;
+}
+
+.featuredContent h3{
+  font-size:2rem;
+
+  line-height:1.15;
+
+  margin:14px 0 10px;
 }
 
 .meta{
   color:#64748b;
-  font-size:.84rem;
-  line-height:1.5;
+  font-size:.86rem;
 }
 
-.excerpt{
+.description{
   color:#475569;
+  margin:15px 0 22px;
+}
+
+
+/* =========================
+   ARTICLE GRID
+========================= */
+
+.grid{
+  display:grid;
+
+  grid-template-columns:
+    repeat(3,1fr);
+
+  gap:20px;
+}
+
+.card{
+  background:white;
+
+  border:1px solid #e2e8f0;
+
+  border-radius:16px;
+
+  overflow:hidden;
+
+  transition:
+    transform .2s,
+    box-shadow .2s;
+}
+
+.card:hover{
+  transform:translateY(-5px);
+
+  box-shadow:
+    0 12px 30px
+    rgba(15,23,42,.09);
+}
+
+.cardImage{
+  height:175px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #e0f2fe,
+      #f8fafc
+    );
+
+  overflow:hidden;
+}
+
+.cardImage img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+.cardImagePlaceholder{
+  height:100%;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  font-size:3rem;
+
+  opacity:.35;
+}
+
+.cardBody{
+  padding:20px;
+}
+
+.card h3{
+  font-size:1.25rem;
+
+  line-height:1.3;
+
+  margin:12px 0 7px;
+}
+
+.cardText{
+  color:#64748b;
+
+  font-size:.94rem;
+
   line-height:1.6;
-  margin:14px 0 18px;
+
+  margin:12px 0 18px;
+}
+
+.read{
+  color:#0284c7;
+
+  font-weight:800;
+
+  font-size:.92rem;
+}
+
+.read:hover{
+  color:#0369a1;
+}
+
+
+/* =========================
+   TRENDING
+========================= */
+
+.trendingGrid{
+  display:grid;
+
+  grid-template-columns:
+    repeat(3,1fr);
+
+  gap:18px;
+}
+
+.trendingCard{
+  background:white;
+
+  border:1px solid #e2e8f0;
+
+  border-radius:15px;
+
+  padding:20px;
+
+  display:flex;
+
+  gap:15px;
+}
+
+.rank{
+  width:42px;
+  height:42px;
+
+  flex-shrink:0;
+
+  border-radius:12px;
+
+  background:#e0f2fe;
+  color:#0369a1;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  font-weight:900;
+}
+
+.trendingCard h3{
+  margin:0 0 5px;
+
+  font-size:1rem;
+
+  line-height:1.35;
+}
+
+.trendingCard p{
+  margin:0;
+
+  color:#64748b;
+
+  font-size:.82rem;
+}
+
+
+/* =========================
+   CATEGORIES
+========================= */
+
+.categories{
+  display:grid;
+
+  grid-template-columns:
+    repeat(4,1fr);
+
+  gap:15px;
+}
+
+.categoryCard{
+  background:white;
+
+  border:1px solid #e2e8f0;
+
+  border-radius:14px;
+
+  padding:20px;
+
+  text-align:center;
+
+  transition:.2s;
+}
+
+.categoryCard:hover{
+  border-color:#7dd3fc;
+
+  transform:translateY(-3px);
+}
+
+.categoryIcon{
+  font-size:2rem;
+
+  margin-bottom:8px;
+}
+
+.categoryName{
+  font-weight:800;
+}
+
+.categoryCount{
+  color:#64748b;
+
+  font-size:.85rem;
+}
+
+
+/* =========================
+   STATES
+========================= */
+
+.loading{
+  grid-column:1/-1;
+
+  text-align:center;
+
+  padding:45px;
+
+  color:#64748b;
 }
 
 .empty{
-  text-align:center;
   grid-column:1/-1;
-  padding:40px;
-  color:#64748b;
-  background:#fff;
+
+  background:white;
+
   border:1px solid #e2e8f0;
-  border-radius:14px;
+
+  border-radius:15px;
+
+  text-align:center;
+
+  padding:40px;
+
+  color:#64748b;
 }
 
-/* FOOTER */
+.error{
+  color:#dc2626;
+}
+
+
+/* =========================
+   FOOTER
+========================= */
 
 footer{
-  margin-top:60px;
+  margin-top:70px;
+
   background:#0f172a;
+
   color:#94a3b8;
-  text-align:center;
-  padding:25px 20px;
+
+  padding:45px 20px 25px;
 }
 
-/* MOBILE */
+.footerInner{
+  max-width:1200px;
 
-@media(max-width:800px){
+  margin:auto;
+
+  display:grid;
+
+  grid-template-columns:
+    2fr 1fr 1fr;
+
+  gap:40px;
+}
+
+.footerBrand h2{
+  color:#38bdf8;
+
+  margin:0 0 10px;
+}
+
+.footerBrand p{
+  max-width:450px;
+
+  line-height:1.7;
+}
+
+.footerCol h3{
+  color:white;
+
+  margin-top:0;
+}
+
+.footerCol a{
+  display:block;
+
+  color:#94a3b8;
+
+  margin:8px 0;
+}
+
+.footerCol a:hover{
+  color:#38bdf8;
+}
+
+.copyright{
+  max-width:1200px;
+
+  margin:35px auto 0;
+
+  padding-top:20px;
+
+  border-top:1px solid #1e293b;
+
+  text-align:center;
+
+  font-size:.85rem;
+}
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media(max-width:900px){
 
   .grid{
+    grid-template-columns:
+      repeat(2,1fr);
+  }
+
+  .trendingGrid{
+    grid-template-columns:
+      repeat(2,1fr);
+  }
+
+  .categories{
+    grid-template-columns:
+      repeat(2,1fr);
+  }
+
+  .featured{
+    grid-template-columns:1fr;
+  }
+
+  .featuredImage{
+    min-height:260px;
+  }
+
+  .footerInner{
     grid-template-columns:1fr 1fr;
   }
 
 }
 
-@media(max-width:560px){
-
-  .grid{
-    grid-template-columns:1fr;
-  }
+@media(max-width:600px){
 
   .nav{
     flex-direction:column;
+
     gap:12px;
   }
 
-  .heroBox{
-    padding:35px 22px;
+  .links{
+    gap:14px;
   }
 
-  .links{
-    gap:15px;
+  .heroBox{
+    padding:35px 23px;
+
+    min-height:350px;
+  }
+
+  .hero h1{
+    letter-spacing:-1px;
+  }
+
+  .grid,
+  .trendingGrid,
+  .categories{
+    grid-template-columns:1fr;
+  }
+
+  .featuredContent{
+    padding:25px;
+  }
+
+  .featuredContent h3{
+    font-size:1.6rem;
+  }
+
+  .footerInner{
+    grid-template-columns:1fr;
   }
 
 }
 
 </style>
+
 </head>
 
 
 <body>
 
-<!-- HEADER -->
+
+<!-- =========================
+     HEADER
+========================= -->
 
 <header>
 
   <div class="nav">
 
     <a
-      class="logo"
       href="/"
+      class="logo"
     >
       GyanTech Blog
     </a>
 
+
     <nav class="links">
+
+      <a href="/">
+        Home
+      </a>
+
+      <a href="/articles">
+        Articles
+      </a>
+
+      <a
+        href="/admin"
+        class="adminLink"
+      >
+        Admin
+      </a>
+
+    </nav>
+
+  </div>
+
+</header>
+
+
+<!-- =========================
+     HERO
+========================= -->
+
+<section class="hero">
+
+  <div class="heroBox">
+
+    <div class="heroContent">
+
+      <span class="heroLabel">
+        💡 Learn Technology
+      </span>
+
+      <h1>
+        Technology,<br>
+        explained simply.
+      </h1>
+
+      <p>
+        AI, coding, web development and useful
+        technology guides — written in simple,
+        easy-to-understand language.
+      </p>
+
+      <div class="heroButtons">
+
+        <a
+          href="/articles"
+          class="btn"
+        >
+          Explore Articles →
+        </a>
+
+        <a
+          href="#latest"
+          class="btn btnSecondary"
+        >
+          Latest Articles
+        </a>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<main class="container">
+
+
+<!-- =========================
+     FEATURED ARTICLE
+========================= -->
+
+<section class="section">
+
+  <div class="sectionHeader">
+
+    <div>
+      <h2>⭐ Featured Article</h2>
+
+      <p>
+        Our highlighted technology article
+      </p>
+    </div>
+
+  </div>
+
+
+  <div
+    id="featured"
+    class="featured"
+  >
+
+    <div class="loading">
+      Loading featured article...
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =========================
+     LATEST ARTICLES
+========================= -->
+
+<section
+  class="section"
+  id="latest"
+>
+
+  <div class="sectionHeader">
+
+    <div>
+
+      <h2>
+        Latest Articles
+      </h2>
+
+      <p>
+        Fresh technology articles from GyanTech
+      </p>
+
+    </div>
+
+    <a
+      href="/articles"
+      class="viewAll"
+    >
+      View All →
+    </a>
+
+  </div>
+
+
+  <div
+    id="latestGrid"
+    class="grid"
+  >
+
+    <div class="loading">
+      Loading articles...
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =========================
+     TRENDING
+========================= -->
+
+<section class="section">
+
+  <div class="sectionHeader">
+
+    <div>
+
+      <h2>
+        🔥 Trending
+      </h2>
+
+      <p>
+        Most viewed articles
+      </p>
+
+    </div>
+
+  </div>
+
+
+  <div
+    id="trendingGrid"
+    class="trendingGrid"
+  >
+
+    <div class="loading">
+      Loading trending articles...
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =========================
+     CATEGORIES
+========================= -->
+
+<section class="section">
+
+  <div class="sectionHeader">
+
+    <div>
+
+      <h2>
+        🏷️ Explore Categories
+      </h2>
+
+      <p>
+        Explore technology by topic
+      </p>
+
+    </div>
+
+  </div>
+
+
+  <div
+    id="categories"
+    class="categories"
+  >
+
+    <div class="loading">
+      Loading categories...
+    </div>
+
+  </div>
+
+</section>
+
+
+</main>
+
+
+<!-- =========================
+     FOOTER
+========================= -->
+
+<footer>
+
+  <div class="footerInner">
+
+
+    <div class="footerBrand">
+
+      <h2>
+        GyanTech Blog
+      </h2>
+
+      <p>
+        Technology explained simply.
+        Learn AI, coding, web development
+        and modern technology without
+        complicated language.
+      </p>
+
+    </div>
+
+
+    <div class="footerCol">
+
+      <h3>
+        Quick Links
+      </h3>
 
       <a href="/">
         Home
@@ -251,80 +1081,51 @@ footer{
         Admin
       </a>
 
-    </nav>
-
-  </div>
-
-</header>
-
-
-<!-- HERO -->
-
-<section class="hero">
-
-  <div class="heroBox">
-
-    <h1>
-      Technology, explained simply.
-    </h1>
-
-    <p>
-      AI, coding, web development and useful tech
-      guides for learners.
-    </p>
-
-    <a
-      class="btn"
-      href="/articles"
-    >
-      Explore Articles →
-    </a>
-
-  </div>
-
-</section>
-
-
-<!-- LATEST ARTICLES -->
-
-<section class="wrap">
-
-  <h2 class="sectionTitle">
-    Latest Articles
-  </h2>
-
-  <div
-    id="grid"
-    class="grid"
-  >
-
-    <div class="empty">
-      Loading...
     </div>
 
+
+    <div class="footerCol">
+
+      <h3>
+        Topics
+      </h3>
+
+      <a href="/articles">
+        AI & Machine Learning
+      </a>
+
+      <a href="/articles">
+        Coding
+      </a>
+
+      <a href="/articles">
+        Web Development
+      </a>
+
+      <a href="/articles">
+        Technology
+      </a>
+
+    </div>
+
+
   </div>
 
-</section>
 
+  <div class="copyright">
 
-<!-- FOOTER -->
+    © 2026 GyanTech Blog · Built for curious learners.
 
-<footer>
-
-  © 2026 GyanTech Blog
+  </div>
 
 </footer>
 
 
 <script>
 
-/* GET ARTICLE GRID */
-
-const grid =
-  document.getElementById("grid");
-
-
-/* ESCAPE HTML */
+/* =================================
+   HELPERS
+================================= */
 
 function escapeHTML(value){
 
@@ -337,7 +1138,6 @@ function escapeHTML(value){
         ">":"&gt;",
         '"':"&quot;",
         "'":"&#039;"
-
       }[m];
 
     });
@@ -345,24 +1145,436 @@ function escapeHTML(value){
 }
 
 
-/* LOAD ARTICLES */
+function formatDate(date){
 
-async function loadArticles(){
+  return new Date(date)
+    .toLocaleDateString(
+      "en-IN",
+      {
+        day:"numeric",
+        month:"short",
+        year:"numeric"
+      }
+    );
+
+}
+
+
+function getImage(url){
+
+  if(!url){
+    return `
+      <div class="cardImagePlaceholder">
+        💻
+      </div>
+    `;
+  }
+
+  return `
+    <img
+      src="${escapeHTML(url)}"
+      alt="Article image"
+      loading="lazy"
+      onerror="this.parentElement.innerHTML='<div class=&quot;cardImagePlaceholder&quot;>💻</div>'"
+    >
+  `;
+
+}
+
+
+/* =================================
+   GET ARTICLES
+================================= */
+
+async function getArticles(){
+
+  const response =
+    await fetch(
+      "/api/articles?limit=30"
+    );
+
+  if(!response.ok){
+
+    throw new Error(
+      "Could not load articles"
+    );
+
+  }
+
+  const data =
+    await response.json();
+
+  return data.articles || [];
+
+}
+
+
+/* =================================
+   FEATURED ARTICLE
+================================= */
+
+function showFeatured(articles){
+
+  const box =
+    document.getElementById(
+      "featured"
+    );
+
+
+  if(!articles.length){
+
+    box.innerHTML = `
+      <div class="empty">
+        No published articles yet.
+      </div>
+    `;
+
+    return;
+
+  }
+
+
+  /*
+    Prefer an article marked featured.
+    Otherwise use newest article.
+  */
+
+  const article =
+    articles.find(
+      a => a.featured === true
+    ) || articles[0];
+
+
+  box.innerHTML = `
+
+    <div class="featuredImage">
+
+      ${
+        article.image_url
+
+        ? `
+          <img
+            src="${escapeHTML(
+              article.image_url
+            )}"
+            alt="${escapeHTML(
+              article.title
+            )}"
+            onerror="this.style.display='none'"
+          >
+        `
+
+        : `
+          <div class="imagePlaceholder">
+            💻
+          </div>
+        `
+      }
+
+    </div>
+
+
+    <div class="featuredContent">
+
+      <span class="category">
+
+        ${escapeHTML(
+          article.category ||
+          "Technology"
+        )}
+
+      </span>
+
+
+      <h3>
+        ${escapeHTML(
+          article.title
+        )}
+      </h3>
+
+
+      <div class="meta">
+
+        By
+        ${escapeHTML(
+          article.author ||
+          "Admin"
+        )}
+
+        ·
+
+        ${formatDate(
+          article.created_at
+        )}
+
+        ·
+
+        👁
+        ${article.views || 0}
+        views
+
+      </div>
+
+
+      <p class="description">
+
+        ${escapeHTML(
+          article.excerpt ||
+          (
+            article.content ||
+            ""
+          ).slice(0,220) + "..."
+        )}
+
+      </p>
+
+
+      <div>
+
+        <a
+          class="btn"
+          href="/article/${encodeURIComponent(
+            article.slug
+          )}"
+        >
+          Read Article →
+        </a>
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+/* =================================
+   LATEST ARTICLES
+================================= */
+
+function showLatest(articles){
+
+  const grid =
+    document.getElementById(
+      "latestGrid"
+    );
+
+
+  if(!articles.length){
+
+    grid.innerHTML = `
+      <div class="empty">
+        No published articles yet.
+      </div>
+    `;
+
+    return;
+
+  }
+
 
   grid.innerHTML =
-    '<div class="empty">Loading...</div>';
+    articles
+      .slice(0,6)
+      .map(article => `
+
+        <article class="card">
+
+
+          <div class="cardImage">
+
+            ${getImage(
+              article.image_url
+            )}
+
+          </div>
+
+
+          <div class="cardBody">
+
+
+            <span class="category">
+
+              ${escapeHTML(
+                article.category ||
+                "Technology"
+              )}
+
+            </span>
+
+
+            <h3>
+
+              ${escapeHTML(
+                article.title
+              )}
+
+            </h3>
+
+
+            <div class="meta">
+
+              By
+              ${escapeHTML(
+                article.author ||
+                "Admin"
+              )}
+
+              ·
+
+              ${formatDate(
+                article.created_at
+              )}
+
+            </div>
+
+
+            <p class="cardText">
+
+              ${escapeHTML(
+                article.excerpt ||
+                (
+                  article.content ||
+                  ""
+                ).slice(0,120) +
+                "..."
+              )}
+
+            </p>
+
+
+            <a
+              class="read"
+              href="/article/${encodeURIComponent(
+                article.slug
+              )}"
+            >
+              Read Article →
+            </a>
+
+
+          </div>
+
+        </article>
+
+      `)
+      .join("");
+
+}
+
+
+/* =================================
+   TRENDING
+================================= */
+
+function showTrending(articles){
+
+  const grid =
+    document.getElementById(
+      "trendingGrid"
+    );
+
+
+  if(!articles.length){
+
+    grid.innerHTML = `
+      <div class="empty">
+        No articles available.
+      </div>
+    `;
+
+    return;
+
+  }
+
+
+  const trending =
+    [...articles]
+      .sort(
+        (a,b) =>
+          (b.views || 0) -
+          (a.views || 0)
+      )
+      .slice(0,3);
+
+
+  grid.innerHTML =
+    trending
+      .map((article,index) => `
+
+        <a
+          href="/article/${encodeURIComponent(
+            article.slug
+          )}"
+          class="trendingCard"
+        >
+
+          <div class="rank">
+            ${index + 1}
+          </div>
+
+
+          <div>
+
+            <h3>
+
+              ${escapeHTML(
+                article.title
+              )}
+
+            </h3>
+
+
+            <p>
+
+              👁
+              ${article.views || 0}
+              views
+
+              ·
+
+              ${escapeHTML(
+                article.category ||
+                "Technology"
+              )}
+
+            </p>
+
+          </div>
+
+        </a>
+
+      `)
+      .join("");
+
+}
+
+
+/* =================================
+   CATEGORIES
+================================= */
+
+async function loadCategories(){
+
+  const container =
+    document.getElementById(
+      "categories"
+    );
 
 
   try{
 
     const response =
-      await fetch("/api/articles?limit=6");
+      await fetch(
+        "/api/categories"
+      );
 
 
     if(!response.ok){
 
       throw new Error(
-        "Could not load articles"
+        "Category API failed"
       );
 
     }
@@ -372,122 +1584,170 @@ async function loadArticles(){
       await response.json();
 
 
-    /* NO ARTICLES */
+    if(!data.length){
 
-    if(
-      !data.articles ||
-      data.articles.length === 0
-    ){
-
-      grid.innerHTML =
-        '<div class="empty">' +
-        'No published articles yet.' +
-        '</div>';
+      container.innerHTML = `
+        <div class="empty">
+          No categories yet.
+        </div>
+      `;
 
       return;
 
     }
 
 
-    /* SHOW ARTICLES */
-
-    grid.innerHTML =
-      data.articles
-        .map(function(article){
-
-          const excerpt =
-            article.excerpt ||
-            (
-              (article.content || "")
-                .slice(0,150) +
-              "..."
-            );
+    const icons = [
+      "🤖",
+      "💻",
+      "🌐",
+      "⚡",
+      "🔐",
+      "📱",
+      "🧠",
+      "🛠️"
+    ];
 
 
-          return `
+    container.innerHTML =
+      data
+        .slice(0,8)
+        .map((item,index) => `
 
-            <article class="card">
+          <a
+            href="/articles"
+            class="categoryCard"
+          >
 
-              <span class="pill">
-                ${escapeHTML(
-                  article.category ||
-                  "Technology"
-                )}
-              </span>
+            <div class="categoryIcon">
 
-              <h2>
-                ${escapeHTML(
-                  article.title
-                )}
-              </h2>
+              ${icons[
+                index % icons.length
+              ]}
 
-              <div class="meta">
+            </div>
 
-                By
-                ${escapeHTML(
-                  article.author ||
-                  "Admin"
-                )}
 
-                ·
+            <div class="categoryName">
 
-                ${new Date(
-                  article.created_at
-                ).toLocaleDateString(
-                  "en-IN"
-                )}
+              ${escapeHTML(
+                item.category
+              )}
 
-                ·
+            </div>
 
-                ${article.views || 0}
-                views
 
-              </div>
+            <div class="categoryCount">
 
-              <p class="excerpt">
-                ${escapeHTML(excerpt)}
-              </p>
+              ${item.count}
+              article${item.count == 1 ? "" : "s"}
 
-              <a
-                class="btn"
-                href="/article/${encodeURIComponent(
-                  article.slug
-                )}"
-              >
-                Read Article
-              </a>
+            </div>
 
-            </article>
+          </a>
 
-          `;
-
-        })
+        `)
         .join("");
 
 
   }catch(error){
 
-    console.error(
-      "Article loading error:",
-      error
-    );
+    console.error(error);
 
-
-    grid.innerHTML =
-      '<div class="empty">' +
-      'Unable to load articles.' +
-      '</div>';
+    container.innerHTML = `
+      <div class="empty">
+        Categories unavailable.
+      </div>
+    `;
 
   }
 
 }
 
 
-/* START */
+/* =================================
+   LOAD EVERYTHING
+================================= */
 
-loadArticles();
+async function loadHome(){
+
+  const latestGrid =
+    document.getElementById(
+      "latestGrid"
+    );
+
+  const trendingGrid =
+    document.getElementById(
+      "trendingGrid"
+    );
+
+
+  try{
+
+    const articles =
+      await getArticles();
+
+
+    showFeatured(
+      articles
+    );
+
+    showLatest(
+      articles
+    );
+
+    showTrending(
+      articles
+    );
+
+
+  }catch(error){
+
+    console.error(
+      "Homepage error:",
+      error
+    );
+
+
+    latestGrid.innerHTML = `
+      <div class="empty error">
+        Unable to load articles.
+        Please try again later.
+      </div>
+    `;
+
+
+    document.getElementById(
+      "featured"
+    ).innerHTML = `
+      <div class="empty error">
+        Unable to load featured article.
+      </div>
+    `;
+
+
+    trendingGrid.innerHTML = `
+      <div class="empty error">
+        Unable to load trending articles.
+      </div>
+    `;
+
+  }
+
+
+  await loadCategories();
+
+}
+
+
+/* =================================
+   START
+================================= */
+
+loadHome();
 
 </script>
+
 
 </body>
 </html>
