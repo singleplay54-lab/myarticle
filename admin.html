@@ -1,20 +1,26 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Admin Dashboard - GyanTech Blog</title>
+<head>
+
+<meta charset="utf-8">
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1"
+>
+
+<title>Admin Dashboard — GyanTech</title>
 
 <style>
+
 *{
   box-sizing:border-box;
-  margin:0;
-  padding:0;
-  font-family:Segoe UI,Arial,sans-serif;
 }
 
 body{
+  margin:0;
+  font-family:Segoe UI,Arial,sans-serif;
   background:#f5f7fb;
   color:#0f172a;
 }
@@ -22,12 +28,12 @@ body{
 header{
   background:#0f172a;
   color:white;
-  padding:16px 24px;
 }
 
 .nav{
-  max-width:1100px;
+  max-width:1200px;
   margin:auto;
+  padding:16px 20px;
   display:flex;
   justify-content:space-between;
   align-items:center;
@@ -36,7 +42,7 @@ header{
 .logo{
   color:#38bdf8;
   font-size:1.5rem;
-  font-weight:800;
+  font-weight:900;
   text-decoration:none;
 }
 
@@ -46,50 +52,65 @@ header{
   margin-left:20px;
 }
 
+.nav a:hover{
+  color:#38bdf8;
+}
+
 .container{
-  max-width:1000px;
-  margin:35px auto;
+  max-width:1200px;
+  margin:30px auto;
   padding:0 20px;
 }
 
 .box{
   background:white;
   border:1px solid #e2e8f0;
-  border-radius:16px;
+  border-radius:18px;
   padding:25px;
   margin-bottom:22px;
-  box-shadow:0 5px 20px rgba(15,23,42,.05);
+  box-shadow:0 6px 25px rgba(15,23,42,.05);
 }
 
-h2{
-  margin-bottom:18px;
+.login{
+  max-width:500px;
+  margin:70px auto;
+}
+
+h1,h2,h3{
+  margin-top:0;
+}
+
+.subtitle{
+  color:#64748b;
 }
 
 label{
   display:block;
-  font-weight:600;
-  margin:16px 0 7px;
+  margin:17px 0 7px;
+  font-weight:700;
 }
 
 input,
 textarea,
 select{
   width:100%;
-  padding:12px;
+  padding:12px 13px;
   border:1px solid #cbd5e1;
   border-radius:9px;
   font-size:1rem;
   outline:none;
+  background:white;
 }
 
 input:focus,
 textarea:focus,
 select:focus{
   border-color:#0284c7;
+  box-shadow:0 0 0 3px rgba(2,132,199,.1);
 }
 
 textarea{
-  min-height:220px;
+  min-height:300px;
   resize:vertical;
 }
 
@@ -97,12 +118,12 @@ button{
   border:0;
   border-radius:9px;
   padding:11px 17px;
-  background:#0284c7;
-  color:white;
-  font-weight:700;
-  cursor:pointer;
   margin-top:18px;
   margin-right:8px;
+  background:#0284c7;
+  color:white;
+  font-weight:800;
+  cursor:pointer;
 }
 
 button:hover{
@@ -126,33 +147,108 @@ button:hover{
 }
 
 .hidden{
-  display:none !important;
-}
-
-.small{
-  color:#64748b;
-  font-size:.9rem;
+  display:none!important;
 }
 
 .msg{
   margin-top:15px;
-  font-weight:600;
+  font-weight:700;
+}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:16px;
+  margin-bottom:22px;
+}
+
+.stat{
+  background:white;
+  border:1px solid #e2e8f0;
+  border-radius:15px;
+  padding:20px;
+}
+
+.statTitle{
+  color:#64748b;
+  font-size:.9rem;
+}
+
+.statNumber{
+  font-size:2rem;
+  font-weight:900;
+  margin-top:5px;
+}
+
+.editorGrid{
+  display:grid;
+  grid-template-columns:2fr 1fr;
+  gap:25px;
+}
+
+.sideBox{
+  background:#f8fafc;
+  border:1px solid #e2e8f0;
+  border-radius:13px;
+  padding:18px;
+  height:max-content;
+}
+
+.preview{
+  margin-top:12px;
+  border-radius:10px;
+  overflow:hidden;
+  background:#e2e8f0;
+}
+
+.preview img{
+  width:100%;
+  max-height:220px;
+  object-fit:cover;
+}
+
+.checkbox{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  margin-top:17px;
+}
+
+.checkbox input{
+  width:auto;
+}
+
+.toolbar{
+  display:flex;
+  gap:10px;
+  margin-bottom:18px;
+}
+
+.toolbar input{
+  flex:1;
 }
 
 .article{
   border:1px solid #e2e8f0;
-  border-radius:12px;
-  padding:18px;
+  border-radius:14px;
+  padding:19px;
   margin-top:14px;
 }
 
-.article h3{
-  margin-bottom:7px;
+.articleTop{
+  display:flex;
+  justify-content:space-between;
+  gap:15px;
 }
 
-.article p{
+.article h3{
+  margin-bottom:5px;
+}
+
+.articleMeta{
   color:#64748b;
-  line-height:1.5;
+  font-size:.85rem;
+  margin-top:8px;
 }
 
 .badge{
@@ -160,378 +256,647 @@ button:hover{
   background:#e0f2fe;
   color:#0369a1;
   padding:4px 9px;
-  border-radius:99px;
-  font-size:.8rem;
+  border-radius:999px;
+  font-size:.78rem;
+  font-weight:700;
+  margin:8px 5px 0 0;
+}
+
+.badgeDraft{
+  background:#fef3c7;
+  color:#92400e;
+}
+
+.badgeFeatured{
+  background:#ede9fe;
+  color:#6d28d9;
+}
+
+.articleButtons{
   margin-top:10px;
 }
 
-.stats{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:15px;
-  margin-bottom:22px;
+.empty{
+  text-align:center;
+  color:#64748b;
+  padding:35px;
 }
 
-.stat{
-  background:white;
-  border:1px solid #e2e8f0;
-  border-radius:14px;
-  padding:20px;
-}
+@media(max-width:850px){
 
-.stat strong{
-  display:block;
-  font-size:1.8rem;
-  margin-top:5px;
-}
-
-@media(max-width:700px){
   .stats{
     grid-template-columns:1fr 1fr;
   }
 
-  .nav{
-    gap:10px;
-  }
-}
-
-@media(max-width:500px){
-  .stats{
+  .editorGrid{
     grid-template-columns:1fr;
   }
 
+}
+
+@media(max-width:600px){
+
   .nav{
     flex-direction:column;
-    align-items:flex-start;
+    gap:12px;
   }
 
   .nav a{
     margin-left:0;
-    margin-right:15px;
+    margin-right:14px;
   }
+
+  .stats{
+    grid-template-columns:1fr;
+  }
+
+  .toolbar{
+    flex-direction:column;
+  }
+
+  .articleTop{
+    flex-direction:column;
+  }
+
 }
+
 </style>
+
 </head>
+
 
 <body>
 
+
 <header>
+
   <div class="nav">
 
-    <a href="/" class="logo">
+    <a
+      href="/"
+      class="logo"
+    >
       GyanTech Blog
     </a>
 
-    <div>
-      <a href="/">Home</a>
-      <a href="/articles">Articles</a>
-      <a href="/admin">Admin</a>
-    </div>
+    <nav>
+
+      <a href="/">
+        Home
+      </a>
+
+      <a href="/articles">
+        Articles
+      </a>
+
+    </nav>
 
   </div>
+
 </header>
 
 
-<div class="container">
+<!-- LOGIN -->
 
-  <!-- LOGIN -->
+<div
+  id="loginBox"
+  class="box login"
+>
 
-  <div id="loginBox" class="box">
+  <h2>🔐 Admin Login</h2>
 
-    <h2>🔐 Admin Login</h2>
+  <p class="subtitle">
+    Login to manage your GyanTech articles.
+  </p>
 
-    <p class="small">
-      Sirf admin password se articles manage kiye ja sakte hain.
-    </p>
+  <form id="loginForm">
 
-    <form id="loginForm">
+    <label>
+      Admin Password
+    </label>
 
-      <label>Password</label>
+    <input
+      id="loginPassword"
+      type="password"
+      placeholder="Enter admin password"
+      required
+    >
 
-      <input
-        id="loginPassword"
-        type="password"
-        placeholder="Admin password"
-        required
-      >
+    <button type="submit">
+      Login
+    </button>
 
-      <button type="submit">
-        Login
-      </button>
+  </form>
 
-    </form>
-
-    <div id="loginMsg" class="msg"></div>
-
-  </div>
-
-
-  <!-- DASHBOARD -->
-
-  <div id="panel" class="hidden">
-
-    <!-- STATS -->
-
-    <div class="stats">
-
-      <div class="stat">
-        Total Articles
-        <strong id="totalStat">0</strong>
-      </div>
-
-      <div class="stat">
-        Published
-        <strong id="publishedStat">0</strong>
-      </div>
-
-      <div class="stat">
-        Drafts
-        <strong id="draftStat">0</strong>
-      </div>
-
-      <div class="stat">
-        Total Views
-        <strong id="viewsStat">0</strong>
-      </div>
-
-    </div>
-
-
-    <!-- PUBLISH -->
-
-    <div class="box">
-
-      <h2>➕ Publish Article</h2>
-
-      <form id="articleForm">
-
-        <input
-          id="editId"
-          type="hidden"
-        >
-
-        <label>Article Title</label>
-
-        <input
-          id="title"
-          required
-          placeholder="Example: Internet Kaise Kaam Karta Hai?"
-        >
-
-
-        <label>Author</label>
-
-        <input
-          id="author"
-          value="Admin"
-          required
-        >
-
-
-        <label>Category</label>
-
-        <input
-          id="category"
-          value="Technology"
-          placeholder="Technology"
-        >
-
-
-        <label>Excerpt</label>
-
-        <input
-          id="excerpt"
-          placeholder="Short description of the article"
-        >
-
-
-        <label>Tags</label>
-
-        <input
-          id="tags"
-          placeholder="AI, Coding, Technology"
-        >
-
-
-        <label>Image URL</label>
-
-        <input
-          id="image_url"
-          placeholder="Optional image URL"
-        >
-
-
-        <label>Status</label>
-
-        <select id="status">
-          <option value="published">Published</option>
-          <option value="draft">Draft</option>
-        </select>
-
-
-        <label>
-          <input
-            id="featured"
-            type="checkbox"
-            style="width:auto;margin-right:8px"
-          >
-          Featured Article
-        </label>
-
-
-        <label>Article Content</label>
-
-        <textarea
-          id="content"
-          required
-          placeholder="Yahan poora article likho..."
-        ></textarea>
-
-
-        <button id="saveBtn" type="submit">
-          Publish Article
-        </button>
-
-        <button
-          id="cancelBtn"
-          type="button"
-          class="secondary hidden"
-        >
-          Cancel Edit
-        </button>
-
-      </form>
-
-      <div id="msg" class="msg"></div>
-
-    </div>
-
-
-    <!-- MANAGE -->
-
-    <div class="box">
-
-      <h2>📚 Manage Articles</h2>
-
-      <div id="manageList">
-        <p class="small">Loading...</p>
-      </div>
-
-      <button
-        id="logout"
-        class="secondary"
-      >
-        Logout
-      </button>
-
-    </div>
-
-  </div>
+  <div
+    id="loginMsg"
+    class="msg"
+  ></div>
 
 </div>
 
 
+<!-- DASHBOARD -->
+
+<main
+  id="dashboard"
+  class="container hidden"
+>
+
+
+  <!-- STATS -->
+
+  <section class="stats">
+
+    <div class="stat">
+
+      <div class="statTitle">
+        Total Articles
+      </div>
+
+      <div
+        id="totalStat"
+        class="statNumber"
+      >
+        0
+      </div>
+
+    </div>
+
+
+    <div class="stat">
+
+      <div class="statTitle">
+        Published
+      </div>
+
+      <div
+        id="publishedStat"
+        class="statNumber"
+      >
+        0
+      </div>
+
+    </div>
+
+
+    <div class="stat">
+
+      <div class="statTitle">
+        Drafts
+      </div>
+
+      <div
+        id="draftStat"
+        class="statNumber"
+      >
+        0
+      </div>
+
+    </div>
+
+
+    <div class="stat">
+
+      <div class="statTitle">
+        Total Views
+      </div>
+
+      <div
+        id="viewsStat"
+        class="statNumber"
+      >
+        0
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- EDITOR -->
+
+  <section class="box">
+
+    <h2 id="editorTitle">
+      ✍️ Create New Article
+    </h2>
+
+    <p class="subtitle">
+      Write, edit and publish your technology articles.
+    </p>
+
+
+    <form id="articleForm">
+
+      <input
+        id="editId"
+        type="hidden"
+      >
+
+
+      <div class="editorGrid">
+
+
+        <!-- MAIN EDITOR -->
+
+        <div>
+
+          <label>
+            Article Title
+          </label>
+
+          <input
+            id="title"
+            required
+            placeholder="Example: What is Artificial Intelligence?"
+          >
+
+
+          <label>
+            Article Content
+          </label>
+
+          <textarea
+            id="content"
+            required
+            placeholder="Write your complete article here..."
+          ></textarea>
+
+
+          <label>
+            Excerpt
+          </label>
+
+          <textarea
+            id="excerpt"
+            style="min-height:110px"
+            placeholder="Short description of your article..."
+          ></textarea>
+
+        </div>
+
+
+        <!-- SETTINGS -->
+
+        <div class="sideBox">
+
+          <h3>
+            Article Settings
+          </h3>
+
+
+          <label>
+            Author
+          </label>
+
+          <input
+            id="author"
+            value="Admin"
+            required
+          >
+
+
+          <label>
+            Category
+          </label>
+
+          <input
+            id="category"
+            value="Technology"
+            placeholder="AI"
+          >
+
+
+          <label>
+            Tags
+          </label>
+
+          <input
+            id="tags"
+            placeholder="AI, Coding, Technology"
+          >
+
+
+          <label>
+            Status
+          </label>
+
+          <select id="status">
+
+            <option value="published">
+              Published
+            </option>
+
+            <option value="draft">
+              Draft
+            </option>
+
+          </select>
+
+
+          <label>
+            Image URL
+          </label>
+
+          <input
+            id="image_url"
+            placeholder="https://example.com/image.jpg"
+          >
+
+
+          <div
+            id="imagePreview"
+            class="preview hidden"
+          >
+
+            <img
+              id="previewImg"
+              alt="Preview"
+            >
+
+          </div>
+
+
+          <label class="checkbox">
+
+            <input
+              id="featured"
+              type="checkbox"
+            >
+
+            <span>
+              ⭐ Featured Article
+            </span>
+
+          </label>
+
+        </div>
+
+      </div>
+
+
+      <button
+        id="saveBtn"
+        type="submit"
+      >
+        Publish Article
+      </button>
+
+
+      <button
+        id="cancelBtn"
+        type="button"
+        class="secondary hidden"
+      >
+        Cancel Edit
+      </button>
+
+
+    </form>
+
+
+    <div
+      id="msg"
+      class="msg"
+    ></div>
+
+  </section>
+
+
+  <!-- MANAGE ARTICLES -->
+
+  <section class="box">
+
+    <h2>
+      📚 Manage Articles
+    </h2>
+
+    <div class="toolbar">
+
+      <input
+        id="adminSearch"
+        placeholder="Search your articles..."
+      >
+
+      <button
+        id="refreshBtn"
+        type="button"
+        class="secondary"
+      >
+        Refresh
+      </button>
+
+    </div>
+
+
+    <div id="manageList">
+
+      <div class="empty">
+        Loading articles...
+      </div>
+
+    </div>
+
+
+    <button
+      id="logout"
+      class="secondary"
+    >
+      Logout
+    </button>
+
+  </section>
+
+
+</main>
+
+
 <script>
 
-const $ = id => document.getElementById(id);
+
+/* =========================
+   HELPERS
+========================= */
+
+const $ =
+  id => document.getElementById(id);
 
 
-/* API HELPER */
+async function api(
+  url,
+  options={}
+){
 
-async function api(url, options = {}){
+  const response =
+    await fetch(
+      url,
+      {
+        ...options,
 
-  const res = await fetch(url, {
-    ...options,
-    headers:{
-      "Content-Type":"application/json",
-      ...(options.headers || {})
-    }
-  });
+        headers:{
+          "Content-Type":
+            "application/json",
 
-  const data = await res.json().catch(() => ({}));
+          ...(options.headers || {})
+        }
+      }
+    );
 
-  if(!res.ok){
-    throw new Error(data.error || "Something went wrong");
+
+  const data =
+    await response
+      .json()
+      .catch(() => ({}));
+
+
+  if(!response.ok){
+
+    throw new Error(
+      data.error ||
+      "Something went wrong"
+    );
+
   }
 
+
   return data;
+
 }
 
 
-/* CHECK LOGIN */
+function escapeHTML(value){
+
+  return String(value ?? "")
+    .replace(
+      /[&<>"']/g,
+      m => ({
+        "&":"&amp;",
+        "<":"&lt;",
+        ">":"&gt;",
+        '"':"&quot;",
+        "'":"&#039;"
+      }[m])
+    );
+
+}
+
+
+/* =========================
+   LOGIN CHECK
+========================= */
 
 async function checkLogin(){
 
   try{
 
-    const data = await api("/api/admin/check");
+    const data =
+      await api(
+        "/api/admin/check"
+      );
 
-    /*
-      IMPORTANT:
-      Server returns HTTP 200 even when user is not logged in.
-      Therefore we MUST check authenticated.
-    */
 
     if(!data.authenticated){
 
-      $("loginBox").classList.remove("hidden");
-      $("panel").classList.add("hidden");
+      $("loginBox")
+        .classList
+        .remove("hidden");
+
+      $("dashboard")
+        .classList
+        .add("hidden");
 
       return;
+
     }
 
-    $("loginBox").classList.add("hidden");
-    $("panel").classList.remove("hidden");
 
-    loadDashboard();
+    showDashboard();
 
-  }catch(err){
+  }catch{
 
-    $("loginBox").classList.remove("hidden");
-    $("panel").classList.add("hidden");
+    $("loginBox")
+      .classList
+      .remove("hidden");
 
   }
+
 }
 
 
-/* LOGIN */
+function showDashboard(){
 
-$("loginForm").addEventListener("submit", async e => {
+  $("loginBox")
+    .classList
+    .add("hidden");
 
-  e.preventDefault();
+  $("dashboard")
+    .classList
+    .remove("hidden");
 
-  $("loginMsg").textContent = "Logging in...";
+  loadDashboard();
 
-  try{
-
-    await api("/api/login",{
-      method:"POST",
-      body:JSON.stringify({
-        password:$("loginPassword").value
-      })
-    });
-
-    $("loginMsg").textContent =
-      "✅ Login successful.";
-
-    $("loginBox").classList.add("hidden");
-    $("panel").classList.remove("hidden");
-
-    $("loginPassword").value = "";
-
-    loadDashboard();
-
-  }catch(err){
-
-    $("loginMsg").textContent =
-      "❌ " + err.message;
-
-  }
-
-});
+}
 
 
-/* DASHBOARD */
+/* =========================
+   LOGIN
+========================= */
+
+$("loginForm")
+  .addEventListener(
+    "submit",
+    async event => {
+
+      event.preventDefault();
+
+      $("loginMsg")
+        .textContent =
+        "Logging in...";
+
+
+      try{
+
+        await api(
+          "/api/login",
+          {
+            method:"POST",
+
+            body:JSON.stringify({
+              password:
+                $("loginPassword")
+                .value
+            })
+          }
+        );
+
+
+        $("loginMsg")
+          .textContent =
+          "✅ Login successful.";
+
+        $("loginPassword")
+          .value = "";
+
+        showDashboard();
+
+
+      }catch(error){
+
+        $("loginMsg")
+          .textContent =
+          "❌ " +
+          error.message;
+
+      }
+
+    }
+  );
+
+
+/* =========================
+   DASHBOARD
+========================= */
 
 async function loadDashboard(){
 
@@ -543,339 +908,745 @@ async function loadDashboard(){
 }
 
 
-/* STATS */
+/* =========================
+   STATS
+========================= */
 
 async function loadStats(){
 
   try{
 
-    const s = await api("/api/admin/stats");
+    const data =
+      await api(
+        "/api/admin/stats"
+      );
 
-    $("totalStat").textContent = s.total;
-    $("publishedStat").textContent = s.published;
-    $("draftStat").textContent = s.drafts;
-    $("viewsStat").textContent = s.views;
 
-  }catch(err){
+    $("totalStat")
+      .textContent =
+      data.total || 0;
 
-    console.error(err);
+    $("publishedStat")
+      .textContent =
+      data.published || 0;
+
+    $("draftStat")
+      .textContent =
+      data.drafts || 0;
+
+    $("viewsStat")
+      .textContent =
+      data.views || 0;
+
+  }catch(error){
+
+    console.error(error);
 
   }
 
 }
 
 
-/* PUBLISH / UPDATE */
+/* =========================
+   IMAGE PREVIEW
+========================= */
 
-$("articleForm").addEventListener("submit", async e => {
+$("image_url")
+  .addEventListener(
+    "input",
+    function(){
 
-  e.preventDefault();
-
-  const id = $("editId").value;
-
-  const body = JSON.stringify({
-
-    title:$("title").value.trim(),
-
-    author:$("author").value.trim(),
-
-    category:$("category").value.trim(),
-
-    excerpt:$("excerpt").value.trim(),
-
-    tags:$("tags").value.trim(),
-
-    image_url:$("image_url").value.trim(),
-
-    status:$("status").value,
-
-    featured:$("featured").checked,
-
-    content:$("content").value.trim()
-
-  });
+      const url =
+        this.value.trim();
 
 
-  try{
+      if(!url){
 
-    if(id){
+        $("imagePreview")
+          .classList
+          .add("hidden");
 
-      await api(
-        "/api/articles/" + id,
-        {
-          method:"PUT",
-          body
-        }
-      );
+        return;
 
-      $("msg").textContent =
-        "✅ Article updated.";
+      }
 
-    }else{
 
-      await api(
-        "/api/articles",
-        {
-          method:"POST",
-          body
-        }
-      );
+      $("previewImg").src = url;
 
-      $("msg").textContent =
-        "✅ Article published.";
+      $("imagePreview")
+        .classList
+        .remove("hidden");
 
     }
-
-    resetForm();
-
-    loadDashboard();
-
-  }catch(err){
-
-    $("msg").textContent =
-      "❌ " + err.message;
-
-  }
-
-});
+  );
 
 
-/* LOAD ADMIN ARTICLES */
+$("previewImg")
+  .addEventListener(
+    "error",
+    function(){
+
+      $("imagePreview")
+        .classList
+        .add("hidden");
+
+    }
+  );
+
+
+/* =========================
+   SAVE ARTICLE
+========================= */
+
+$("articleForm")
+  .addEventListener(
+    "submit",
+    async event => {
+
+      event.preventDefault();
+
+
+      const id =
+        $("editId").value;
+
+
+      const article = {
+
+        title:
+          $("title")
+          .value
+          .trim(),
+
+        author:
+          $("author")
+          .value
+          .trim(),
+
+        content:
+          $("content")
+          .value
+          .trim(),
+
+        excerpt:
+          $("excerpt")
+          .value
+          .trim(),
+
+        category:
+          $("category")
+          .value
+          .trim(),
+
+        tags:
+          $("tags")
+          .value
+          .trim(),
+
+        image_url:
+          $("image_url")
+          .value
+          .trim(),
+
+        status:
+          $("status")
+          .value,
+
+        featured:
+          $("featured")
+          .checked
+
+      };
+
+
+      try{
+
+        if(id){
+
+          await api(
+            "/api/articles/" + id,
+            {
+              method:"PUT",
+              body:
+                JSON.stringify(article)
+            }
+          );
+
+
+          $("msg")
+            .textContent =
+            "✅ Article updated.";
+
+        }else{
+
+          await api(
+            "/api/articles",
+            {
+              method:"POST",
+              body:
+                JSON.stringify(article)
+            }
+          );
+
+
+          $("msg")
+            .textContent =
+            "✅ Article published.";
+
+        }
+
+
+        resetForm();
+
+        await loadDashboard();
+
+
+      }catch(error){
+
+        $("msg")
+          .textContent =
+          "❌ " +
+          error.message;
+
+      }
+
+    }
+  );
+
+
+/* =========================
+   LOAD ARTICLES
+========================= */
+
+let allArticles = [];
+
 
 async function loadManage(){
 
   try{
 
-    /*
-      IMPORTANT:
-      Admin articles endpoint is /api/admin/articles
-      NOT /api/articles
-    */
+    allArticles =
+      await api(
+        "/api/admin/articles"
+      );
 
-    const articles =
-      await api("/api/admin/articles");
 
-    const list = $("manageList");
+    renderArticles(
+      allArticles
+    );
 
-    if(!articles.length){
 
-      list.innerHTML =
-        "<p class='small'>No articles yet.</p>";
+  }catch(error){
+
+    $("manageList")
+      .innerHTML =
+      `
+        <div class="empty">
+          ❌ ${escapeHTML(
+            error.message
+          )}
+        </div>
+      `;
+
+  }
+
+}
+
+
+/* =========================
+   RENDER ARTICLES
+========================= */
+
+function renderArticles(
+  articles
+){
+
+  const list =
+    $("manageList");
+
+
+  if(!articles.length){
+
+    list.innerHTML =
+      `
+        <div class="empty">
+          No articles found.
+        </div>
+      `;
+
+    return;
+
+  }
+
+
+  list.innerHTML =
+    articles
+      .map(article => {
+
+        const statusClass =
+          article.status === "draft"
+          ? "badgeDraft"
+          : "";
+
+
+        const featuredBadge =
+          article.featured
+          ? `
+            <span class="badge badgeFeatured">
+              ⭐ Featured
+            </span>
+          `
+          : "";
+
+
+        return `
+
+          <div class="article">
+
+            <div class="articleTop">
+
+              <div>
+
+                <h3>
+                  ${escapeHTML(
+                    article.title
+                  )}
+                </h3>
+
+                <div class="articleMeta">
+
+                  By
+                  ${escapeHTML(
+                    article.author ||
+                    "Admin"
+                  )}
+
+                  ·
+
+                  ${new Date(
+                    article.created_at
+                  ).toLocaleDateString(
+                    "en-IN"
+                  )}
+
+                </div>
+
+              </div>
+
+            </div>
+
+
+            <div>
+
+              <span class="badge ${statusClass}">
+                ${escapeHTML(
+                  article.status ||
+                  "published"
+                )}
+              </span>
+
+
+              <span class="badge">
+                ${escapeHTML(
+                  article.category ||
+                  "Technology"
+                )}
+              </span>
+
+
+              <span class="badge">
+                👁
+                ${article.views || 0}
+                views
+              </span>
+
+
+              ${featuredBadge}
+
+            </div>
+
+
+            <p class="subtitle">
+
+              ${escapeHTML(
+                (
+                  article.excerpt ||
+                  article.content ||
+                  ""
+                ).slice(0,220)
+              )}
+
+              ${
+                (
+                  article.excerpt ||
+                  article.content ||
+                  ""
+                ).length > 220
+                ? "..."
+                : ""
+              }
+
+            </p>
+
+
+            <div class="articleButtons">
+
+              <button
+                onclick="startEdit(${article.id})"
+              >
+                ✏️ Edit
+              </button>
+
+
+              <button
+                class="danger"
+                onclick="deleteArticle(${article.id})"
+              >
+                🗑️ Delete
+              </button>
+
+
+              ${
+                article.status === "published"
+                ? `
+                  <a
+                    href="/article/${encodeURIComponent(
+                      article.slug
+                    )}"
+                    target="_blank"
+                  >
+                    <button
+                      type="button"
+                      class="secondary"
+                    >
+                      👁 View
+                    </button>
+                  </a>
+                `
+                : ""
+              }
+
+            </div>
+
+          </div>
+
+        `;
+
+      })
+      .join("");
+
+}
+
+
+/* =========================
+   SEARCH
+========================= */
+
+$("adminSearch")
+  .addEventListener(
+    "input",
+    function(){
+
+      const search =
+        this.value
+          .trim()
+          .toLowerCase();
+
+
+      if(!search){
+
+        renderArticles(
+          allArticles
+        );
+
+        return;
+
+      }
+
+
+      const filtered =
+        allArticles.filter(
+          article =>
+            String(
+              article.title || ""
+            )
+            .toLowerCase()
+            .includes(search)
+            ||
+
+            String(
+              article.category || ""
+            )
+            .toLowerCase()
+            .includes(search)
+            ||
+
+            String(
+              article.tags || ""
+            )
+            .toLowerCase()
+            .includes(search)
+        );
+
+
+      renderArticles(
+        filtered
+      );
+
+    }
+  );
+
+
+/* =========================
+   EDIT
+========================= */
+
+window.startEdit =
+  function(id){
+
+    const article =
+      allArticles.find(
+        x => x.id === id
+      );
+
+
+    if(!article){
+      return;
+    }
+
+
+    $("editId").value =
+      article.id;
+
+    $("title").value =
+      article.title || "";
+
+    $("author").value =
+      article.author || "Admin";
+
+    $("content").value =
+      article.content || "";
+
+    $("excerpt").value =
+      article.excerpt || "";
+
+    $("category").value =
+      article.category ||
+      "Technology";
+
+    $("tags").value =
+      article.tags || "";
+
+    $("image_url").value =
+      article.image_url || "";
+
+    $("status").value =
+      article.status ||
+      "published";
+
+    $("featured").checked =
+      !!article.featured;
+
+
+    if(article.image_url){
+
+      $("previewImg").src =
+        article.image_url;
+
+      $("imagePreview")
+        .classList
+        .remove("hidden");
+
+    }else{
+
+      $("imagePreview")
+        .classList
+        .add("hidden");
+
+    }
+
+
+    $("editorTitle")
+      .textContent =
+      "✏️ Edit Article";
+
+
+    $("saveBtn")
+      .textContent =
+      "Update Article";
+
+
+    $("cancelBtn")
+      .classList
+      .remove("hidden");
+
+
+    $("msg")
+      .textContent = "";
+
+
+    window.scrollTo({
+      top:0,
+      behavior:"smooth"
+    });
+
+  };
+
+
+/* =========================
+   RESET
+========================= */
+
+function resetForm(){
+
+  $("articleForm")
+    .reset();
+
+
+  $("editId")
+    .value = "";
+
+
+  $("author")
+    .value =
+    "Admin";
+
+
+  $("category")
+    .value =
+    "Technology";
+
+
+  $("status")
+    .value =
+    "published";
+
+
+  $("editorTitle")
+    .textContent =
+    "✍️ Create New Article";
+
+
+  $("saveBtn")
+    .textContent =
+    "Publish Article";
+
+
+  $("cancelBtn")
+    .classList
+    .add("hidden");
+
+
+  $("imagePreview")
+    .classList
+    .add("hidden");
+
+}
+
+
+$("cancelBtn")
+  .addEventListener(
+    "click",
+    resetForm
+  );
+
+
+/* =========================
+   DELETE
+========================= */
+
+window.deleteArticle =
+  async function(id){
+
+    const article =
+      allArticles.find(
+        x => x.id === id
+      );
+
+
+    const name =
+      article
+      ? article.title
+      : "this article";
+
+
+    if(
+      !confirm(
+        `Delete "${name}"?`
+      )
+    ){
 
       return;
 
     }
 
-    list.innerHTML = "";
+
+    try{
+
+      await api(
+        "/api/articles/" + id,
+        {
+          method:"DELETE"
+        }
+      );
 
 
-    articles.forEach(a => {
-
-      const div =
-        document.createElement("div");
-
-      div.className = "article";
+      await loadDashboard();
 
 
-      div.innerHTML = `
+    }catch(error){
 
-        <h3>${escapeHTML(a.title)}</h3>
+      alert(
+        "❌ " +
+        error.message
+      );
 
-        <p>
-          ${escapeHTML(
-            (a.excerpt || a.content || "").slice(0,180)
-          )}
-        </p>
+    }
 
-        <span class="badge">
-          ${escapeHTML(a.status)}
-        </span>
-
-        <span class="badge">
-          ${escapeHTML(a.category)}
-        </span>
-
-        <span class="badge">
-          👁 ${a.views || 0} views
-        </span>
-
-        <br>
-
-        <button class="edit">
-          Edit
-        </button>
-
-        <button class="danger delete">
-          Delete
-        </button>
-
-      `;
+  };
 
 
-      div.querySelector(".edit").onclick =
-        () => startEdit(a);
+/* =========================
+   REFRESH
+========================= */
+
+$("refreshBtn")
+  .addEventListener(
+    "click",
+    loadDashboard
+  );
 
 
-      div.querySelector(".delete").onclick =
-        () => deleteArticle(a.id);
+/* =========================
+   LOGOUT
+========================= */
 
+$("logout")
+  .addEventListener(
+    "click",
+    async function(){
 
-      list.appendChild(div);
+      try{
 
-    });
+        await api(
+          "/api/logout",
+          {
+            method:"POST"
+          }
+        );
 
-  }catch(err){
+      }finally{
 
-    $("manageList").innerHTML =
-      "<p class='small'>❌ " +
-      escapeHTML(err.message) +
-      "</p>";
+        location.reload();
 
-  }
-
-}
-
-
-/* EDIT */
-
-function startEdit(a){
-
-  $("editId").value = a.id;
-
-  $("title").value = a.title || "";
-
-  $("author").value = a.author || "Admin";
-
-  $("category").value =
-    a.category || "Technology";
-
-  $("excerpt").value =
-    a.excerpt || "";
-
-  $("tags").value =
-    a.tags || "";
-
-  $("image_url").value =
-    a.image_url || "";
-
-  $("status").value =
-    a.status || "published";
-
-  $("featured").checked =
-    !!a.featured;
-
-  $("content").value =
-    a.content || "";
-
-  $("saveBtn").textContent =
-    "Update Article";
-
-  $("cancelBtn").classList.remove("hidden");
-
-  window.scrollTo({
-    top:0,
-    behavior:"smooth"
-  });
-
-}
-
-
-/* RESET */
-
-function resetForm(){
-
-  $("articleForm").reset();
-
-  $("author").value = "Admin";
-
-  $("category").value = "Technology";
-
-  $("status").value = "published";
-
-  $("editId").value = "";
-
-  $("saveBtn").textContent =
-    "Publish Article";
-
-  $("cancelBtn").classList.add("hidden");
-
-}
-
-
-$("cancelBtn").onclick =
-  resetForm;
-
-
-/* DELETE */
-
-async function deleteArticle(id){
-
-  if(
-    !confirm(
-      "Is article ko delete karna hai?"
-    )
-  ) return;
-
-
-  try{
-
-    await api(
-      "/api/articles/" + id,
-      {
-        method:"DELETE"
       }
-    );
 
-    await loadDashboard();
-
-  }catch(err){
-
-    alert(err.message);
-
-  }
-
-}
+    }
+  );
 
 
-/* LOGOUT */
-
-$("logout").onclick = async () => {
-
-  try{
-
-    await api(
-      "/api/logout",
-      {
-        method:"POST"
-      }
-    );
-
-  }finally{
-
-    location.reload();
-
-  }
-
-};
-
-
-/* ESCAPE HTML */
-
-function escapeHTML(value){
-
-  return String(value ?? "")
-    .replace(/[&<>"']/g, m => ({
-      "&":"&amp;",
-      "<":"&lt;",
-      ">":"&gt;",
-      '"':"&quot;",
-      "'":"&#039;"
-    }[m]));
-
-}
-
-
-/* START */
+/* =========================
+   START
+========================= */
 
 checkLogin();
 
