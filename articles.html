@@ -1,1 +1,421 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Articles — GyanTech</title><style>body{margin:0;background:#f5f7fb;font-family:Segoe UI,Arial;color:#10203a}header{background:#0f172a}.nav{max-width:1180px;margin:auto;padding:17px 20px;display:flex;justify-content:space-between}.logo{color:#38bdf8;font-weight:800;font-size:1.4rem}.nav a{color:#fff;text-decoration:none;margin-left:18px}.wrap{max-width:1180px;margin:30px auto;padding:0 20px}.tools{display:grid;grid-template-columns:2fr 1fr auto;gap:10px;background:#fff;padding:15px;border:1px solid #e2e8f0;border-radius:12px;margin:20px 0}input,select{padding:11px;border:1px solid #cbd5e1;border-radius:8px;font-size:1rem}.btn{border:0;background:#0284c7;color:#fff;padding:11px 16px;border-radius:8px;font-weight:700;cursor:pointer}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:18px}.pill{background:#e0f2fe;color:#0369a1;padding:4px 8px;border-radius:99px;font-size:.78rem}.meta{color:#64748b;font-size:.84rem}.read{color:#0369a1;font-weight:700;text-decoration:none}.empty{text-align:center;grid-column:1/-1;padding:35px;color:#64748b}@media(max-width:800px){.grid{grid-template-columns:1fr 1fr}.tools{grid-template-columns:1fr}}@media(max-width:560px){.grid{grid-template-columns:1fr}}</style></head><body><header><div class="nav"><a class="logo" href="/">GyanTech Blog</a><nav><a href="/">Home</a><a href="/admin">Admin</a></nav></div></header><div class="wrap"><h1>All Articles</h1><div class="tools"><input id="q" placeholder="Search articles..."><select id="cat"><option value="">All categories</option></select><button class="btn" onclick="load(1)">Search</button></div><div id="grid" class="grid"></div><p id="pager" style="text-align:center"></p></div><script>const lim=9;async function cats(){let d=await(await fetch('/api/categories')).json();cat.innerHTML='<option value="">All categories</option>'+d.map(x=>`<option>${e(x.category)}</option>`).join('')}async function load(p=1){grid.innerHTML='<div class="empty">Loading...</div>';let u=`/api/articles?q=${encodeURIComponent(q.value)}&category=${encodeURIComponent(cat.value)}&page=${p}&limit=${lim}`;try{let d=await(await fetch(u)).json();grid.innerHTML=d.articles.length?d.articles.map(a=>`<article class="card"><span class="pill">${e(a.category)}</span><h2>${e(a.title)}</h2><div class="meta">By ${e(a.author)} · ${new Date(a.created_at).toLocaleDateString('en-IN')} · ${a.views} views</div><p>${e(a.excerpt||a.content.slice(0,160)+'...')}</p><a class="read" href="/article/${encodeURIComponent(a.slug)}">Read full article →</a></article>`).join(''):'<div class="empty">No articles found.</div>';let pages=Math.ceil(d.total/lim);pager.innerHTML=(p>1?`<button class="btn" onclick="load(${p-1})">← Prev</button> `:'')+(p<pages?`<button class="btn" onclick="load(${p+1})">Next →</button>`:'')}catch{grid.innerHTML='<div class="empty">Unable to load.</div>'}}function e(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])}cats().then(()=>load())</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Articles — GyanTech</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  background:#f5f7fb;
+  font-family:Segoe UI,Arial,sans-serif;
+  color:#10203a;
+}
+
+header{
+  background:#0f172a;
+}
+
+.nav{
+  max-width:1180px;
+  margin:auto;
+  padding:17px 20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.logo{
+  color:#38bdf8;
+  font-weight:800;
+  font-size:1.4rem;
+  text-decoration:none;
+}
+
+.nav a{
+  color:#fff;
+  text-decoration:none;
+  margin-left:18px;
+}
+
+.wrap{
+  max-width:1180px;
+  margin:30px auto;
+  padding:0 20px;
+}
+
+.tools{
+  display:grid;
+  grid-template-columns:2fr 1fr auto;
+  gap:10px;
+  background:#fff;
+  padding:15px;
+  border:1px solid #e2e8f0;
+  border-radius:12px;
+  margin:20px 0;
+}
+
+input,select{
+  padding:11px;
+  border:1px solid #cbd5e1;
+  border-radius:8px;
+  font-size:1rem;
+  width:100%;
+}
+
+.btn{
+  border:0;
+  background:#0284c7;
+  color:#fff;
+  padding:11px 16px;
+  border-radius:8px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:18px;
+}
+
+.card{
+  background:#fff;
+  border:1px solid #e2e8f0;
+  border-radius:14px;
+  padding:18px;
+}
+
+.pill{
+  background:#e0f2fe;
+  color:#0369a1;
+  padding:4px 8px;
+  border-radius:99px;
+  font-size:.78rem;
+}
+
+.meta{
+  color:#64748b;
+  font-size:.84rem;
+}
+
+.read{
+  color:#0369a1;
+  font-weight:700;
+  text-decoration:none;
+}
+
+.empty{
+  text-align:center;
+  grid-column:1/-1;
+  padding:35px;
+  color:#64748b;
+}
+
+@media(max-width:800px){
+  .grid{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .tools{
+    grid-template-columns:1fr;
+  }
+}
+
+@media(max-width:560px){
+  .grid{
+    grid-template-columns:1fr;
+  }
+
+  .nav{
+    flex-direction:column;
+    gap:10px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="nav">
+
+    <a class="logo" href="/">
+      GyanTech Blog
+    </a>
+
+    <nav>
+      <a href="/">Home</a>
+      <a href="/admin">Admin</a>
+    </nav>
+
+  </div>
+</header>
+
+
+<div class="wrap">
+
+  <h1>All Articles</h1>
+
+  <div class="tools">
+
+    <input
+      id="q"
+      placeholder="Search articles..."
+    >
+
+    <select id="cat">
+      <option value="">All categories</option>
+    </select>
+
+    <button
+      class="btn"
+      id="searchBtn"
+    >
+      Search
+    </button>
+
+  </div>
+
+
+  <div id="grid" class="grid">
+    <div class="empty">
+      Loading...
+    </div>
+  </div>
+
+
+  <p
+    id="pager"
+    style="text-align:center"
+  ></p>
+
+</div>
+
+
+<script>
+
+const q = document.getElementById("q");
+const cat = document.getElementById("cat");
+const grid = document.getElementById("grid");
+const pager = document.getElementById("pager");
+const searchBtn = document.getElementById("searchBtn");
+
+const lim = 9;
+
+
+/* HTML SECURITY */
+
+function e(s){
+
+  return String(s ?? "")
+    .replace(/[&<>"']/g, m => ({
+      "&":"&amp;",
+      "<":"&lt;",
+      ">":"&gt;",
+      '"':"&quot;",
+      "'":"&#039;"
+    }[m]));
+
+}
+
+
+/* LOAD CATEGORIES */
+
+async function cats(){
+
+  try{
+
+    const res =
+      await fetch("/api/categories");
+
+    const data =
+      await res.json();
+
+    cat.innerHTML =
+      '<option value="">All categories</option>' +
+
+      data.map(x =>
+        `<option value="${e(x.category)}">
+          ${e(x.category)}
+        </option>`
+      ).join("");
+
+  }catch(err){
+
+    console.error(
+      "Category loading failed:",
+      err
+    );
+
+  }
+
+}
+
+
+/* LOAD ARTICLES */
+
+async function load(p=1){
+
+  grid.innerHTML =
+    '<div class="empty">Loading...</div>';
+
+  pager.innerHTML = "";
+
+
+  const url =
+    `/api/articles?q=${encodeURIComponent(q.value)}` +
+    `&category=${encodeURIComponent(cat.value)}` +
+    `&page=${p}&limit=${lim}`;
+
+
+  try{
+
+    const res =
+      await fetch(url);
+
+    if(!res.ok){
+      throw new Error("API error");
+    }
+
+    const d =
+      await res.json();
+
+
+    if(d.articles && d.articles.length){
+
+      grid.innerHTML =
+        d.articles.map(a => `
+
+          <article class="card">
+
+            <span class="pill">
+              ${e(a.category)}
+            </span>
+
+            <h2>
+              ${e(a.title)}
+            </h2>
+
+            <div class="meta">
+              By ${e(a.author)}
+              ·
+              ${new Date(a.created_at)
+                .toLocaleDateString("en-IN")}
+              ·
+              ${a.views || 0} views
+            </div>
+
+            <p>
+              ${e(
+                a.excerpt ||
+                (a.content || "").slice(0,160) +
+                "..."
+              )}
+            </p>
+
+            <a
+              class="read"
+              href="/article/${encodeURIComponent(a.slug)}"
+            >
+              Read full article →
+            </a>
+
+          </article>
+
+        `).join("");
+
+    }else{
+
+      grid.innerHTML =
+        '<div class="empty">No articles found.</div>';
+
+    }
+
+
+    /* PAGINATION */
+
+    const pages =
+      Math.ceil((d.total || 0) / lim);
+
+
+    if(p > 1){
+
+      pager.innerHTML += `
+        <button
+          class="btn"
+          onclick="load(${p-1})"
+        >
+          ← Prev
+        </button>
+      `;
+
+    }
+
+
+    if(p < pages){
+
+      pager.innerHTML += `
+        <button
+          class="btn"
+          onclick="load(${p+1})"
+        >
+          Next →
+        </button>
+      `;
+
+    }
+
+  }catch(err){
+
+    console.error(err);
+
+    grid.innerHTML =
+      '<div class="empty">Unable to load articles.</div>';
+
+  }
+
+}
+
+
+/* SEARCH */
+
+searchBtn.addEventListener(
+  "click",
+  () => load(1)
+);
+
+
+/* ENTER KEY SEARCH */
+
+q.addEventListener(
+  "keydown",
+  event => {
+
+    if(event.key === "Enter"){
+      load(1);
+    }
+
+  }
+);
+
+
+/* START */
+
+async function start(){
+
+  await cats();
+
+  await load(1);
+
+}
+
+start();
+
+</script>
+
+</body>
+</html>
