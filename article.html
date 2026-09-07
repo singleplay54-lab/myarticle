@@ -1,107 +1,606 @@
 <!doctype html>
 <html lang="en">
-
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
 <title>Article — GyanTech</title>
+<meta name="description" content="Read technology articles on GyanTech Blog.">
+<meta name="theme-color" content="#0f172a">
 
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#f5f7fb;font-family:Segoe UI,Arial,sans-serif;color:#10203a;line-height:1.7}
-.nav{background:#0f172a;padding:17px 22px}
-.nav-inner{max-width:1100px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:20px}
-.nav a{color:#38bdf8;font-weight:800;font-size:1.4rem;text-decoration:none}
-.nav-links{display:flex;gap:20px}
-.nav-links a{color:#e2e8f0;font-size:.95rem;font-weight:600}
+
+:root{
+  --bg:#f5f7fb;
+  --surface:#ffffff;
+  --surface-2:#f8fafc;
+  --text:#10203a;
+  --heading:#0f172a;
+  --muted:#64748b;
+  --border:#e2e8f0;
+  --primary:#0284c7;
+  --primary-soft:#e0f2fe;
+  --nav:#0f172a;
+  --nav-text:#e2e8f0;
+  --code:#0f172a;
+  --shadow:0 8px 30px rgba(15,23,42,.06);
+}
+
+html{scroll-behavior:smooth}
+
+html.dark{
+  --bg:#0b1120;
+  --surface:#111827;
+  --surface-2:#172033;
+  --text:#dbe4f0;
+  --heading:#f8fafc;
+  --muted:#94a3b8;
+  --border:#263449;
+  --primary:#38bdf8;
+  --primary-soft:#0c3b57;
+  --nav:#070d19;
+  --nav-text:#dbeafe;
+  --code:#020617;
+  --shadow:0 10px 35px rgba(0,0,0,.28);
+}
+
+body{
+  margin:0;
+  background:var(--bg);
+  font-family:Segoe UI,Arial,sans-serif;
+  color:var(--text);
+  line-height:1.7;
+  transition:background .2s ease,color .2s ease;
+}
+
+a{color:inherit}
+
+.nav{
+  position:sticky;
+  top:0;
+  z-index:1000;
+  background:var(--nav);
+  padding:14px 22px;
+  box-shadow:0 2px 14px rgba(0,0,0,.12);
+}
+
+.nav-inner{
+  max-width:1100px;
+  margin:auto;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:20px;
+}
+
+.brand{
+  color:#38bdf8;
+  font-weight:800;
+  font-size:1.4rem;
+  text-decoration:none;
+  white-space:nowrap;
+}
+
+.nav-right{
+  display:flex;
+  align-items:center;
+  gap:18px;
+}
+
+.nav-links{
+  display:flex;
+  gap:20px;
+}
+
+.nav-links a{
+  color:var(--nav-text);
+  font-size:.95rem;
+  font-weight:600;
+  text-decoration:none;
+}
+
 .nav-links a:hover{color:#38bdf8}
-.wrap{max-width:850px;margin:40px auto;padding:0 20px}
-.article-card{background:#fff;border:1px solid #e2e8f0;border-radius:20px;overflow:hidden;box-shadow:0 8px 30px rgba(15,23,42,.06)}
-.hero-image{width:100%;max-height:430px;object-fit:cover;display:block}
-.article-body{padding:38px}
-.category{display:inline-block;background:#e0f2fe;color:#0369a1;padding:5px 11px;border-radius:999px;font-size:.8rem;font-weight:800;margin-bottom:14px}
-h1{margin:0 0 14px;font-size:clamp(2rem,5vw,3rem);line-height:1.2;color:#0f172a}
-.meta{color:#64748b;font-size:.9rem;margin-bottom:25px}
-.excerpt{padding:16px 18px;background:#f8fafc;border-left:4px solid #0284c7;border-radius:8px;color:#475569;margin-bottom:30px}
-.content{color:#1e293b;font-size:1.08rem;overflow-wrap:anywhere}
-.content h2{margin:34px 0 12px;font-size:1.65rem;line-height:1.3;color:#0f172a}
-.content h3{margin:26px 0 10px;font-size:1.3rem;line-height:1.35;color:#0f172a}
+
+.theme-toggle{
+  border:1px solid #475569;
+  background:rgba(255,255,255,.06);
+  color:#f8fafc;
+  border-radius:999px;
+  width:42px;
+  height:38px;
+  cursor:pointer;
+  font-size:17px;
+  display:grid;
+  place-items:center;
+  transition:.2s;
+}
+
+.theme-toggle:hover{
+  background:rgba(255,255,255,.14);
+  transform:translateY(-1px);
+}
+
+.progress{
+  position:fixed;
+  left:0;
+  top:0;
+  z-index:2000;
+  height:3px;
+  width:0;
+  background:#38bdf8;
+  transition:width .05s linear;
+}
+
+.wrap{
+  max-width:900px;
+  margin:34px auto 55px;
+  padding:0 20px;
+}
+
+/* BREADCRUMBS */
+.breadcrumbs{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:7px;
+  margin-bottom:16px;
+  font-size:.86rem;
+  color:var(--muted);
+}
+
+.breadcrumbs a{
+  color:var(--primary);
+  font-weight:700;
+  text-decoration:none;
+}
+
+.breadcrumbs a:hover{text-decoration:underline}
+
+.breadcrumb-current{
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+/* ARTICLE */
+.article-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:20px;
+  overflow:hidden;
+  box-shadow:var(--shadow);
+}
+
+.hero-image{
+  width:100%;
+  max-height:470px;
+  object-fit:cover;
+  display:block;
+}
+
+.article-body{padding:42px}
+
+.category{
+  display:inline-block;
+  background:var(--primary-soft);
+  color:var(--primary);
+  padding:5px 11px;
+  border-radius:999px;
+  font-size:.8rem;
+  font-weight:800;
+  margin-bottom:14px;
+}
+
+h1{
+  margin:0 0 14px;
+  font-size:clamp(2rem,5vw,3rem);
+  line-height:1.2;
+  color:var(--heading);
+  letter-spacing:-.025em;
+}
+
+.meta{
+  color:var(--muted);
+  font-size:.9rem;
+  margin-bottom:25px;
+}
+
+.excerpt{
+  padding:17px 19px;
+  background:var(--surface-2);
+  border-left:4px solid var(--primary);
+  border-radius:8px;
+  color:var(--text);
+  margin-bottom:30px;
+}
+
+.content{
+  color:var(--text);
+  font-size:1.08rem;
+  overflow-wrap:anywhere;
+}
+
+.content h2{
+  margin:34px 0 12px;
+  font-size:1.65rem;
+  line-height:1.3;
+  color:var(--heading);
+}
+
+.content h3{
+  margin:26px 0 10px;
+  font-size:1.3rem;
+  line-height:1.35;
+  color:var(--heading);
+}
+
 .content p{margin:0 0 18px}
-.content ul,.content ol{margin:12px 0 20px;padding-left:28px}
+
+.content ul,.content ol{
+  margin:12px 0 20px;
+  padding-left:28px;
+}
+
 .content li{margin-bottom:7px}
-.content blockquote{margin:22px 0;padding:15px 20px;border-left:4px solid #0284c7;background:#f8fafc;color:#475569;font-style:italic;border-radius:0 10px 10px 0}
-.content strong{color:#0f172a}
-.content a{color:#0284c7;font-weight:600}
-.content img{max-width:100%;height:auto;display:block;margin:20px auto;border-radius:12px}
-.content pre{overflow:auto;background:#0f172a;color:#e2e8f0;padding:16px;border-radius:10px}
-.content code{background:#f1f5f9;padding:2px 5px;border-radius:4px}
 
-.tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:30px;padding-top:20px;border-top:1px solid #e2e8f0}
-.tag{background:#f1f5f9;color:#475569;padding:5px 10px;border-radius:999px;font-size:.8rem;font-weight:700}
+.content blockquote{
+  margin:22px 0;
+  padding:15px 20px;
+  border-left:4px solid var(--primary);
+  background:var(--surface-2);
+  color:var(--muted);
+  font-style:italic;
+  border-radius:0 10px 10px 0;
+}
 
-/* Share section */
-.share-box{margin-top:32px;padding:22px;border:1px solid #e2e8f0;border-radius:16px;background:#f8fafc}
-.share-title{margin:0 0 14px;font-size:1.05rem;font-weight:800;color:#0f172a}
-.share-buttons{display:flex;flex-wrap:wrap;gap:10px}
-.share-btn{border:0;border-radius:10px;padding:10px 15px;font:inherit;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:7px;transition:.2s;box-shadow:0 2px 8px rgba(15,23,42,.06)}
-.share-btn:hover{transform:translateY(-1px);filter:brightness(.97)}
-.share-whatsapp{background:#dcfce7;color:#166534}
-.share-facebook{background:#dbeafe;color:#1d4ed8}
-.share-x{background:#e2e8f0;color:#0f172a}
-.share-copy{background:#e0f2fe;color:#0369a1}
-.share-status{margin:10px 0 0;color:#64748b;font-size:.82rem;min-height:20px}
+.content strong{color:var(--heading)}
 
-/* Related articles */
-.related-box{margin-top:34px;padding:24px;border:1px solid #e2e8f0;border-radius:18px;background:#fff}
-.related-title{margin:0 0 16px;font-size:1.35rem;color:#0f172a}
-.related-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-.related-card{display:block;padding:16px;border:1px solid #e2e8f0;border-radius:14px;background:#f8fafc;text-decoration:none;color:inherit;transition:.2s}
-.related-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(15,23,42,.08);border-color:#bae6fd}
-.related-category{display:inline-block;font-size:.72rem;font-weight:800;color:#0284c7;margin-bottom:6px}
-.related-card h3{margin:0;font-size:1rem;line-height:1.4;color:#0f172a}
-.related-empty{color:#64748b;font-size:.9rem}
-@media(max-width:700px){.related-grid{grid-template-columns:1fr}}
+.content a{
+  color:var(--primary);
+  font-weight:600;
+}
 
-.back{display:inline-block;margin-bottom:18px;color:#0284c7;text-decoration:none;font-weight:700}
-.loading,.error{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:40px 25px;text-align:center;color:#64748b}
-.error{color:#b91c1c}
+.content img{
+  max-width:100%;
+  height:auto;
+  display:block;
+  margin:20px auto;
+  border-radius:12px;
+}
+
+.content pre{
+  overflow:auto;
+  background:var(--code);
+  color:#e2e8f0;
+  padding:16px;
+  border-radius:10px;
+}
+
+.content code{
+  background:var(--surface-2);
+  padding:2px 5px;
+  border-radius:4px;
+}
+
+/* TAGS */
+.tags{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:30px;
+  padding-top:20px;
+  border-top:1px solid var(--border);
+}
+
+.tag{
+  background:var(--surface-2);
+  color:var(--muted);
+  padding:5px 10px;
+  border-radius:999px;
+  font-size:.8rem;
+  font-weight:700;
+}
+
+/* SHARE */
+.share-box{
+  margin-top:34px;
+  padding-top:26px;
+  border-top:1px solid var(--border);
+}
+
+.share-title{
+  margin:0 0 14px;
+  font-size:1.15rem;
+  color:var(--heading);
+}
+
+.share-buttons{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+}
+
+.share-btn{
+  min-height:44px;
+  padding:10px 12px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  text-decoration:none;
+  font-weight:700;
+  font-size:.9rem;
+  cursor:pointer;
+  transition:.2s;
+  background:var(--surface);
+  color:var(--text);
+}
+
+.share-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 7px 18px rgba(15,23,42,.10);
+}
+
+.share-whatsapp:hover{border-color:#22c55e}
+.share-facebook:hover{border-color:#3b82f6}
+.share-x:hover{border-color:#64748b}
+.share-copy:hover{border-color:var(--primary)}
+
+.share-status{
+  min-height:20px;
+  margin:10px 0 0;
+  color:var(--primary);
+  font-size:.85rem;
+  font-weight:600;
+}
+
+/* BACK */
+.back{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  margin-bottom:14px;
+  color:var(--primary);
+  text-decoration:none;
+  font-weight:700;
+}
+
+.back:hover{text-decoration:underline}
+
+/* LOADING / ERROR */
+.loading,.error{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:40px 25px;
+  text-align:center;
+  color:var(--muted);
+}
+
+.error{color:#ef4444}
+
 .hidden{display:none!important}
-footer{text-align:center;padding:30px 20px;color:#64748b;font-size:.9rem}
 
-@media(max-width:650px){
-  .nav-inner{flex-direction:column;align-items:flex-start}
-  .nav-links{gap:14px}
-  .wrap{margin:25px auto;padding:0 12px}
-  .article-body{padding:25px 20px}
-  h1{font-size:2rem}
-  .content{font-size:1rem}
-  .share-buttons{display:grid;grid-template-columns:1fr 1fr}
-  .share-btn{justify-content:center}
+/* BACK TO TOP */
+.top-btn{
+  position:fixed;
+  right:20px;
+  bottom:20px;
+  width:44px;
+  height:44px;
+  border:1px solid var(--border);
+  border-radius:50%;
+  background:var(--surface);
+  color:var(--heading);
+  box-shadow:var(--shadow);
+  cursor:pointer;
+  display:none;
+  place-items:center;
+  font-size:18px;
+  z-index:900;
+}
+
+.top-btn.show{display:grid}
+
+footer{
+  text-align:center;
+  padding:32px 20px;
+  color:var(--muted);
+  font-size:.9rem;
+}
+
+/* MOBILE */
+@media(max-width:700px){
+  .nav{padding:12px 15px}
+
+  .nav-inner{
+    gap:12px;
+  }
+
+  .nav-right{
+    gap:10px;
+  }
+
+  .nav-links{
+    gap:12px;
+  }
+
+  .nav-links a{
+    font-size:.85rem;
+  }
+
+  .brand{
+    font-size:1.15rem;
+  }
+
+  .wrap{
+    margin:22px auto 40px;
+    padding:0 12px;
+  }
+
+  .breadcrumbs{
+    font-size:.78rem;
+    margin-bottom:13px;
+  }
+
+  .article-card{
+    border-radius:15px;
+  }
+
+  .hero-image{
+    max-height:280px;
+  }
+
+  .article-body{
+    padding:25px 19px;
+  }
+
+  h1{
+    font-size:clamp(1.85rem,9vw,2.35rem);
+  }
+
+  .meta{
+    font-size:.82rem;
+    line-height:1.6;
+  }
+
+  .content{
+    font-size:1rem;
+  }
+
+  .content h2{
+    font-size:1.42rem;
+    margin-top:28px;
+  }
+
+  .content h3{
+    font-size:1.18rem;
+  }
+
+  .content pre{
+    margin-left:-4px;
+    margin-right:-4px;
+    font-size:.84rem;
+  }
+
+  .share-buttons{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .share-btn{
+    min-height:46px;
+  }
+
+  .top-btn{
+    right:14px;
+    bottom:14px;
+  }
+}
+
+@media(max-width:430px){
+  .nav-links a:nth-child(2){
+    display:none;
+  }
+
+  .nav-right{
+    margin-left:auto;
+  }
+
+  .article-body{
+    padding:22px 16px;
+  }
+
+  .hero-image{
+    max-height:230px;
+  }
+
+  .share-buttons{
+    grid-template-columns:1fr 1fr;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *{transition:none!important}
 }
 </style>
+
+<script>
+/* Apply saved theme before the page paints */
+(function(){
+  try{
+    const saved=localStorage.getItem("gyantech-theme");
+    if(saved==="dark"){
+      document.documentElement.classList.add("dark");
+    }
+  }catch(e){}
+})();
+</script>
 </head>
 
 <body>
+
+<div id="progress" class="progress"></div>
+
 <header class="nav">
   <div class="nav-inner">
-    <a href="/">GyanTech Blog</a>
-    <nav class="nav-links">
-      <a href="/">Home</a>
-      <a href="/articles">Articles</a>
-    </nav>
+
+    <a href="/" class="brand">GyanTech Blog</a>
+
+    <div class="nav-right">
+
+      <nav class="nav-links">
+        <a href="/">Home</a>
+        <a href="/articles">Articles</a>
+      </nav>
+
+      <button
+        id="themeToggle"
+        class="theme-toggle"
+        type="button"
+        aria-label="Toggle dark mode"
+        title="Toggle dark mode">
+        🌙
+      </button>
+
+    </div>
   </div>
 </header>
 
 <main class="wrap">
+
+  <!-- BREADCRUMBS -->
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="/">Home</a>
+    <span>›</span>
+    <a href="/articles">Articles</a>
+    <span>›</span>
+    <a id="breadcrumbCategory" href="/articles">Technology</a>
+    <span>›</span>
+    <span id="breadcrumbTitle" class="breadcrumb-current">
+      Article
+    </span>
+  </nav>
+
   <a href="/articles" class="back">← Back to Articles</a>
 
-  <div id="loading" class="loading">Loading article...</div>
+  <div id="loading" class="loading">
+    Loading article...
+  </div>
 
   <article id="articleCard" class="article-card hidden">
-    <img id="heroImage" class="hero-image hidden" alt="Article image">
+
+    <img
+      id="heroImage"
+      class="hero-image hidden"
+      alt="Article image">
 
     <div class="article-body">
+
       <div id="category" class="category hidden"></div>
 
       <h1 id="title"></h1>
@@ -114,63 +613,77 @@ footer{text-align:center;padding:30px 20px;color:#64748b;font-size:.9rem}
 
       <div id="tags" class="tags hidden"></div>
 
+      <!-- SOCIAL SHARING -->
       <section class="share-box" aria-label="Share article">
+
         <h2 class="share-title">🔗 Share this article</h2>
 
         <div class="share-buttons">
-          <a id="whatsappShare"
-             class="share-btn share-whatsapp"
-             href="#"
-             target="_blank"
-             rel="noopener noreferrer">
+
+          <a
+            id="whatsappShare"
+            class="share-btn share-whatsapp"
+            href="#"
+            target="_blank"
+            rel="noopener noreferrer">
             🟢 WhatsApp
           </a>
 
-          <a id="facebookShare"
-             class="share-btn share-facebook"
-             href="#"
-             target="_blank"
-             rel="noopener noreferrer">
+          <a
+            id="facebookShare"
+            class="share-btn share-facebook"
+            href="#"
+            target="_blank"
+            rel="noopener noreferrer">
             🔵 Facebook
           </a>
 
-          <a id="xShare"
-             class="share-btn share-x"
-             href="#"
-             target="_blank"
-             rel="noopener noreferrer">
+          <a
+            id="xShare"
+            class="share-btn share-x"
+            href="#"
+            target="_blank"
+            rel="noopener noreferrer">
             𝕏 Share
           </a>
 
-          <button id="copyShare"
-                  class="share-btn share-copy"
-                  type="button">
+          <button
+            id="copyShare"
+            class="share-btn share-copy"
+            type="button">
             🔗 Copy Link
           </button>
+
         </div>
 
         <p id="shareStatus" class="share-status"></p>
+
       </section>
 
     </div>
   </article>
 
-
-  <section id="relatedBox" class="related-box hidden" aria-label="Related articles">
-    <h2 class="related-title">📚 Related Articles</h2>
-    <div id="relatedGrid" class="related-grid"></div>
-  </section>
-
   <div id="error" class="error hidden"></div>
+
 </main>
 
+<button
+  id="topBtn"
+  class="top-btn"
+  type="button"
+  aria-label="Back to top"
+  title="Back to top">
+  ↑
+</button>
+
 <footer>
-  <p>&copy; 2026 GyanTech Blog. All rights reserved.</p>
+  <p>&copy; <span id="year"></span> GyanTech Blog. All rights reserved.</p>
 </footer>
 
 <script>
 const $ = id => document.getElementById(id);
 
+/* Escape normal text safely */
 function escapeHTML(value){
   return String(value ?? "")
     .replace(/[&<>"']/g, m => ({
@@ -182,159 +695,216 @@ function escapeHTML(value){
     }[m]));
 }
 
+/*
+  Allow only the formatting produced by the GyanTech editor.
+  This keeps headings, lists, bold, italic, underline and quotes
+  while removing scripts/event attributes and other unsafe markup.
+*/
 function sanitizeHTML(html){
-  const template = document.createElement("template");
-  template.innerHTML = String(html || "");
+  const template=document.createElement("template");
+  template.innerHTML=String(html || "");
 
-  const allowed = new Set([
+  const allowed=new Set([
     "P","BR","H2","H3","STRONG","B","EM","I","U",
     "UL","OL","LI","BLOCKQUOTE","A","IMG","CODE","PRE"
   ]);
 
-  const elements = template.content.querySelectorAll("*");
+  const elements=template.content.querySelectorAll("*");
 
-  elements.forEach(el => {
-
+  elements.forEach(el=>{
     if(!allowed.has(el.tagName)){
-      const parent = el.parentNode;
+      const parent=el.parentNode;
 
-      while(el.firstChild){
-        parent.insertBefore(el.firstChild, el);
+      if(parent){
+        while(el.firstChild){
+          parent.insertBefore(el.firstChild,el);
+        }
       }
 
       el.remove();
       return;
     }
 
-    [...el.attributes].forEach(attr => {
+    [...el.attributes].forEach(attr=>{
+      const name=attr.name.toLowerCase();
 
-      const name = attr.name.toLowerCase();
-
-      if(el.tagName === "A" && name === "href"){
-
-        const value = attr.value.trim();
+      if(el.tagName==="A" && name==="href"){
+        const value=attr.value.trim();
 
         if(!/^https?:\/\//i.test(value)){
           el.removeAttribute(attr.name);
         }
-
-      }else if(
-        el.tagName === "IMG" &&
-        ["src","alt"].includes(name)
-      ){
-
+      }
+      else if(el.tagName==="IMG" && ["src","alt"].includes(name)){
         if(
-          name === "src" &&
-          !/^https?:\/\//i.test(attr.value.trim())
+          name==="src" &&
+          !/^(https?:\/\/|data:image\/)/i.test(attr.value.trim())
         ){
           el.removeAttribute(attr.name);
         }
-
-      }else{
-
-        el.removeAttribute(attr.name);
-
       }
-
+      else{
+        el.removeAttribute(attr.name);
+      }
     });
 
-    if(el.tagName === "A"){
+    if(el.tagName==="A"){
       el.setAttribute("target","_blank");
       el.setAttribute("rel","noopener noreferrer");
     }
-
   });
 
   return template.innerHTML;
 }
 
+/* Get slug from /article/:slug */
 function getSlug(){
+  const parts=location.pathname.split("/").filter(Boolean);
 
-  const parts =
-    location.pathname
-      .split("/")
-      .filter(Boolean);
-
-  return parts.length >= 2
-    ? decodeURIComponent(parts[parts.length - 1])
+  return parts.length>=2
+    ? decodeURIComponent(parts[parts.length-1])
     : "";
 }
 
-function setupShare(article){
+/* Theme */
+function updateThemeButton(){
+  const dark=document.documentElement.classList.contains("dark");
 
-  const shareURL = location.href;
-  const shareTitle = article.title || "GyanTech Blog";
-
-  $("whatsappShare").href =
-    "https://wa.me/?text=" +
-    encodeURIComponent(
-      shareTitle + " - " + shareURL
-    );
-
-  $("facebookShare").href =
-    "https://www.facebook.com/sharer/sharer.php?u=" +
-    encodeURIComponent(shareURL);
-
-  $("xShare").href =
-    "https://twitter.com/intent/tweet?text=" +
-    encodeURIComponent(shareTitle) +
-    "&url=" +
-    encodeURIComponent(shareURL);
-
-  $("copyShare").onclick = async () => {
-
-    try{
-
-      await navigator.clipboard.writeText(shareURL);
-
-      $("shareStatus").textContent =
-        "✅ Article link copied!";
-
-    }catch{
-
-      $("shareStatus").textContent =
-        "Please copy the URL from your browser.";
-
-    }
-
-  };
+  $("themeToggle").textContent=dark ? "☀️" : "🌙";
+  $("themeToggle").title=dark
+    ? "Switch to light mode"
+    : "Switch to dark mode";
 }
 
-
-async function loadRelatedArticles(article){
-  const category = String(article.category || "").trim();
-  if(!category) return;
+function toggleTheme(){
+  const dark=document.documentElement.classList.toggle("dark");
 
   try{
-    const response = await fetch("/api/articles?category=" + encodeURIComponent(category));
-    if(!response.ok) return;
+    localStorage.setItem(
+      "gyantech-theme",
+      dark ? "dark" : "light"
+    );
+  }catch(e){}
 
-    const data = await response.json();
-    const articles = Array.isArray(data) ? data : (Array.isArray(data.articles) ? data.articles : []);
-    const currentId = Number(article.id);
-    const related = articles
-      .filter(item => Number(item.id) !== currentId)
-      .slice(0,3);
+  updateThemeButton();
+}
 
-    if(!related.length) return;
+$("themeToggle").addEventListener("click",toggleTheme);
+updateThemeButton();
 
-    $("relatedGrid").innerHTML = related.map(item => {
-      const slug = item.slug || item.id;
-      return `<a class="related-card" href="/article/${encodeURIComponent(slug)}">
-        <span class="related-category">${escapeHTML(item.category || category)}</span>
-        <h3>${escapeHTML(item.title || "Untitled Article")}</h3>
-      </a>`;
-    }).join("");
+/* Year */
+$("year").textContent=new Date().getFullYear();
 
-    $("relatedBox").classList.remove("hidden");
-  }catch(error){
-    console.warn("Related articles unavailable", error);
+/* Reading progress */
+function updateProgress(){
+  const scrollTop=window.scrollY;
+  const max=document.documentElement.scrollHeight-window.innerHeight;
+
+  const percent=max>0
+    ? Math.min(100,(scrollTop/max)*100)
+    : 0;
+
+  $("progress").style.width=percent+"%";
+}
+
+window.addEventListener("scroll",updateProgress,{passive:true});
+
+/* Back to top */
+function updateTopButton(){
+  if(window.scrollY>450){
+    $("topBtn").classList.add("show");
+  }else{
+    $("topBtn").classList.remove("show");
   }
 }
 
+window.addEventListener("scroll",updateTopButton,{passive:true});
+
+$("topBtn").addEventListener("click",()=>{
+  window.scrollTo({
+    top:0,
+    behavior:"smooth"
+  });
+});
+
+/* Setup share buttons */
+function setupSharing(article){
+
+  const url=window.location.href;
+  const title=article.title || "GyanTech Blog article";
+
+  const encodedURL=encodeURIComponent(url);
+  const encodedTitle=encodeURIComponent(title);
+
+  $("whatsappShare").href=
+    "https://wa.me/?text="+
+    encodeURIComponent(title+" "+url);
+
+  $("facebookShare").href=
+    "https://www.facebook.com/sharer/sharer.php?u="+
+    encodedURL;
+
+  $("xShare").href=
+    "https://twitter.com/intent/tweet?text="+
+    encodedTitle+
+    "&url="+
+    encodedURL;
+
+  $("copyShare").onclick=async()=>{
+
+    try{
+
+      await navigator.clipboard.writeText(url);
+
+      $("shareStatus").textContent=
+        "✓ Article link copied!";
+
+    }catch(error){
+
+      const textarea=document.createElement("textarea");
+
+      textarea.value=url;
+      textarea.style.position="fixed";
+      textarea.style.opacity="0";
+
+      document.body.appendChild(textarea);
+      textarea.select();
+
+      try{
+        document.execCommand("copy");
+        $("shareStatus").textContent=
+          "✓ Article link copied!";
+      }catch(e){
+        $("shareStatus").textContent=
+          "Copy failed. Please copy the URL manually.";
+      }
+
+      textarea.remove();
+    }
+
+    setTimeout(()=>{
+      $("shareStatus").textContent="";
+    },2500);
+  };
+}
+
+/* Breadcrumb */
+function setupBreadcrumbs(article){
+
+  const category=article.category || "Technology";
+  const title=article.title || "Article";
+
+  $("breadcrumbCategory").textContent=category;
+  $("breadcrumbCategory").href=
+    "/articles?category="+encodeURIComponent(category);
+
+  $("breadcrumbTitle").textContent=title;
+}
+
+/* Load article */
 async function loadArticle(){
 
-  const slug = getSlug();
+  const slug=getSlug();
 
   if(!slug){
     showError("Article not found.");
@@ -343,21 +913,17 @@ async function loadArticle(){
 
   try{
 
-    const response =
-      await fetch(
-        "/api/articles/" +
-        encodeURIComponent(slug)
-      );
+    const response=await fetch(
+      "/api/articles/"+encodeURIComponent(slug)
+    );
 
-    const data =
-      await response
-        .json()
-        .catch(() => ({}));
+    const data=await response
+      .json()
+      .catch(()=>({}));
 
     if(!response.ok){
       throw new Error(
-        data.error ||
-        "Article not found."
+        data.error || "Article not found."
       );
     }
 
@@ -368,35 +934,28 @@ async function loadArticle(){
     console.error(error);
 
     showError(
-      error.message ||
-      "Unable to load article."
+      error.message || "Unable to load article."
     );
-
   }
 }
 
+/* Render */
 function renderArticle(article){
 
-  $("loading")
-    .classList.add("hidden");
+  $("loading").classList.add("hidden");
+  $("error").classList.add("hidden");
+  $("articleCard").classList.remove("hidden");
 
-  $("error")
-    .classList.add("hidden");
-
-  $("articleCard")
-    .classList.remove("hidden");
-
-  document.title =
-    (article.title || "Article") +
+  document.title=
+    (article.title || "Article")+
     " — GyanTech";
 
-  $("title").textContent =
-    article.title ||
-    "Untitled Article";
+  $("title").textContent=
+    article.title || "Untitled Article";
 
   if(article.category){
 
-    $("category").textContent =
+    $("category").textContent=
       article.category;
 
     $("category")
@@ -405,59 +964,52 @@ function renderArticle(article){
 
   }
 
-  const author =
+  const author=
     article.author || "Admin";
 
-  const date =
+  const date=
     article.created_at
       ? new Date(article.created_at)
-          .toLocaleDateString(
-            "en-IN",
-            {
-              day:"numeric",
-              month:"short",
-              year:"numeric"
-            }
-          )
+          .toLocaleDateString("en-IN",{
+            day:"numeric",
+            month:"short",
+            year:"numeric"
+          })
       : "";
 
-  const views =
+  const views=
     Number(article.views || 0);
 
-  $("meta").textContent =
-    `By ${author}` +
-    (date ? ` · ${date}` : "") +
+  $("meta").textContent=
+    `By ${author}`+
+    (date ? ` · ${date}` : "")+
     ` · 👁 ${views} views`;
 
   if(article.excerpt){
 
-    $("excerpt").textContent =
+    $("excerpt").textContent=
       article.excerpt;
 
     $("excerpt")
       .classList
       .remove("hidden");
-
   }
 
-  $("content").innerHTML =
-    sanitizeHTML(
-      article.content || ""
-    );
+  $("content").innerHTML=
+    sanitizeHTML(article.content || "");
 
   if(article.tags){
 
-    const tags =
-      String(article.tags)
-        .split(",")
-        .map(tag => tag.trim())
-        .filter(Boolean);
+    const tags=String(article.tags)
+      .split(",")
+      .map(tag=>tag.trim())
+      .filter(Boolean);
 
     if(tags.length){
 
-      $("tags").innerHTML =
+      $("tags").innerHTML=
         tags
-          .map(tag =>
+          .map(tag=>
             `<span class="tag">#${escapeHTML(tag)}</span>`
           )
           .join("");
@@ -465,30 +1017,29 @@ function renderArticle(article){
       $("tags")
         .classList
         .remove("hidden");
-
     }
-
   }
 
   if(article.image_url){
 
-    $("heroImage").src =
+    $("heroImage").src=
       article.image_url;
 
-    $("heroImage").alt =
-      article.title ||
-      "Article image";
+    $("heroImage").alt=
+      article.title || "Article image";
 
     $("heroImage")
       .classList
       .remove("hidden");
-
   }
 
-  setupShare(article);
-  loadRelatedArticles(article);
+  setupSharing(article);
+  setupBreadcrumbs(article);
+
+  updateProgress();
 }
 
+/* Error */
 function showError(message){
 
   $("loading")
@@ -499,8 +1050,8 @@ function showError(message){
     .classList
     .add("hidden");
 
-  $("error").textContent =
-    "❌ " + message;
+  $("error").textContent=
+    "❌ "+message;
 
   $("error")
     .classList
