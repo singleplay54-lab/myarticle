@@ -1105,4 +1105,1073 @@ app.get(
 );
 
 
-/*
+/* =========================
+   ADMIN STATS
+========================= */
+
+app.get(
+  '/api/admin/stats',
+  auth,
+  async(req,res)=>{
+
+    try{
+
+      const result=
+        await pool.query(`
+          SELECT
+
+            COUNT(*)::int total,
+
+            COUNT(*) FILTER(
+              WHERE status='published'
+            )::int published,
+
+            COUNT(*) FILTER(
+              WHERE status='draft'
+            )::int drafts,
+
+            COALESCE(
+              SUM(views),
+              0
+            )::int views,
+
+            COUNT(
+              DISTINCT category
+            )::int categories
+
+          FROM articles
+        `);
+
+
+      res.json(
+        result.rows[0]
+      );
+
+    }catch(e){
+
+      console.error(e);
+
+      res.status(500).json({
+        error:'Failed'
+      });
+
+    }
+
+  }
+);
+
+
+/* =========================
+   ARTICLE VALIDATION
+========================= */
+
+function valid(b){
+
+  const a={
+
+    title:
+      String(
+        b.title||''
+      ).trim(),
+
+    content:
+      String(
+        b.content||''
+      ).trim(),
+
+    author:
+      String(
+        b.author||'Admin'
+      ).trim()||
+      'Admin',
+
+    category:
+      String(
+        b.category||
+        'Technology'
+      ).trim()||
+      'Technology',
+
+    excerpt:
+      String(
+        b.excerpt||''
+      ).trim(),
+
+    tags:
+      String(
+        b.tags||''
+      ).trim(),
+
+    image_url:
+      String(
+        b.image_url||''
+      ).trim(),
+
+    status:
+      b.status==='draft'
+        ?'draft'
+        :'published',
+
+    featured:
+      !!b.featured
+
+  };
+
+
+  if(
+    !a.title||
+    !a.content
+  ){
+
+    throw Error(
+      'Title and content are required'
+    );
+
+  }
+
+
+  return a;
+
+}
+
+
+/* =========================
+   CREATE ARTICLE
+========================= */
+
+app.post(
+  '/api/articles',
+  auth,
+  async(req,res)=>{
+
+    try{
+
+      const a=
+        valid(req.body);
+
+
+      const base=
+        slugify(a.title);
+
+
+      const slug=
+        base+'-'+
+        Date.now().toString(36);
+
+
+      const x=
+        await pool.query(
+          `
+          INSERT INTO articles(
+
+            title,
+            content,
+            author,
+            category,
+            excerpt,
+            tags,
+            image_url,
+            status,
+            featured,
+            slug,
+            updated_at
+
+          )
+
+          VALUES(
+            $1,$2,$3,$4,$5,
+            $6,$7,$8,$9,$10,
+            NOW()
+          )
+
+          RETURNING *
+          `,
+          [
+
+            a.title,
+            a.content,
+            a.author,
+            a.category,
+            a.excerpt,
+            a.tags,
+            a.image_url,
+            a.status,
+            a.featured,
+            slug
+
+          ]
+        );
+
+
+      res
+        .status(201)
+        .json(
+          x.rows[0]
+        );
+
+    }catch(e){
+
+      console.error(e);
+
+      res.status(400).json({
+        error:e.message
+      });
+
+    }
+
+  }
+);
+
+
+/* =========================
+   UPDATE ARTICLE
+========================= */
+
+app.put(
+  '/api/articles/:id',
+  auth,
+  async(req,res)=>{
+
+    try{
+
+      const a=
+        valid(req.body);
+
+
+      const id=
+        +req.params.id;
+
+
+      const x=
+        await pool.query(
+          `
+          UPDATE articles
+
+          SET
+
+            title=$1,
+            content=$2,
+            author=$3,
+            category=$4,
+            excerpt=$5,
+            tags=$6,
+            image_url=$7,
+            status=$8,
+            featured=$9,
+            updated_at=NOW()
+
+          WHERE id=$10
+
+          RETURNING *
+          `,
+          [
+
+            a.title,
+            a.content,
+            a.author,
+            a.category,
+            a.excerpt,
+            a.tags,
+            a.image_url,
+            a.status,
+            a.featured,
+            id
+
+          ]
+        );
+
+
+      if(!x.rows.length){
+
+        return res
+          .status(404)
+          .json({
+            error:'Not found'
+          });
+
+      }
+
+
+      res.json(
+        x.rows[0]
+      );
+
+    }catch(e){
+
+      console.error(e);
+
+      res.status(400).json({
+        error:e.message
+      });
+
+    }
+
+  }
+);
+
+
+/* =========================
+   DELETE ARTICLE
+========================= */
+
+app.delete(
+  '/api/articles/:id',
+  auth,
+  async(req,res)=>{
+
+    try{
+
+      const x=
+        await pool.query(
+          `
+          DELETE FROM articles
+          WHERE id=$1
+          RETURNING id
+          `,
+          [+req.params.id]
+        );
+
+
+      if(!x.rows.length){
+
+        return res
+          .status(404)
+          .json({
+            error:'Not found'
+          });
+
+      }
+
+
+      res.json({
+        ok:true
+      });
+
+    }catch(e){
+
+      console.error(e);
+
+      res.status(500).json({
+        error:'Delete failed'
+      });
+
+    }
+
+  }
+);
+
+
+/* ==================================================
+   COMMENTS SYSTEM
+================================================== */
+
+
+/* =========================
+   GET APPROVED COMMENTS
+========================= */
+
+app.get(
+  '/api/articles/:slug/comments',
+  async(req,res)=>{
+
+    try{
+
+      const article=
+        await pool.query(
+          `
+          SELECT id
+          FROM articles
+          WHERE slug=$1
+          AND status='published'
+          LIMIT 1
+          `,
+          [req.params.slug]
+        );
+
+
+      if(!article.rows.length){
+
+        return res
+          .status(404)
+          .json({
+            error:'Article not found'
+          });
+
+      }
+
+
+      const result=
+        await pool.query(
+          `
+          SELECT
+
+            id,
+            name,
+            comment,
+            created_at
+
+          FROM comments
+
+          WHERE article_id=$1
+          AND status='approved'
+
+          ORDER BY
+            created_at DESC
+          `,
+          [article.rows[0].id]
+        );
+
+
+      res.json({
+
+        comments:
+          result.rows,
+
+        total:
+          result.rows.length
+
+      });
+
+    }catch(e){
+
+      console.error(e);
+
+      res.status(500).json({
+        error:'Could not load comments'
+      });
+
+    }
+
+  }
+);
+
+
+/* =========================
+   SUBMIT COMMENT
+========================= */
+
+app.post(
+  '/api/articles/:slug/comments',
+  async(req,res)=>{
+
+    try{
+
+      /* Rate limit */
+
+      if(
+        isCommentRateLimited(req)
+      ){
+
+        return res
+          .status(429)
+          .json({
+            error:
+              'Too many comments. Please try again later.'
+          });
+
+      }
+
+
+      const{
+        name,
+        email,
+        comment,
+        website
+      }=req.body||{};
+
+
+      /* Honeypot */
+
+      if(
+        String(
+          website||''
+        ).trim()
+      ){
+
+        return res
+          .status(400)
+          .json({
+            error:'Spam detected'
+          });
+
+      }
+
+
+      const cleanName=
+        normalizeComment(
+          name
+        );
+
+
+      const cleanEmail=
+        normalizeComment(
+          email
+        );
+
+
+      const cleanComment=
+        normalizeComment(
+          comment
+        );
+
+
+      /* Name validation */
+
+      if(
+        cleanName.length<2||
+        cleanName.length>80
+      ){
+
+        return res
+          .status(400)
+          .json({
+            error:
+              'Name must be between 2 and 80 characters.'
+          });
+
+      }
+
+
+      /* Comment validation */
+
+      if(
+        cleanComment.length<2||
+        cleanComment.length>3000
+      ){
+
+        return res
+          .status(400)
+          .json({
+            error:
+              'Comment must be between 2 and 3000 characters.'
+          });
+
+      }
+
+
+      /* Email validation */
+
+      if(
+        cleanEmail&&
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/
+          .test(cleanEmail)
+      ){
+
+        return res
+          .status(400)
+          .json({
+            error:
+              'Please enter a valid email.'
+          });
+
+      }
+
+
+      /* Spam detection */
+
+      if(
+        looksLikeCommentSpam(
+          cleanComment
+        )
+      ){
+
+        return res
+          .status(400)
+          .json({
+            error:
+              'Comment looks like spam.'
+          });
+
+      }
+
+
+      /* Find article */
+
+      const article=
+        await pool.query(
+          `
+          SELECT id
+          FROM articles
+          WHERE slug=$1
+          AND status='published'
+          LIMIT 1
+          `,
+          [req.params.slug]
+        );
+
+
+      if(!article.rows.length){
+
+        return res
+          .status(404)
+          .json({
+            error:
+              'Article not found'
+          });
+
+      }
+
+
+      const articleId=
+        article.rows[0].id;
+
+
+      /* Duplicate comment protection */
+
+      const duplicate=
+        await pool.query(
+          `
+          SELECT id
+          FROM comments
+
+          WHERE article_id=$1
+
+          AND LOWER(name)=
+              LOWER($2)
+
+          AND comment=$3
+
+          AND created_at>
+              NOW() -
+              INTERVAL '10 minutes'
+
+          LIMIT 1
+          `,
+          [
+            articleId,
+            cleanName,
+            cleanComment
+          ]
+        );
+
+
+      if(
+        duplicate.rows.length
+      ){
+
+        return res
+          .status(409)
+          .json({
+            error:
+              'This comment was already submitted.'
+          });
+
+      }
+
+
+      const ip=
+        getClientIP(req);
+
+
+      /* Save as pending */
+
+      const inserted=
+        await pool.query(
+          `
+          INSERT INTO comments(
+
+            article_id,
+            name,
+            email,
+            comment,
+            status,
+            ip_hash,
+            updated_at
+
+          )
+
+          VALUES(
+
+            $1,
+            $2,
+            $3,
+            $4,
+            'pending',
+            $5,
+            NOW()
+
+          )
+
+          RETURNING
+
+            id,
+            name,
+            comment,
+            status,
+            created_at
+          `,
+          [
+            articleId,
+            cleanName,
+            cleanEmail,
+            cleanComment,
+            ip
+          ]
+        );
+
+
+      res
+        .status(201)
+        .json({
+
+          ok:true,
+
+          message:
+            'Comment submitted for approval.',
+
+          comment:
+            inserted.rows[0]
+
+        });
+
+    }catch(e){
+
+      console.error(e);
+
+      res.status(500).json({
+        error:
+          'Could not submit comment'
+      });
+
+    }
+
+  }
+);
+
+
+/* =========================
+   ADMIN COMMENTS
+========================= */
+
+app.get(
+  '/api/admin/comments',
+  auth,
+  async(req,res)=>{
+
+    try{
+
+      const result=
+        await pool.query(
+          `
+          SELECT
+
+            c.id,
+            c.article_id,
+            c.name,
+            c.email,
+            c.comment,
+            c.status,
+            c.created_at,
+            c.updated_at,
+
+            a.title AS article_title,
+            a.slug AS article_slug
+
+          FROM comments c
+
+          LEFT JOIN articles a
+          ON a.id=c.article_id
+
+          ORDER BY
+            c.created_at DESC
+          `
+        );
+
+
+      res.json({
+
+        comments:
+          result.rows,
+
+        total:
+          result.rows.length
+
+      });
+
+    }catch(e){
+
+      console.error(e);
+
+      res.status(500).json({
+        error:
+          'Could not load admin comments'
+      });
+
+    }
+
+  }
+);
+
+
+/* =========================
+   COMMENT STATS
+========================= */
+
+app.get(
+  '/api/admin/comments/stats',
+  auth,
+  async(req,res)=>{
+
+    try{
+
+      const result=
+        await pool.query(
+          `
+          SELECT
+
+            COUNT(*)::int
+              AS total,
+
+            COUNT(*) FILTER(
+              WHERE status='pending'
+            )::int
+              AS pending,
+
+            COUNT(*) FILTER(
+              WHERE status='approved'
+            )::int
+              AS approved,
+
+            COUNT(*) FILTER(
+              WHERE status='rejected'
+            )::int
+              AS rejected
+
+          FROM comments
+          `
+        );
+
+
+      res.json(
+        result.rows[0]
+      );
+
+    }catch(e){
+
+      console.error(e);
+
+      res.status(500).json({
+        error:
+          'Could not load comment stats'
+      });
+
+    }
+
+  }
+);
+
+
+/* =========================
+   APPROVE COMMENT
+========================= */
+
+app.put(
+  '/api/admin/comments/:id/approve',
+  auth,
+  async(req,res)=>{
+
+    try{
+
+      const result=
+        await pool.query(
+          `
+          UPDATE comments
+
+          SET
+
+            status='approved',
+            updated_at=NOW()
+
+          WHERE id=$1
+
+          RETURNING *
+          `,
+          [+req.params.id]
+        );
+
+
+      if(!result.rows.length){
+
+        return res
+          .status(404)
+          .json({
+            error:
+              'Comment not found'
+          });
+
+      }
+
+
+      res.json({
+
+        ok:true,
+
+        comment:
+          result.rows[0]
+
+      });
+
+    }catch(e){
+
+      console.error(e);
+
+      res.status(500).json({
+        error:
+          'Could not approve comment'
+      });
+
+    }
+
+  }
+);
+
+
+/* =========================
+   REJECT COMMENT
+========================= */
+
+app.put(
+  '/api/admin/comments/:id/reject',
+  auth,
+  async(req,res)=>{
+
+    try{
+
+      const result=
+        await pool.query(
+          `
+          UPDATE comments
+
+          SET
+
+            status='rejected',
+            updated_at=NOW()
+
+          WHERE id=$1
+
+          RETURNING *
+          `,
+          [+req.params.id]
+        );
+
+
+      if(!result.rows.length){
+
+        return res
+          .status(404)
+          .json({
+            error:
+              'Comment not found'
+          });
+
+      }
+
+
+      res.json({
+
+        ok:true,
+
+        comment:
+          result.rows[0]
+
+      });
+
+    }catch(e){
+
+      console.error(e);
+
+      res.status(500).json({
+        error:
+          'Could not reject comment'
+      });
+
+    }
+
+  }
+);
+
+
+/* =========================
+   DELETE COMMENT
+========================= */
+
+app.delete(
+  '/api/admin/comments/:id',
+  auth,
+  async(req,res)=>{
+
+    try{
+
+      const result=
+        await pool.query(
+          `
+          DELETE FROM comments
+
+          WHERE id=$1
+
+          RETURNING id
+          `,
+          [+req.params.id]
+        );
+
+
+      if(!result.rows.length){
+
+        return res
+          .status(404)
+          .json({
+            error:
+              'Comment not found'
+          });
+
+      }
+
+
+      res.json({
+        ok:true
+      });
+
+    }catch(e){
+
+      console.error(e);
+
+      res.status(500).json({
+        error:
+          'Could not delete comment'
+      });
+
+    }
+
+  }
+);
+
+
+/* =========================
+   START SERVER
+========================= */
+
+init()
+
+  .then(()=>{
+
+    app.listen(
+      PORT,
+      ()=>{
+
+        console.log(
+          'GyanTech Advanced running on '+
+          PORT
+        );
+
+      }
+    );
+
+  })
+
+  .catch(e=>{
+
+    console.error(e);
+
+    process.exit(1);
+
+  });
