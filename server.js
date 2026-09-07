@@ -141,13 +141,21 @@ async function init(){
   for(const q of [
 
     `ALTER TABLE articles ADD COLUMN IF NOT EXISTS slug TEXT`,
+
     `ALTER TABLE articles ADD COLUMN IF NOT EXISTS excerpt TEXT DEFAULT ''`,
+
     `ALTER TABLE articles ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'Technology'`,
+
     `ALTER TABLE articles ADD COLUMN IF NOT EXISTS tags TEXT DEFAULT ''`,
+
     `ALTER TABLE articles ADD COLUMN IF NOT EXISTS image_url TEXT DEFAULT ''`,
+
     `ALTER TABLE articles ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'published'`,
+
     `ALTER TABLE articles ADD COLUMN IF NOT EXISTS featured BOOLEAN DEFAULT FALSE`,
+
     `ALTER TABLE articles ADD COLUMN IF NOT EXISTS views INTEGER DEFAULT 0`,
+
     `ALTER TABLE articles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`
 
   ]){
@@ -180,16 +188,18 @@ async function init(){
     ON articles(slug)
   `);
 
-  /* =========================
-     COMMENTS TABLE
-  ========================= */
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS newsletter_subscribers(
+      id SERIAL PRIMARY KEY,
+      email TEXT UNIQUE NOT NULL,
+      subscribed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS comments(
       id SERIAL PRIMARY KEY,
-      article_id INTEGER NOT NULL
-        REFERENCES articles(id)
-        ON DELETE CASCADE,
+      article_id INTEGER NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
       name TEXT NOT NULL,
       email TEXT DEFAULT '',
       comment TEXT NOT NULL,
@@ -214,32 +224,20 @@ async function init(){
     ON comments(article_id,created_at DESC)
   `);
 
-  /* =========================
-     COMMENT LIKES
-  ========================= */
-
   await pool.query(`
     CREATE TABLE IF NOT EXISTS comment_likes(
       id SERIAL PRIMARY KEY,
-      comment_id INTEGER NOT NULL
-        REFERENCES comments(id)
-        ON DELETE CASCADE,
+      comment_id INTEGER NOT NULL REFERENCES comments(id) ON DELETE CASCADE,
       ip_hash TEXT NOT NULL,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       UNIQUE(comment_id,ip_hash)
     )
   `);
 
-  /* =========================
-     COMMENT REPORTS
-  ========================= */
-
   await pool.query(`
     CREATE TABLE IF NOT EXISTS comment_reports(
       id SERIAL PRIMARY KEY,
-      comment_id INTEGER NOT NULL
-        REFERENCES comments(id)
-        ON DELETE CASCADE,
+      comment_id INTEGER NOT NULL REFERENCES comments(id) ON DELETE CASCADE,
       reason TEXT NOT NULL DEFAULT 'other',
       ip_hash TEXT DEFAULT '',
       status TEXT NOT NULL DEFAULT 'open',
@@ -251,13 +249,7 @@ async function init(){
     CREATE INDEX IF NOT EXISTS comment_reports_status_idx
     ON comment_reports(status,created_at DESC)
   `);
-
 }
-
-
-/* =========================
-   AUTH
-========================= */
 
 function auth(req,res,next){
 
@@ -281,29 +273,17 @@ function auth(req,res,next){
   }
 }
 
-
-/* =========================
-   COMMENT SECURITY
-========================= */
-
 const commentRateLimit=new Map();
-
-const COMMENT_WINDOW_MS=
-  10*60*1000;
-
+const COMMENT_WINDOW_MS=10*60*1000;
 const COMMENT_MAX_REQUESTS=3;
 
 function getClientIP(req){
-
   return (
     req.ip||
-    req.headers['x-forwarded-for']
-      ?.split(',')[0]
-      ?.trim()||
+    req.headers['x-forwarded-for']?.split(',')[0]?.trim()||
     req.socket?.remoteAddress||
     'unknown'
   );
-
 }
 
 function isCommentRateLimited(req){
@@ -338,24 +318,24 @@ function isCommentRateLimited(req){
           t=>now-t<COMMENT_WINDOW_MS
         )
       ){
-        commentRateLimit.delete(savedIP);
+
+        commentRateLimit.delete(
+          savedIP
+        );
+
       }
 
     }
 
   }
 
-  return recent.length>
-    COMMENT_MAX_REQUESTS;
-
+  return recent.length>COMMENT_MAX_REQUESTS;
 }
 
 function normalizeComment(text){
-
   return String(text||'')
     .trim()
     .replace(/\s+/g,' ');
-
 }
 
 function looksLikeCommentSpam(text){
@@ -382,7 +362,6 @@ function looksLikeCommentSpam(text){
     return true;
 
   return false;
-
 }
 
 function hashIP(ip){
@@ -390,21 +369,14 @@ function hashIP(ip){
   return crypto
     .createHash('sha256')
     .update(
-      String(ip)+
-      '|'+
+      String(ip)+'|'+
       String(
         process.env.JWT_SECRET||
         'gyantech'
       )
     )
     .digest('hex');
-
 }
-
-
-/* =========================
-   MAIN PAGES
-========================= */
 
 app.get('/',(q,r)=>
   r.sendFile(
@@ -427,10 +399,79 @@ app.get('/admin',(q,r)=>
   )
 );
 
+app.get('/category/:category',(q,r)=>
+  r.sendFile(
+    'category.html',
+    {root:__dirname}
+  )
+);
 
-/* =========================
-   ARTICLE PAGE + SEO
-========================= */
+app.post('/api/newsletter/subscribe',async(req,res)=>{
+
+  try{
+
+    const email=
+      String(
+        req.body.email||''
+      )
+      .trim()
+      .toLowerCase();
+
+    if(
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      .test(email)
+    ){
+
+      return res.status(400).json({
+        error:
+          'Please enter a valid email address.'
+      });
+
+    }
+
+    const result=
+      await pool.query(
+        `
+        INSERT INTO newsletter_subscribers(email)
+        VALUES($1)
+        ON CONFLICT(email)
+        DO NOTHING
+        RETURNING id
+        `,
+        [email]
+      );
+
+    if(!result.rows.length){
+
+      return res.json({
+        ok:true,
+        message:
+          'This email is already subscribed.'
+      });
+
+    }
+
+    res.status(201).json({
+      ok:true,
+      message:
+        'You’re subscribed! Thanks for joining GyanTech Blog.'
+    });
+
+  }catch(e){
+
+    console.error(
+      'Newsletter subscribe error:',
+      e
+    );
+
+    res.status(500).json({
+      error:
+        'Could not subscribe right now. Please try again.'
+    });
+
+  }
+
+});
 
 app.get('/article/:slug',async(req,res)=>{
 
@@ -497,11 +538,6 @@ app.get('/article/:slug',async(req,res)=>{
 
 });
 
-
-/* =========================
-   SITEMAP
-========================= */
-
 app.get('/sitemap.xml',async(q,r)=>{
 
   try{
@@ -537,25 +573,27 @@ app.get('/sitemap.xml',async(q,r)=>{
     }
 
     const articleURLs=
-      result.rows.map(article=>{
+      result.rows.map(
+        article=>{
 
-        const url=
-          `${SITE_URL}/article/`+
-          encodeURIComponent(
-            article.slug
-          );
+          const url=
+            `${SITE_URL}/article/`+
+            encodeURIComponent(
+              article.slug
+            );
 
-        const date=
-          article.updated_at||
-          article.created_at;
+          const date=
+            article.updated_at||
+            article.created_at;
 
-        return `
+          return `
   <url>
     <loc>${escapeHTML(url)}</loc>
     <lastmod>${new Date(date).toISOString()}</lastmod>
   </url>`;
 
-      }).join('\n');
+        }
+      ).join('\n');
 
     const sitemap=
 `<?xml version="1.0" encoding="UTF-8"?>
@@ -584,23 +622,22 @@ ${articleURLs}
     r
       .status(500)
       .type('text/plain')
-      .send('Sitemap unavailable');
+      .send(
+        'Sitemap unavailable'
+      );
 
   }
 
 });
-
-
-/* =========================
-   LOGIN
-========================= */
 
 app.post('/api/login',async(req,res)=>{
 
   try{
 
     const password=
-      String(req.body.password||'');
+      String(
+        req.body.password||''
+      );
 
     const validPassword=
       await bcrypt.compare(
@@ -630,7 +667,8 @@ app.post('/api/login',async(req,res)=>{
         httpOnly:true,
         sameSite:'lax',
         secure:
-          process.env.NODE_ENV==='production',
+          process.env.NODE_ENV===
+          'production',
         maxAge:604800000
       }
     );
@@ -649,11 +687,6 @@ app.post('/api/login',async(req,res)=>{
 
 });
 
-
-/* =========================
-   LOGOUT
-========================= */
-
 app.post('/api/logout',(q,r)=>{
 
   r.clearCookie(
@@ -665,11 +698,6 @@ app.post('/api/logout',(q,r)=>{
   });
 
 });
-
-
-/* =========================
-   ADMIN CHECK
-========================= */
 
 app.get('/api/admin/check',(q,r)=>{
 
@@ -695,11 +723,6 @@ app.get('/api/admin/check',(q,r)=>{
   }
 
 });
-
-
-/* =========================
-   PUBLIC ARTICLES
-========================= */
 
 app.get('/api/articles',async(req,res)=>{
 
@@ -736,7 +759,9 @@ app.get('/api/articles',async(req,res)=>{
     if(q.trim()){
 
       params.push(
-        '%'+q.trim()+'%'
+        '%'+
+        q.trim()+
+        '%'
       );
 
       w.push(`
@@ -768,7 +793,8 @@ app.get('/api/articles',async(req,res)=>{
     const count=
       await pool.query(
         `
-        SELECT COUNT(*)::int total
+        SELECT
+          COUNT(*)::int total
         FROM articles
         WHERE ${where}
         `,
@@ -819,78 +845,66 @@ app.get('/api/articles',async(req,res)=>{
     console.error(e);
 
     res.status(500).json({
-      error:'Could not load articles'
+      error:
+        'Could not load articles'
     });
 
   }
 
 });
 
+app.get('/api/articles/:slug',async(req,res)=>{
 
-/* =========================
-   SINGLE ARTICLE API
-========================= */
+  try{
 
-app.get(
-  '/api/articles/:slug',
-  async(req,res)=>{
+    const x=
+      await pool.query(
+        `
+        UPDATE articles
+        SET views=views+1
+        WHERE slug=$1
+        AND status='published'
+        RETURNING *
+        `,
+        [req.params.slug]
+      );
 
-    try{
+    if(!x.rows.length){
 
-      const x=
-        await pool.query(
-          `
-          UPDATE articles
-          SET views=views+1
-          WHERE slug=$1
-          AND status='published'
-          RETURNING *
-          `,
-          [req.params.slug]
-        );
-
-      if(!x.rows.length){
-
-        return res.status(404).json({
-          error:'Article not found'
-        });
-
-      }
-
-      const article=
-        x.rows[0];
-
-      const commentCount=
-        await pool.query(
-          `
-          SELECT COUNT(*)::int AS count
-          FROM comments
-          WHERE article_id=$1
-          AND status='approved'
-          `,
-          [article.id]
-        );
-
-      article.comment_count=
-        commentCount.rows[0].count;
-
-      res.json(article);
-
-    }catch{
-
-      res.status(500).json({
-        error:'Could not load article'
+      return res.status(404).json({
+        error:
+          'Article not found'
       });
 
     }
 
+    const article=
+      x.rows[0];
+
+    const commentCount=
+      await pool.query(`
+        SELECT
+          COUNT(*)::int AS count
+        FROM comments
+        WHERE article_id=$1
+        AND status='approved'
+      `,[article.id]);
+
+    article.comment_count=
+      commentCount.rows[0].count;
+
+    res.json(article);
+
+  }catch{
+
+    res.status(500).json({
+      error:
+        'Could not load article'
+    });
+
   }
-);
 
-
-/* =========================
-   CATEGORIES
-========================= */
+});
 
 app.get('/api/categories',async(q,r)=>{
 
@@ -915,714 +929,683 @@ app.get('/api/categories',async(q,r)=>{
     r.status(500).json({
       error:'Failed'
     });
+    app.get('/api/articles/:slug/comments',async(req,res)=>{
+
+  try{
+
+    const article=
+      await pool.query(`
+        SELECT id
+        FROM articles
+        WHERE slug=$1
+        AND status='published'
+        LIMIT 1
+      `,[req.params.slug]);
+
+    if(!article.rows.length){
+
+      return res.status(404).json({
+        error:
+          'Article not found'
+      });
+
+    }
+
+    const comments=
+      await pool.query(`
+        SELECT
+          c.id,
+          c.name,
+          c.comment,
+          c.created_at,
+          c.parent_id,
+          COALESCE(
+            l.likes,
+            0
+          )::int AS likes
+        FROM comments c
+
+        LEFT JOIN (
+          SELECT
+            comment_id,
+            COUNT(*)::int AS likes
+          FROM comment_likes
+          GROUP BY comment_id
+        ) l
+        ON l.comment_id=c.id
+
+        WHERE
+          c.article_id=$1
+          AND c.status='approved'
+
+        ORDER BY
+          c.created_at ASC
+      `,[article.rows[0].id]);
+
+    res.json({
+      comments:
+        comments.rows,
+      total:
+        comments.rows.length
+    });
+
+  }catch(e){
+
+    console.error(e);
+
+    res.status(500).json({
+      error:
+        'Could not load comments'
+    });
 
   }
 
 });
 
+app.post('/api/articles/:slug/comments',async(req,res)=>{
 
-/* =========================
-   PUBLIC COMMENTS
-========================= */
+  try{
 
-app.get(
-  '/api/articles/:slug/comments',
-  async(req,res)=>{
-    try{
+    if(isCommentRateLimited(req)){
 
-      const article=
-        await pool.query(`
-          SELECT id
-          FROM articles
-          WHERE slug=$1
-          AND status='published'
-          LIMIT 1
-        `,[req.params.slug]);
-
-      if(!article.rows.length){
-
-        return res.status(404).json({
-          error:'Article not found'
-        });
-
-      }
-
-      const comments=
-        await pool.query(`
-          SELECT
-            c.id,
-            c.name,
-            c.comment,
-            c.created_at,
-            c.parent_id,
-            COALESCE(
-              l.likes,
-              0
-            )::int AS likes
-          FROM comments c
-          LEFT JOIN (
-            SELECT
-              comment_id,
-              COUNT(*)::int AS likes
-            FROM comment_likes
-            GROUP BY comment_id
-          ) l
-          ON l.comment_id=c.id
-          WHERE c.article_id=$1
-          AND c.status='approved'
-          ORDER BY c.created_at ASC
-        `,[article.rows[0].id]);
-
-      res.json({
-        comments:comments.rows,
-        total:comments.rows.length
-      });
-
-    }catch(e){
-
-      console.error(e);
-
-      res.status(500).json({
-        error:'Could not load comments'
+      return res.status(429).json({
+        error:
+          'Too many comments. Please try again later.'
       });
 
     }
-  }
-);
 
+    const website=
+      String(
+        req.body.website||''
+      ).trim();
 
-/* =========================
-   SUBMIT COMMENT / REPLY
-========================= */
+    if(website){
 
-app.post(
-  '/api/articles/:slug/comments',
-  async(req,res)=>{
-    try{
+      return res.status(400).json({
+        error:
+          'Spam detected'
+      });
 
-      if(isCommentRateLimited(req)){
+    }
 
-        return res.status(429).json({
+    const name=
+      normalizeComment(
+        req.body.name
+      );
+
+    const email=
+      normalizeComment(
+        req.body.email
+      ).toLowerCase();
+
+    const comment=
+      normalizeComment(
+        req.body.comment
+      );
+
+    if(
+      name.length<2||
+      name.length>80
+    ){
+
+      return res.status(400).json({
+        error:
+          'Please enter a valid name'
+      });
+
+    }
+
+    if(
+      email &&
+      (
+        email.length>160||
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+      )
+    ){
+
+      return res.status(400).json({
+        error:
+          'Please enter a valid email'
+      });
+
+    }
+
+    if(
+      comment.length<2||
+      comment.length>3000
+    ){
+
+      return res.status(400).json({
+        error:
+          'Comment must be between 2 and 3000 characters'
+      });
+
+    }
+
+    if(
+      looksLikeCommentSpam(
+        comment
+      )
+    ){
+
+      return res.status(400).json({
+        error:
+          'Comment looks like spam'
+      });
+
+    }
+
+    const article=
+      await pool.query(`
+        SELECT id
+        FROM articles
+        WHERE slug=$1
+        AND status='published'
+        LIMIT 1
+      `,[req.params.slug]);
+
+    if(!article.rows.length){
+
+      return res.status(404).json({
+        error:
+          'Article not found'
+      });
+
+    }
+
+    const articleId=
+      article.rows[0].id;
+
+    const ipHash=
+      hashIP(
+        getClientIP(req)
+      );
+
+    const parentId=
+      req.body.parent_id
+        ?Number(req.body.parent_id)
+        :null;
+
+    if(parentId!==null){
+
+      if(
+        !Number.isInteger(parentId)||
+        parentId<1
+      ){
+
+        return res.status(400).json({
           error:
-            'Too many comments. Please try again later.'
+            'Invalid reply target'
         });
 
       }
 
-      /* Honeypot */
-
-      const website=
-        String(
-          req.body.website||''
-        ).trim();
-
-      if(website){
-
-        return res.status(400).json({
-          error:'Spam detected'
-        });
-
-      }
-
-      const name=
-        normalizeComment(
-          req.body.name
-        );
-
-      const email=
-        normalizeComment(
-          req.body.email
-        ).toLowerCase();
-
-      const comment=
-        normalizeComment(
-          req.body.comment
-        );
-
-      if(
-        name.length<2||
-        name.length>80
-      ){
-
-        return res.status(400).json({
-          error:'Please enter a valid name'
-        });
-
-      }
-
-      if(
-        email &&
-        (
-          email.length>160||
-          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/
-            .test(email)
-        )
-      ){
-
-        return res.status(400).json({
-          error:'Please enter a valid email'
-        });
-
-      }
-
-      if(
-        comment.length<2||
-        comment.length>3000
-      ){
-
-        return res.status(400).json({
-          error:
-            'Comment must be between 2 and 3000 characters'
-        });
-
-      }
-
-      if(
-        looksLikeCommentSpam(
-          comment
-        )
-      ){
-
-        return res.status(400).json({
-          error:'Comment looks like spam'
-        });
-
-      }
-
-      const article=
-        await pool.query(`
-          SELECT id
-          FROM articles
-          WHERE slug=$1
-          AND status='published'
-          LIMIT 1
-        `,[req.params.slug]);
-
-      if(!article.rows.length){
-
-        return res.status(404).json({
-          error:'Article not found'
-        });
-
-      }
-
-      const articleId=
-        article.rows[0].id;
-
-      const ipHash=
-        hashIP(
-          getClientIP(req)
-        );
-
-      const parentId=
-        req.body.parent_id
-          ?Number(req.body.parent_id)
-          :null;
-
-      /* Reply validation */
-
-      if(parentId!==null){
-
-        if(
-          !Number.isInteger(parentId)||
-          parentId<1
-        ){
-
-          return res.status(400).json({
-            error:'Invalid reply target'
-          });
-
-        }
-
-        const parent=
-          await pool.query(`
-            SELECT id
-            FROM comments
-            WHERE id=$1
-            AND article_id=$2
-            AND status='approved'
-            LIMIT 1
-          `,[
-            parentId,
-            articleId
-          ]);
-
-        if(!parent.rows.length){
-
-          return res.status(400).json({
-            error:'Reply target not found'
-          });
-
-        }
-
-      }
-
-      /* Duplicate protection */
-
-      const duplicate=
+      const parent=
         await pool.query(`
           SELECT id
           FROM comments
-          WHERE article_id=$1
+          WHERE
+            id=$1
+            AND article_id=$2
+            AND status='approved'
+          LIMIT 1
+        `,[
+          parentId,
+          articleId
+        ]);
+
+      if(!parent.rows.length){
+
+        return res.status(400).json({
+          error:
+            'Reply target not found'
+        });
+
+      }
+
+    }
+
+    const duplicate=
+      await pool.query(`
+        SELECT id
+        FROM comments
+        WHERE
+          article_id=$1
           AND ip_hash=$2
           AND LOWER(comment)=LOWER($3)
           AND created_at>
             NOW()-INTERVAL '10 minutes'
-          LIMIT 1
-        `,[
-          articleId,
-          ipHash,
-          comment
-        ]);
+        LIMIT 1
+      `,[
+        articleId,
+        ipHash,
+        comment
+      ]);
 
-      if(duplicate.rows.length){
+    if(duplicate.rows.length){
 
-        return res.status(409).json({
-          error:
-            'This comment was already submitted'
-        });
-
-      }
-
-      const result=
-        await pool.query(`
-          INSERT INTO comments(
-            article_id,
-            name,
-            email,
-            comment,
-            status,
-            ip_hash,
-            parent_id
-          )
-          VALUES(
-            $1,$2,$3,$4,
-            'pending',
-            $5,$6
-          )
-          RETURNING
-            id,
-            name,
-            comment,
-            status,
-            created_at,
-            parent_id
-        `,[
-          articleId,
-          name,
-          email,
-          comment,
-          ipHash,
-          parentId
-        ]);
-
-      res.status(201).json({
-        ok:true,
-        message:
-          'Comment submitted and waiting for approval.',
-        comment:
-          result.rows[0]
-      });
-
-    }catch(e){
-
-      console.error(e);
-
-      res.status(500).json({
-        error:'Could not submit comment'
+      return res.status(409).json({
+        error:
+          'This comment was already submitted'
       });
 
     }
-  }
-);
 
-
-/* =========================
-   COMMENT LIKE
-========================= */
-
-app.post(
-  '/api/comments/:id/like',
-  async(req,res)=>{
-    try{
-
-      const id=
-        Number(req.params.id);
-
-      if(
-        !Number.isInteger(id)||
-        id<1
-      ){
-
-        return res.status(400).json({
-          error:'Invalid comment id'
-        });
-
-      }
-
-      const ipHash=
-        hashIP(
-          getClientIP(req)
-        );
-
-      const exists=
-        await pool.query(`
-          SELECT id
-          FROM comments
-          WHERE id=$1
-          AND status='approved'
-          LIMIT 1
-        `,[id]);
-
-      if(!exists.rows.length){
-
-        return res.status(404).json({
-          error:'Comment not found'
-        });
-
-      }
-
+    const result=
       await pool.query(`
-        INSERT INTO comment_likes(
-          comment_id,
-          ip_hash
+        INSERT INTO comments(
+          article_id,
+          name,
+          email,
+          comment,
+          status,
+          ip_hash,
+          parent_id
         )
-        VALUES($1,$2)
-        ON CONFLICT(
-          comment_id,
-          ip_hash
+        VALUES(
+          $1,$2,$3,$4,
+          'pending',
+          $5,$6
         )
-        DO NOTHING
+        RETURNING
+          id,
+          name,
+          comment,
+          status,
+          created_at,
+          parent_id
+      `,[
+        articleId,
+        name,
+        email,
+        comment,
+        ipHash,
+        parentId
+      ]);
+
+    res.status(201).json({
+      ok:true,
+      message:
+        'Comment submitted and waiting for approval.',
+      comment:
+        result.rows[0]
+    });
+
+  }catch(e){
+
+    console.error(e);
+
+    res.status(500).json({
+      error:
+        'Could not submit comment'
+    });
+
+  }
+
+});
+
+app.post('/api/comments/:id/like',async(req,res)=>{
+
+  try{
+
+    const id=
+      Number(req.params.id);
+
+    if(
+      !Number.isInteger(id)||
+      id<1
+    ){
+
+      return res.status(400).json({
+        error:
+          'Invalid comment id'
+      });
+
+    }
+
+    const ipHash=
+      hashIP(
+        getClientIP(req)
+      );
+
+    const exists=
+      await pool.query(`
+        SELECT id
+        FROM comments
+        WHERE
+          id=$1
+          AND status='approved'
+        LIMIT 1
+      `,[id]);
+
+    if(!exists.rows.length){
+
+      return res.status(404).json({
+        error:
+          'Comment not found'
+      });
+
+    }
+
+    await pool.query(`
+      INSERT INTO comment_likes(
+        comment_id,
+        ip_hash
+      )
+      VALUES($1,$2)
+      ON CONFLICT(
+        comment_id,
+        ip_hash
+      )
+      DO NOTHING
+    `,[
+      id,
+      ipHash
+    ]);
+
+    const count=
+      await pool.query(`
+        SELECT
+          COUNT(*)::int AS likes
+        FROM comment_likes
+        WHERE comment_id=$1
+      `,[id]);
+
+    res.json({
+      ok:true,
+      likes:
+        count.rows[0].likes
+    });
+
+  }catch(e){
+
+    console.error(e);
+
+    res.status(500).json({
+      error:
+        'Could not like comment'
+    });
+
+  }
+
+});
+
+app.post('/api/comments/:id/report',async(req,res)=>{
+
+  try{
+
+    const id=
+      Number(req.params.id);
+
+    const reason=
+      String(
+        req.body.reason||'other'
+      )
+      .trim()
+      .slice(0,40)||'other';
+
+    if(
+      !Number.isInteger(id)||
+      id<1
+    ){
+
+      return res.status(400).json({
+        error:
+          'Invalid comment id'
+      });
+
+    }
+
+    const exists=
+      await pool.query(`
+        SELECT id
+        FROM comments
+        WHERE
+          id=$1
+          AND status='approved'
+        LIMIT 1
+      `,[id]);
+
+    if(!exists.rows.length){
+
+      return res.status(404).json({
+        error:
+          'Comment not found'
+      });
+
+    }
+
+    const ipHash=
+      hashIP(
+        getClientIP(req)
+      );
+
+    const prior=
+      await pool.query(`
+        SELECT id
+        FROM comment_reports
+        WHERE
+          comment_id=$1
+          AND ip_hash=$2
+        LIMIT 1
       `,[
         id,
         ipHash
       ]);
 
-      const count=
-        await pool.query(`
-          SELECT COUNT(*)::int AS likes
-          FROM comment_likes
-          WHERE comment_id=$1
-        `,[id]);
+    if(!prior.rows.length){
 
-      res.json({
-        ok:true,
-        likes:
-          count.rows[0].likes
-      });
-
-    }catch(e){
-
-      console.error(e);
-
-      res.status(500).json({
-        error:'Could not like comment'
-      });
-
-    }
-  }
-);
-
-
-/* =========================
-   COMMENT REPORT
-========================= */
-
-app.post(
-  '/api/comments/:id/report',
-  async(req,res)=>{
-    try{
-
-      const id=
-        Number(req.params.id);
-
-      const reason=
-        String(
-          req.body.reason||'other'
-        )
-        .trim()
-        .slice(0,40)||
-        'other';
-
-      if(
-        !Number.isInteger(id)||
-        id<1
-      ){
-
-        return res.status(400).json({
-          error:'Invalid comment id'
-        });
-
-      }
-
-      const exists=
-        await pool.query(`
-          SELECT id
-          FROM comments
-          WHERE id=$1
-          AND status='approved'
-          LIMIT 1
-        `,[id]);
-
-      if(!exists.rows.length){
-
-        return res.status(404).json({
-          error:'Comment not found'
-        });
-
-      }
-
-      const ipHash=
-        hashIP(
-          getClientIP(req)
-        );
-
-      const prior=
-        await pool.query(`
-          SELECT id
-          FROM comment_reports
-          WHERE comment_id=$1
-          AND ip_hash=$2
-          LIMIT 1
-        `,[
-          id,
-          ipHash
-        ]);
-
-      if(!prior.rows.length){
-
-        await pool.query(`
-          INSERT INTO comment_reports(
-            comment_id,
-            reason,
-            ip_hash
-          )
-          VALUES($1,$2,$3)
-        `,[
-          id,
+      await pool.query(`
+        INSERT INTO comment_reports(
+          comment_id,
           reason,
-          ipHash
-        ]);
-
-      }
-
-      res.json({
-        ok:true,
-        message:
-          'Thanks. Your report was sent to the admin.'
-      });
-
-    }catch(e){
-
-      console.error(e);
-
-      res.status(500).json({
-        error:'Could not report comment'
-      });
-
-    }
-  }
-);
-
-
-/* =========================
-   ADMIN COMMENTS
-========================= */
-
-app.get(
-  '/api/admin/comments',
-  auth,
-  async(req,res)=>{
-    try{
-
-      const result=
-        await pool.query(`
-          SELECT
-            c.id,
-            c.name,
-            c.email,
-            c.comment,
-            c.status,
-            c.created_at,
-            c.article_id,
-            a.title AS article_title,
-            a.slug AS article_slug
-          FROM comments c
-          JOIN articles a
-          ON a.id=c.article_id
-          ORDER BY c.created_at DESC
-        `);
-
-      res.json({
-        comments:result.rows,
-        total:result.rows.length
-      });
-
-    }catch(e){
-
-      console.error(e);
-
-      res.status(500).json({
-        error:'Could not load comments'
-      });
-
-    }
-  }
-);
-
-
-/* =========================
-   ADMIN COMMENT STATUS
-========================= */
-
-app.patch(
-  '/api/admin/comments/:id',
-  auth,
-  async(req,res)=>{
-    try{
-
-      const id=
-        Number(req.params.id);
-
-      const status=
-        String(
-          req.body.status||''
+          ip_hash
         )
-        .trim()
-        .toLowerCase();
+        VALUES($1,$2,$3)
+      `,[
+        id,
+        reason,
+        ipHash
+      ]);
 
-      if(
-        !Number.isInteger(id)||
-        id<1
-      ){
+    }
 
-        return res.status(400).json({
-          error:'Invalid comment id'
-        });
+    res.json({
+      ok:true,
+      message:
+        'Thanks. Your report was sent to the admin.'
+    });
 
-      }
+  }catch(e){
 
-      if(
-        ![
-          'pending',
-          'approved',
-          'rejected'
-        ].includes(status)
-      ){
+    console.error(e);
 
-        return res.status(400).json({
-          error:'Invalid status'
-        });
+    res.status(500).json({
+      error:
+        'Could not report comment'
+    });
 
-      }
+  }
 
-      const result=
-        await pool.query(`
-          UPDATE comments
-          SET status=$1
-          WHERE id=$2
-          RETURNING *
-        `,[
-          status,
-          id
-        ]);
+});
 
-      if(!result.rows.length){
+app.get('/api/admin/comments',auth,async(req,res)=>{
 
-        return res.status(404).json({
-          error:'Comment not found'
-        });
+  try{
 
-      }
+    const result=
+      await pool.query(`
+        SELECT
+          c.id,
+          c.name,
+          c.email,
+          c.comment,
+          c.status,
+          c.created_at,
+          c.article_id,
+          a.title AS article_title,
+          a.slug AS article_slug
+        FROM comments c
+        JOIN articles a
+        ON a.id=c.article_id
+        ORDER BY
+          c.created_at DESC
+      `);
 
-      res.json({
-        ok:true,
-        comment:
-          result.rows[0]
-      });
+    res.json({
+      comments:
+        result.rows,
+      total:
+        result.rows.length
+    });
 
-    }catch(e){
+  }catch(e){
 
-      console.error(e);
+    console.error(e);
 
-      res.status(500).json({
-        error:'Could not update comment'
+    res.status(500).json({
+      error:
+        'Could not load comments'
+    });
+
+  }
+
+});
+
+app.patch('/api/admin/comments/:id',auth,async(req,res)=>{
+
+  try{
+
+    const id=
+      Number(req.params.id);
+
+    const status=
+      String(
+        req.body.status||''
+      )
+      .trim()
+      .toLowerCase();
+
+    if(
+      !Number.isInteger(id)||
+      id<1
+    ){
+
+      return res.status(400).json({
+        error:
+          'Invalid comment id'
       });
 
     }
-  }
-);
 
+    if(
+      ![
+        'pending',
+        'approved',
+        'rejected'
+      ].includes(status)
+    ){
 
-/* =========================
-   ADMIN COMMENT STATS
-========================= */
-
-app.get(
-  '/api/admin/comments/stats',
-  auth,
-  async(req,res)=>{
-    try{
-
-      const r=
-        await pool.query(`
-          SELECT
-            COUNT(*)::int total,
-            COUNT(*)
-              FILTER(
-                WHERE status='pending'
-              )::int pending,
-            COUNT(*)
-              FILTER(
-                WHERE status='approved'
-              )::int approved,
-            COUNT(*)
-              FILTER(
-                WHERE status='rejected'
-              )::int rejected
-          FROM comments
-        `);
-
-      const reports=
-        await pool.query(`
-          SELECT COUNT(*)::int open
-          FROM comment_reports
-          WHERE status='open'
-        `);
-
-      res.json({
-        ...r.rows[0],
-        openReports:
-          reports.rows[0].open
-      });
-
-    }catch(e){
-
-      console.error(e);
-
-      res.status(500).json({
-        error:'Could not load comment stats'
+      return res.status(400).json({
+        error:
+          'Invalid status'
       });
 
     }
+
+    const result=
+      await pool.query(`
+        UPDATE comments
+        SET status=$1
+        WHERE id=$2
+        RETURNING *
+      `,[
+        status,
+        id
+      ]);
+
+    if(!result.rows.length){
+
+      return res.status(404).json({
+        error:
+          'Comment not found'
+      });
+
+    }
+
+    res.json({
+      ok:true,
+      comment:
+        result.rows[0]
+    });
+
+  }catch(e){
+
+    console.error(e);
+
+    res.status(500).json({
+      error:
+        'Could not update comment'
+    });
+
   }
-);
 
+});
 
-/* =========================
-   COMMENT ANALYTICS
-========================= */
+app.get('/api/admin/comments/stats',auth,async(req,res)=>{
 
-app.get(
-  '/api/admin/comments/analytics',
-  auth,
-  async(req,res)=>{
-    try{
+  try{
 
-      const [
-        top,
-        days
-      ]=await Promise.all([
+    const r=
+      await pool.query(`
+        SELECT
+          COUNT(*)::int total,
+          COUNT(*) FILTER(
+            WHERE status='pending'
+          )::int pending,
+          COUNT(*) FILTER(
+            WHERE status='approved'
+          )::int approved,
+          COUNT(*) FILTER(
+            WHERE status='rejected'
+          )::int rejected
+        FROM comments
+      `);
+
+    const reports=
+      await pool.query(`
+        SELECT
+          COUNT(*)::int open
+        FROM comment_reports
+        WHERE status='open'
+      `);
+
+    res.json({
+      ...r.rows[0],
+      openReports:
+        reports.rows[0].open
+    });
+
+  }catch(e){
+
+    console.error(e);
+
+    res.status(500).json({
+      error:
+        'Could not load comment stats'
+    });
+
+  }
+
+});
+
+app.get('/api/admin/comments/analytics',auth,async(req,res)=>{
+
+  try{
+
+    const [top,days]=
+      await Promise.all([
 
         pool.query(`
           SELECT
@@ -1666,361 +1649,310 @@ app.get(
 
       ]);
 
-      res.json({
-        top:top.rows,
-        days:days.rows
-      });
+    res.json({
+      top:top.rows,
+      days:days.rows
+    });
 
-    }catch(e){
+  }catch(e){
 
-      console.error(e);
+    console.error(e);
 
-      res.status(500).json({
-        error:'Could not load analytics'
+    res.status(500).json({
+      error:
+        'Could not load analytics'
+    });
+
+  }
+
+});
+
+app.get('/api/admin/comment-reports',auth,async(req,res)=>{
+
+  try{
+
+    const r=
+      await pool.query(`
+        SELECT
+          r.id,
+          r.comment_id,
+          r.reason,
+          r.status,
+          r.created_at,
+          c.name,
+          c.comment,
+          a.title AS article_title
+        FROM comment_reports r
+        JOIN comments c
+        ON c.id=r.comment_id
+        JOIN articles a
+        ON a.id=c.article_id
+        ORDER BY
+          CASE
+            WHEN r.status='open'
+            THEN 0
+            ELSE 1
+          END,
+          r.created_at DESC
+      `);
+
+    res.json({
+      reports:
+        r.rows,
+      total:
+        r.rows.length
+    });
+
+  }catch(e){
+
+    console.error(e);
+
+    res.status(500).json({
+      error:
+        'Could not load reports'
+    });
+
+  }
+
+});
+
+app.patch('/api/admin/comment-reports/:id',auth,async(req,res)=>{
+
+  try{
+
+    const id=
+      Number(req.params.id);
+
+    const status=
+      req.body.status==='resolved'
+        ?'resolved'
+        :'open';
+
+    const r=
+      await pool.query(`
+        UPDATE comment_reports
+        SET status=$1
+        WHERE id=$2
+        RETURNING *
+      `,[
+        status,
+        id
+      ]);
+
+    if(!r.rows.length){
+
+      return res.status(404).json({
+        error:
+          'Report not found'
       });
 
     }
+
+    res.json({
+      ok:true,
+      report:
+        r.rows[0]
+    });
+
+  }catch(e){
+
+    console.error(e);
+
+    res.status(500).json({
+      error:
+        'Could not update report'
+    });
+
   }
-);
 
+});
 
-/* =========================
-   ADMIN COMMENT REPORTS
-========================= */
+app.delete('/api/admin/comment-reports/:id',auth,async(req,res)=>{
 
-app.get(
-  '/api/admin/comment-reports',
-  auth,
-  async(req,res)=>{
-    try{
+  try{
 
-      const r=
-        await pool.query(`
-          SELECT
-            r.id,
-            r.comment_id,
-            r.reason,
-            r.status,
-            r.created_at,
-            c.name,
-            c.comment,
-            a.title AS article_title
-          FROM comment_reports r
-          JOIN comments c
-          ON c.id=r.comment_id
-          JOIN articles a
-          ON a.id=c.article_id
-          ORDER BY
-            CASE
-              WHEN r.status='open'
-              THEN 0
-              ELSE 1
-            END,
-            r.created_at DESC
-        `);
+    const id=
+      Number(req.params.id);
 
-      res.json({
-        reports:r.rows,
-        total:r.rows.length
-      });
+    await pool.query(
+      `
+      DELETE FROM comment_reports
+      WHERE id=$1
+      `,
+      [id]
+    );
 
-    }catch(e){
+    res.json({
+      ok:true
+    });
 
-      console.error(e);
+  }catch(e){
 
-      res.status(500).json({
-        error:'Could not load reports'
+    console.error(e);
+
+    res.status(500).json({
+      error:
+        'Could not delete report'
+    });
+
+  }
+
+});
+
+app.delete('/api/admin/comments/:id',auth,async(req,res)=>{
+
+  try{
+
+    const id=
+      Number(req.params.id);
+
+    if(
+      !Number.isInteger(id)||
+      id<1
+    ){
+
+      return res.status(400).json({
+        error:
+          'Invalid comment id'
       });
 
     }
-  }
-);
 
-
-/* =========================
-   UPDATE REPORT
-========================= */
-
-app.patch(
-  '/api/admin/comment-reports/:id',
-  auth,
-  async(req,res)=>{
-    try{
-
-      const id=
-        Number(req.params.id);
-
-      const status=
-        req.body.status==='resolved'
-          ?'resolved'
-          :'open';
-
-      const r=
-        await pool.query(`
-          UPDATE comment_reports
-          SET status=$1
-          WHERE id=$2
-          RETURNING *
-        `,[
-          status,
-          id
-        ]);
-
-      if(!r.rows.length){
-
-        return res.status(404).json({
-          error:'Report not found'
-        });
-
-      }
-
-      res.json({
-        ok:true,
-        report:r.rows[0]
-      });
-
-    }catch(e){
-
-      console.error(e);
-
-      res.status(500).json({
-        error:'Could not update report'
-      });
-
-    }
-  }
-);
-
-
-/* =========================
-   DELETE REPORT
-========================= */
-
-app.delete(
-  '/api/admin/comment-reports/:id',
-  auth,
-  async(req,res)=>{
-    try{
-
-      const id=
-        Number(req.params.id);
-
-      await pool.query(
-        `
-        DELETE FROM comment_reports
+    const result=
+      await pool.query(`
+        DELETE FROM comments
         WHERE id=$1
-        `,
-        [id]
-      );
+        RETURNING id
+      `,[id]);
 
-      res.json({
-        ok:true
-      });
+    if(!result.rows.length){
 
-    }catch(e){
-
-      console.error(e);
-
-      res.status(500).json({
-        error:'Could not delete report'
+      return res.status(404).json({
+        error:
+          'Comment not found'
       });
 
     }
+
+    res.json({
+      ok:true
+    });
+
+  }catch(e){
+
+    console.error(e);
+
+    res.status(500).json({
+      error:
+        'Could not delete comment'
+    });
+
   }
-);
 
+});
 
-/* =========================
-   DELETE COMMENT
-========================= */
+app.get('/api/admin/comment-stats',auth,async(req,res)=>{
 
-app.delete(
-  '/api/admin/comments/:id',
-  auth,
-  async(req,res)=>{
-    try{
+  try{
 
-      const id=
-        Number(req.params.id);
+    const result=
+      await pool.query(`
+        SELECT
+          COUNT(*)::int AS total,
+          COUNT(*) FILTER(
+            WHERE status='pending'
+          )::int AS pending,
+          COUNT(*) FILTER(
+            WHERE status='approved'
+          )::int AS approved,
+          COUNT(*) FILTER(
+            WHERE status='rejected'
+          )::int AS rejected
+        FROM comments
+      `);
 
-      if(
-        !Number.isInteger(id)||
-        id<1
-      ){
+    res.json(
+      result.rows[0]
+    );
 
-        return res.status(400).json({
-          error:'Invalid comment id'
-        });
+  }catch(e){
 
-      }
+    console.error(e);
 
-      const result=
+    res.status(500).json({
+      error:
+        'Could not load comment stats'
+    });
+
+  }
+
+});
+
+app.get('/api/admin/articles',auth,async(q,r)=>{
+
+  try{
+
+    r.json(
+      (
         await pool.query(`
-          DELETE FROM comments
-          WHERE id=$1
-          RETURNING id
-        `,[id]);
+          SELECT *
+          FROM articles
+          ORDER BY created_at DESC
+        `)
+      ).rows
+    );
 
-      if(!result.rows.length){
+  }catch{
 
-        return res.status(404).json({
-          error:'Comment not found'
-        });
+    r.status(500).json({
+      error:'Failed'
+    });
 
-      }
-
-      res.json({
-        ok:true
-      });
-
-    }catch(e){
-
-      console.error(e);
-
-      res.status(500).json({
-        error:'Could not delete comment'
-      });
-
-    }
   }
-);
 
+});
 
-/* =========================
-   ADMIN COMMENT-STATS
-========================= */
+app.get('/api/admin/stats',auth,async(q,r)=>{
 
-app.get(
-  '/api/admin/comment-stats',
-  auth,
-  async(req,res)=>{
-    try{
+  try{
 
-      const result=
+    r.json(
+      (
         await pool.query(`
           SELECT
-            COUNT(*)::int AS total,
-            COUNT(*)
-              FILTER(
-                WHERE status='pending'
-              )::int AS pending,
-            COUNT(*)
-              FILTER(
-                WHERE status='approved'
-              )::int AS approved,
-            COUNT(*)
-              FILTER(
-                WHERE status='rejected'
-              )::int AS rejected
-          FROM comments
-        `);
+            COUNT(*)::int total,
 
-      res.json(
-        result.rows[0]
-      );
+            COUNT(*) FILTER(
+              WHERE status='published'
+            )::int published,
 
-    }catch(e){
+            COUNT(*) FILTER(
+              WHERE status='draft'
+            )::int drafts,
 
-      console.error(e);
+            COALESCE(
+              SUM(views),
+              0
+            )::int views,
 
-      res.status(500).json({
-        error:'Could not load comment stats'
-      });
+            COUNT(
+              DISTINCT category
+            )::int categories
 
-    }
-  }
-);
+          FROM articles
+        `)
+      ).rows[0]
+    );
 
+  }catch{
 
-/* =========================
-   ADMIN ARTICLES
-========================= */
-
-app.get(
-  '/api/admin/articles',
-  auth,
-  async(q,r)=>{
-
-    try{
-
-      r.json(
-        (
-          await pool.query(`
-            SELECT *
-            FROM articles
-            ORDER BY created_at DESC
-          `)
-        ).rows
-      );
-
-    }catch{
-
-      r.status(500).json({
-        error:'Failed'
-      });
-
-    }
+    r.status(500).json({
+      error:'Failed'
+    });
 
   }
-);
 
-
-/* =========================
-   ADMIN STATS
-========================= */
-
-app.get(
-  '/api/admin/stats',
-  auth,
-  async(q,r)=>{
-
-    try{
-
-      r.json(
-        (
-          await pool.query(`
-            SELECT
-              COUNT(*)::int total,
-
-              COUNT(*)
-                FILTER(
-                  WHERE status='published'
-                )::int published,
-
-              COUNT(*)
-                FILTER(
-                  WHERE status='draft'
-                )::int drafts,
-
-              COALESCE(
-                SUM(views),
-                0
-              )::int views,
-
-              COUNT(
-                DISTINCT category
-              )::int categories
-
-            FROM articles
-          `)
-        ).rows[0]
-      );
-
-    }catch{
-
-      r.status(500).json({
-        error:'Failed'
-      });
-
-    }
-
-  }
-);
-
-
-/* =========================
-   VALIDATION
-========================= */
+});
 
 function valid(b){
 
@@ -2039,14 +1971,12 @@ function valid(b){
     author:
       String(
         b.author||'Admin'
-      ).trim()||
-      'Admin',
+      ).trim()||'Admin',
 
     category:
       String(
         b.category||'Technology'
-      ).trim()||
-      'Technology',
+      ).trim()||'Technology',
 
     excerpt:
       String(
@@ -2085,217 +2015,200 @@ function valid(b){
   }
 
   return a;
-
 }
 
+app.post('/api/articles',auth,async(req,res)=>{
 
-/* =========================
-   CREATE ARTICLE
-========================= */
+  try{
 
-app.post(
-  '/api/articles',
-  auth,
-  async(req,res)=>{
-    try{
+    const a=
+      valid(req.body);
 
-      const a=
-        valid(req.body);
+    const base=
+      slugify(a.title);
 
-      const base=
-        slugify(a.title);
+    const slug=
+      base+'-'+
+      Date.now().toString(36);
 
-      const slug=
-        base+'-'+
-        Date.now().toString(36);
+    const x=
+      await pool.query(
+        `
+        INSERT INTO articles(
+          title,
+          content,
+          author,
+          category,
+          excerpt,
+          tags,
+          image_url,
+          status,
+          featured,
+          slug,
+          updated_at
+        )
+        VALUES(
+          $1,$2,$3,$4,$5,
+          $6,$7,$8,$9,$10,
+          NOW()
+        )
+        RETURNING *
+        `,
+        [
+          a.title,
+          a.content,
+          a.author,
+          a.category,
+          a.excerpt,
+          a.tags,
+          a.image_url,
+          a.status,
+          a.featured,
+          slug
+        ]
+      );
 
-      const x=
-        await pool.query(
-          `
-          INSERT INTO articles(
-            title,
-            content,
-            author,
-            category,
-            excerpt,
-            tags,
-            image_url,
-            status,
-            featured,
-            slug,
-            updated_at
-          )
-          VALUES(
-            $1,$2,$3,$4,$5,
-            $6,$7,$8,$9,$10,
-            NOW()
-          )
-          RETURNING *
-          `,
-          [
-            a.title,
-            a.content,
-            a.author,
-            a.category,
-            a.excerpt,
-            a.tags,
-            a.image_url,
-            a.status,
-            a.featured,
-            slug
-          ]
-        );
-
-      res
-        .status(201)
-        .json(
-          x.rows[0]
-        );
-
-    }catch(e){
-
-      res.status(400).json({
-        error:e.message
-      });
-
-    }
-
-  }
-);
-
-
-/* =========================
-   UPDATE ARTICLE
-========================= */
-
-app.put(
-  '/api/articles/:id',
-  auth,
-  async(req,res)=>{
-    try{
-
-      const a=
-        valid(req.body);
-
-      const id=
-        +req.params.id;
-
-      const x=
-        await pool.query(
-          `
-          UPDATE articles
-          SET
-            title=$1,
-            content=$2,
-            author=$3,
-            category=$4,
-            excerpt=$5,
-            tags=$6,
-            image_url=$7,
-            status=$8,
-            featured=$9,
-            updated_at=NOW()
-          WHERE id=$10
-          RETURNING *
-          `,
-          [
-            a.title,
-            a.content,
-            a.author,
-            a.category,
-            a.excerpt,
-            a.tags,
-            a.image_url,
-            a.status,
-            a.featured,
-            id
-          ]
-        );
-
-      if(!x.rows.length){
-
-        return res.status(404).json({
-          error:'Not found'
-        });
-
-      }
-
-      res.json(
+    res
+      .status(201)
+      .json(
         x.rows[0]
       );
 
-    }catch(e){
+  }catch(e){
 
-      res.status(400).json({
-        error:e.message
+    res.status(400).json({
+      error:e.message
+    });
+
+  }
+
+});
+
+app.put('/api/articles/:id',auth,async(req,res)=>{
+
+  try{
+
+    const a=
+      valid(req.body);
+
+    const id=
+      +req.params.id;
+
+    const x=
+      await pool.query(
+        `
+        UPDATE articles
+        SET
+          title=$1,
+          content=$2,
+          author=$3,
+          category=$4,
+          excerpt=$5,
+          tags=$6,
+          image_url=$7,
+          status=$8,
+          featured=$9,
+          updated_at=NOW()
+        WHERE id=$10
+        RETURNING *
+        `,
+        [
+          a.title,
+          a.content,
+          a.author,
+          a.category,
+          a.excerpt,
+          a.tags,
+          a.image_url,
+          a.status,
+          a.featured,
+          id
+        ]
+      );
+
+    if(!x.rows.length){
+
+      return res.status(404).json({
+        error:'Not found'
       });
 
     }
 
+    res.json(
+      x.rows[0]
+    );
+
+  }catch(e){
+
+    res.status(400).json({
+      error:e.message
+    });
+
   }
-);
 
+});
 
-/* =========================
-   DELETE ARTICLE
-========================= */
+app.delete('/api/articles/:id',auth,async(req,res)=>{
 
-app.delete(
-  '/api/articles/:id',
-  auth,
-  async(req,res)=>{
-    try{
+  try{
 
-      const x=
-        await pool.query(
-          `
-          DELETE FROM articles
-          WHERE id=$1
-          RETURNING id
-          `,
-          [+req.params.id]
-        );
+    const x=
+      await pool.query(
+        `
+        DELETE FROM articles
+        WHERE id=$1
+        RETURNING id
+        `,
+        [+req.params.id]
+      );
 
-      if(!x.rows.length){
+    if(!x.rows.length){
 
-        return res.status(404).json({
-          error:'Not found'
-        });
-
-      }
-
-      res.json({
-        ok:true
-      });
-
-    }catch{
-
-      res.status(500).json({
-        error:'Delete failed'
+      return res.status(404).json({
+        error:'Not found'
       });
 
     }
 
+    res.json({
+      ok:true
+    });
+
+  }catch{
+
+    res.status(500).json({
+      error:
+        'Delete failed'
+    });
+
   }
-);
 
-
-/* =========================
-   START SERVER
-========================= */
+});
 
 init()
   .then(()=>{
+
     app.listen(
       PORT,
       ()=>{
+
         console.log(
-          'GyanTech Advanced running on '+PORT
+          'GyanTech Advanced running on '+
+          PORT
         );
+
       }
     );
+
   })
   .catch(e=>{
+
     console.error(e);
+
     process.exit(1);
+
   });
+
+  }
+
+});
