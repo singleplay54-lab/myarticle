@@ -84,6 +84,14 @@ footer{text-align:center;padding:30px 20px;color:#64748b;font-size:.9rem}
 @media(max-width:800px){.article-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:520px){.article-grid{grid-template-columns:1fr}.back-top{right:14px;bottom:14px}}
 
+
+/* Share buttons near article title */
+.share-box{margin:18px 0 28px;padding:18px 20px;border:1px solid #bae6fd;border-radius:16px;background:#f0f9ff}
+.share-title{margin:0 0 12px;font-size:1rem}
+.share-buttons{display:flex;flex-wrap:wrap;gap:10px}
+.share-btn{min-height:42px}
+@media(max-width:520px){.share-buttons{display:grid;grid-template-columns:1fr 1fr}.share-btn{justify-content:center}}
+
 </style>
 </head>
 
@@ -113,12 +121,6 @@ footer{text-align:center;padding:30px 20px;color:#64748b;font-size:.9rem}
       <h1 id="title"></h1>
 
       <div id="meta" class="meta"></div>
-
-      <div id="excerpt" class="excerpt hidden"></div>
-
-      <div id="content" class="content"></div>
-
-      <div id="tags" class="tags hidden"></div>
 
       <section class="share-box" aria-label="Share article">
         <h2 class="share-title">🔗 Share this article</h2>
@@ -157,6 +159,13 @@ footer{text-align:center;padding:30px 20px;color:#64748b;font-size:.9rem}
 
         <p id="shareStatus" class="share-status"></p>
       </section>
+
+      <div id="excerpt" class="excerpt hidden"></div>
+
+      <div id="content" class="content"></div>
+
+      <div id="tags" class="tags hidden"></div>
+
 
     </div>
   </article>
