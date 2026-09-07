@@ -1,758 +1,115 @@
 <!doctype html>
 <html lang="en">
+
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
 <title>Article — GyanTech</title>
-<meta name="description" content="Read technology articles on GyanTech Blog.">
-<meta name="theme-color" content="#0f172a">
 
 <style>
 *{box-sizing:border-box}
-
-:root{
-  --bg:#f5f7fb;
-  --surface:#ffffff;
-  --surface-2:#f8fafc;
-  --text:#10203a;
-  --heading:#0f172a;
-  --muted:#64748b;
-  --border:#e2e8f0;
-  --primary:#0284c7;
-  --primary-soft:#e0f2fe;
-  --nav:#0f172a;
-  --nav-text:#e2e8f0;
-  --code:#0f172a;
-  --shadow:0 8px 30px rgba(15,23,42,.06);
-}
-
-html{scroll-behavior:smooth}
-
-html.dark{
-  --bg:#0b1120;
-  --surface:#111827;
-  --surface-2:#172033;
-  --text:#dbe4f0;
-  --heading:#f8fafc;
-  --muted:#94a3b8;
-  --border:#263449;
-  --primary:#38bdf8;
-  --primary-soft:#0c3b57;
-  --nav:#070d19;
-  --nav-text:#dbeafe;
-  --code:#020617;
-  --shadow:0 10px 35px rgba(0,0,0,.28);
-}
-
-body{
-  margin:0;
-  background:var(--bg);
-  font-family:Segoe UI,Arial,sans-serif;
-  color:var(--text);
-  line-height:1.7;
-  transition:background .2s ease,color .2s ease;
-}
-
-a{color:inherit}
-
-.nav{
-  position:sticky;
-  top:0;
-  z-index:1000;
-  background:var(--nav);
-  padding:14px 22px;
-  box-shadow:0 2px 14px rgba(0,0,0,.12);
-}
-
-.nav-inner{
-  max-width:1100px;
-  margin:auto;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:20px;
-}
-
-.brand{
-  color:#38bdf8;
-  font-weight:800;
-  font-size:1.4rem;
-  text-decoration:none;
-  white-space:nowrap;
-}
-
-.nav-right{
-  display:flex;
-  align-items:center;
-  gap:18px;
-}
-
-.nav-links{
-  display:flex;
-  gap:20px;
-}
-
-.nav-links a{
-  color:var(--nav-text);
-  font-size:.95rem;
-  font-weight:600;
-  text-decoration:none;
-}
-
+body{margin:0;background:#f5f7fb;font-family:Segoe UI,Arial,sans-serif;color:#10203a;line-height:1.7}
+.nav{background:#0f172a;padding:17px 22px}
+.nav-inner{max-width:1100px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:20px}
+.nav a{color:#38bdf8;font-weight:800;font-size:1.4rem;text-decoration:none}
+.nav-links{display:flex;gap:20px}
+.nav-links a{color:#e2e8f0;font-size:.95rem;font-weight:600}
 .nav-links a:hover{color:#38bdf8}
-
-.theme-toggle{
-  border:1px solid #475569;
-  background:rgba(255,255,255,.06);
-  color:#f8fafc;
-  border-radius:999px;
-  width:42px;
-  height:38px;
-  cursor:pointer;
-  font-size:17px;
-  display:grid;
-  place-items:center;
-  transition:.2s;
-}
-
-.theme-toggle:hover{
-  background:rgba(255,255,255,.14);
-  transform:translateY(-1px);
-}
-
-.progress{
-  position:fixed;
-  left:0;
-  top:0;
-  z-index:2000;
-  height:3px;
-  width:0;
-  background:#38bdf8;
-  transition:width .05s linear;
-}
-
-.wrap{
-  max-width:900px;
-  margin:34px auto 55px;
-  padding:0 20px;
-}
-
-/* BREADCRUMBS */
-.breadcrumbs{
-  display:flex;
-  flex-wrap:wrap;
-  align-items:center;
-  gap:7px;
-  margin-bottom:16px;
-  font-size:.86rem;
-  color:var(--muted);
-}
-
-.breadcrumbs a{
-  color:var(--primary);
-  font-weight:700;
-  text-decoration:none;
-}
-
-.breadcrumbs a:hover{text-decoration:underline}
-
-.breadcrumb-current{
-  max-width:100%;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-
-/* ARTICLE */
-.article-card{
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:20px;
-  overflow:hidden;
-  box-shadow:var(--shadow);
-}
-
-.hero-image{
-  width:100%;
-  max-height:470px;
-  object-fit:cover;
-  display:block;
-}
-
-.article-body{padding:42px}
-
-.category{
-  display:inline-block;
-  background:var(--primary-soft);
-  color:var(--primary);
-  padding:5px 11px;
-  border-radius:999px;
-  font-size:.8rem;
-  font-weight:800;
-  margin-bottom:14px;
-}
-
-h1{
-  margin:0 0 14px;
-  font-size:clamp(2rem,5vw,3rem);
-  line-height:1.2;
-  color:var(--heading);
-  letter-spacing:-.025em;
-}
-
-.meta{
-  color:var(--muted);
-  font-size:.9rem;
-  margin-bottom:25px;
-}
-
-.excerpt{
-  padding:17px 19px;
-  background:var(--surface-2);
-  border-left:4px solid var(--primary);
-  border-radius:8px;
-  color:var(--text);
-  margin-bottom:30px;
-}
-
-.content{
-  color:var(--text);
-  font-size:1.08rem;
-  overflow-wrap:anywhere;
-}
-
-.content h2{
-  margin:34px 0 12px;
-  font-size:1.65rem;
-  line-height:1.3;
-  color:var(--heading);
-}
-
-.content h3{
-  margin:26px 0 10px;
-  font-size:1.3rem;
-  line-height:1.35;
-  color:var(--heading);
-}
-
+.wrap{max-width:850px;margin:40px auto;padding:0 20px}
+.article-card{background:#fff;border:1px solid #e2e8f0;border-radius:20px;overflow:hidden;box-shadow:0 8px 30px rgba(15,23,42,.06)}
+.hero-image{width:100%;max-height:430px;object-fit:cover;display:block}
+.article-body{padding:38px}
+.category{display:inline-block;background:#e0f2fe;color:#0369a1;padding:5px 11px;border-radius:999px;font-size:.8rem;font-weight:800;margin-bottom:14px}
+h1{margin:0 0 14px;font-size:clamp(2rem,5vw,3rem);line-height:1.2;color:#0f172a}
+.meta{color:#64748b;font-size:.9rem;margin-bottom:25px}
+.excerpt{padding:16px 18px;background:#f8fafc;border-left:4px solid #0284c7;border-radius:8px;color:#475569;margin-bottom:30px}
+.content{color:#1e293b;font-size:1.08rem;overflow-wrap:anywhere}
+.content h2{margin:34px 0 12px;font-size:1.65rem;line-height:1.3;color:#0f172a}
+.content h3{margin:26px 0 10px;font-size:1.3rem;line-height:1.35;color:#0f172a}
 .content p{margin:0 0 18px}
-
-.content ul,.content ol{
-  margin:12px 0 20px;
-  padding-left:28px;
-}
-
+.content ul,.content ol{margin:12px 0 20px;padding-left:28px}
 .content li{margin-bottom:7px}
+.content blockquote{margin:22px 0;padding:15px 20px;border-left:4px solid #0284c7;background:#f8fafc;color:#475569;font-style:italic;border-radius:0 10px 10px 0}
+.content strong{color:#0f172a}
+.content a{color:#0284c7;font-weight:600}
+.content img{max-width:100%;height:auto;display:block;margin:20px auto;border-radius:12px}
+.content pre{overflow:auto;background:#0f172a;color:#e2e8f0;padding:16px;border-radius:10px}
+.content code{background:#f1f5f9;padding:2px 5px;border-radius:4px}
 
-.content blockquote{
-  margin:22px 0;
-  padding:15px 20px;
-  border-left:4px solid var(--primary);
-  background:var(--surface-2);
-  color:var(--muted);
-  font-style:italic;
-  border-radius:0 10px 10px 0;
-}
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:30px;padding-top:20px;border-top:1px solid #e2e8f0}
+.tag{background:#f1f5f9;color:#475569;padding:5px 10px;border-radius:999px;font-size:.8rem;font-weight:700}
 
-.content strong{color:var(--heading)}
+/* Share section */
+.share-box{margin-top:32px;padding:22px;border:1px solid #e2e8f0;border-radius:16px;background:#f8fafc}
+.share-title{margin:0 0 14px;font-size:1.05rem;font-weight:800;color:#0f172a}
+.share-buttons{display:flex;flex-wrap:wrap;gap:10px}
+.share-btn{border:0;border-radius:10px;padding:10px 15px;font:inherit;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:7px;transition:.2s;box-shadow:0 2px 8px rgba(15,23,42,.06)}
+.share-btn:hover{transform:translateY(-1px);filter:brightness(.97)}
+.share-whatsapp{background:#dcfce7;color:#166534}
+.share-facebook{background:#dbeafe;color:#1d4ed8}
+.share-x{background:#e2e8f0;color:#0f172a}
+.share-copy{background:#e0f2fe;color:#0369a1}
+.share-status{margin:10px 0 0;color:#64748b;font-size:.82rem;min-height:20px}
 
-.content a{
-  color:var(--primary);
-  font-weight:600;
-}
+/* COMMENTS */
+.comments-box{margin-top:32px;padding:24px;border:1px solid #e2e8f0;border-radius:16px;background:#fff}
+.comments-title{margin:0 0 6px;color:#0f172a;font-size:1.35rem}
+.comments-subtitle{margin:0 0 18px;color:#64748b;font-size:.9rem}
+.comment-form{display:grid;gap:12px;margin-bottom:26px}
+.comment-form input,.comment-form textarea{width:100%;padding:12px 13px;border:1px solid #cbd5e1;border-radius:10px;font:inherit;outline:none}
+.comment-form input:focus,.comment-form textarea:focus{border-color:#0284c7}
+.comment-form textarea{min-height:120px;resize:vertical}
+.comment-submit{border:0;border-radius:10px;padding:11px 16px;background:#0284c7;color:#fff;font:inherit;font-weight:800;cursor:pointer}
+.comment-submit:disabled{opacity:.6;cursor:not-allowed}
+.comment-status{min-height:20px;color:#64748b;font-size:.88rem}
+.comment-item{padding:16px 0;border-top:1px solid #e2e8f0}
+.comment-item:first-child{border-top:0}
+.comment-name{font-weight:800;color:#0f172a}
+.comment-date{color:#94a3b8;font-size:.78rem;margin-left:8px}
+.comment-text{margin-top:6px;color:#334155;white-space:pre-wrap;overflow-wrap:anywhere}
+.no-comments{padding:18px;background:#f8fafc;border-radius:10px;color:#64748b;text-align:center}
+@media(max-width:650px){.comments-box{padding:20px}.comment-date{display:block;margin:3px 0 0}}
 
-.content img{
-  max-width:100%;
-  height:auto;
-  display:block;
-  margin:20px auto;
-  border-radius:12px;
-}
-
-.content pre{
-  overflow:auto;
-  background:var(--code);
-  color:#e2e8f0;
-  padding:16px;
-  border-radius:10px;
-}
-
-.content code{
-  background:var(--surface-2);
-  padding:2px 5px;
-  border-radius:4px;
-}
-
-/* TAGS */
-.tags{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-  margin-top:30px;
-  padding-top:20px;
-  border-top:1px solid var(--border);
-}
-
-.tag{
-  background:var(--surface-2);
-  color:var(--muted);
-  padding:5px 10px;
-  border-radius:999px;
-  font-size:.8rem;
-  font-weight:700;
-}
-
-/* SHARE */
-.share-box{
-  margin-top:34px;
-  padding-top:26px;
-  border-top:1px solid var(--border);
-}
-
-.share-title{
-  margin:0 0 14px;
-  font-size:1.15rem;
-  color:var(--heading);
-}
-
-.share-buttons{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:10px;
-}
-
-.share-btn{
-  min-height:44px;
-  padding:10px 12px;
-  border:1px solid var(--border);
-  border-radius:10px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:7px;
-  text-decoration:none;
-  font-weight:700;
-  font-size:.9rem;
-  cursor:pointer;
-  transition:.2s;
-  background:var(--surface);
-  color:var(--text);
-}
-
-.share-btn:hover{
-  transform:translateY(-2px);
-  box-shadow:0 7px 18px rgba(15,23,42,.10);
-}
-
-.share-whatsapp:hover{border-color:#22c55e}
-.share-facebook:hover{border-color:#3b82f6}
-.share-x:hover{border-color:#64748b}
-.share-copy:hover{border-color:var(--primary)}
-
-.share-status{
-  min-height:20px;
-  margin:10px 0 0;
-  color:var(--primary);
-  font-size:.85rem;
-  font-weight:600;
-}
-
-/* BACK */
-.back{
-  display:inline-flex;
-  align-items:center;
-  gap:5px;
-  margin-bottom:14px;
-  color:var(--primary);
-  text-decoration:none;
-  font-weight:700;
-}
-
-.back:hover{text-decoration:underline}
-
-/* LOADING / ERROR */
-.loading,.error{
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:16px;
-  padding:40px 25px;
-  text-align:center;
-  color:var(--muted);
-}
-
-.error{color:#ef4444}
-
+.back{display:inline-block;margin-bottom:18px;color:#0284c7;text-decoration:none;font-weight:700}
+.loading,.error{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:40px 25px;text-align:center;color:#64748b}
+.error{color:#b91c1c}
 .hidden{display:none!important}
+footer{text-align:center;padding:30px 20px;color:#64748b;font-size:.9rem}
 
-/* BACK TO TOP */
-.top-btn{
-  position:fixed;
-  right:20px;
-  bottom:20px;
-  width:44px;
-  height:44px;
-  border:1px solid var(--border);
-  border-radius:50%;
-  background:var(--surface);
-  color:var(--heading);
-  box-shadow:var(--shadow);
-  cursor:pointer;
-  display:none;
-  place-items:center;
-  font-size:18px;
-  z-index:900;
+@media(max-width:650px){
+  .nav-inner{flex-direction:column;align-items:flex-start}
+  .nav-links{gap:14px}
+  .wrap{margin:25px auto;padding:0 12px}
+  .article-body{padding:25px 20px}
+  h1{font-size:2rem}
+  .content{font-size:1rem}
+  .share-buttons{display:grid;grid-template-columns:1fr 1fr}
+  .share-btn{justify-content:center}
 }
-
-.top-btn.show{display:grid}
-
-footer{
-  text-align:center;
-  padding:32px 20px;
-  color:var(--muted);
-  font-size:.9rem;
-}
-
-/* MOBILE */
-@media(max-width:700px){
-  .nav{padding:12px 15px}
-
-  .nav-inner{
-    gap:12px;
-  }
-
-  .nav-right{
-    gap:10px;
-  }
-
-  .nav-links{
-    gap:12px;
-  }
-
-  .nav-links a{
-    font-size:.85rem;
-  }
-
-  .brand{
-    font-size:1.15rem;
-  }
-
-  .wrap{
-    margin:22px auto 40px;
-    padding:0 12px;
-  }
-
-  .breadcrumbs{
-    font-size:.78rem;
-    margin-bottom:13px;
-  }
-
-  .article-card{
-    border-radius:15px;
-  }
-
-  .hero-image{
-    max-height:280px;
-  }
-
-  .article-body{
-    padding:25px 19px;
-  }
-
-  h1{
-    font-size:clamp(1.85rem,9vw,2.35rem);
-  }
-
-  .meta{
-    font-size:.82rem;
-    line-height:1.6;
-  }
-
-  .content{
-    font-size:1rem;
-  }
-
-  .content h2{
-    font-size:1.42rem;
-    margin-top:28px;
-  }
-
-  .content h3{
-    font-size:1.18rem;
-  }
-
-  .content pre{
-    margin-left:-4px;
-    margin-right:-4px;
-    font-size:.84rem;
-  }
-
-  .share-buttons{
-    grid-template-columns:1fr 1fr;
-  }
-
-  .share-btn{
-    min-height:46px;
-  }
-
-  .top-btn{
-    right:14px;
-    bottom:14px;
-  }
-}
-
-@media(max-width:430px){
-  .nav-links a:nth-child(2){
-    display:none;
-  }
-
-  .nav-right{
-    margin-left:auto;
-  }
-
-  .article-body{
-    padding:22px 16px;
-  }
-
-  .hero-image{
-    max-height:230px;
-  }
-
-  .share-buttons{
-    grid-template-columns:1fr 1fr;
-  }
-}
-
-@media(prefers-reduced-motion:reduce){
-  html{scroll-behavior:auto}
-  *{transition:none!important}
-}
-
-
-/* =========================
-   COMMENTS
-========================= */
-
-.comments-box{
-  margin-top:36px;
-  padding-top:28px;
-  border-top:1px solid var(--border);
-}
-
-.comments-title{
-  margin:0 0 6px;
-  color:var(--heading);
-  font-size:1.35rem;
-}
-
-.comments-subtitle{
-  margin:0 0 20px;
-  color:var(--muted);
-  font-size:.9rem;
-}
-
-.comment-form{
-  background:var(--surface-2);
-  border:1px solid var(--border);
-  border-radius:14px;
-  padding:18px;
-  margin-bottom:25px;
-}
-
-.comment-form input,
-.comment-form textarea{
-  width:100%;
-  border:1px solid var(--border);
-  background:var(--surface);
-  color:var(--text);
-  border-radius:10px;
-  padding:12px 13px;
-  font:inherit;
-  outline:none;
-  margin-bottom:12px;
-}
-
-.comment-form input:focus,
-.comment-form textarea:focus{
-  border-color:var(--primary);
-  box-shadow:0 0 0 3px var(--primary-soft);
-}
-
-.comment-form textarea{
-  min-height:120px;
-  resize:vertical;
-}
-
-.comment-submit{
-  border:0;
-  background:var(--primary);
-  color:#fff;
-  padding:11px 18px;
-  border-radius:10px;
-  font-weight:800;
-  cursor:pointer;
-  transition:.2s;
-}
-
-.comment-submit:hover{
-  transform:translateY(-1px);
-  opacity:.92;
-}
-
-.comment-submit:disabled{
-  opacity:.6;
-  cursor:not-allowed;
-  transform:none;
-}
-
-.comment-status{
-  min-height:20px;
-  margin:10px 0 0;
-  color:var(--primary);
-  font-size:.85rem;
-  font-weight:600;
-}
-
-.comments-list{
-  display:flex;
-  flex-direction:column;
-  gap:13px;
-}
-
-.comment-item{
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:13px;
-  padding:16px;
-}
-
-.comment-head{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:12px;
-  margin-bottom:7px;
-}
-
-.comment-name{
-  color:var(--heading);
-  font-weight:800;
-}
-
-.comment-date{
-  color:var(--muted);
-  font-size:.78rem;
-}
-
-.comment-text{
-  margin:0;
-  color:var(--text);
-  white-space:pre-wrap;
-  overflow-wrap:anywhere;
-}
-
-.comments-empty,
-.comments-loading{
-  color:var(--muted);
-  font-size:.9rem;
-  padding:15px 0;
-}
-
-@media(max-width:700px){
-  .comments-box{
-    margin-top:30px;
-    padding-top:23px;
-  }
-
-  .comment-form{
-    padding:14px;
-  }
-
-  .comment-head{
-    align-items:flex-start;
-    flex-direction:column;
-    gap:2px;
-  }
-
-  .comment-submit{
-    width:100%;
-  }
-}
-
 </style>
-
-<script>
-/* Apply saved theme before the page paints */
-(function(){
-  try{
-    const saved=localStorage.getItem("gyantech-theme");
-    if(saved==="dark"){
-      document.documentElement.classList.add("dark");
-    }
-  }catch(e){}
-})();
-</script>
 </head>
 
 <body>
-
-<div id="progress" class="progress"></div>
-
 <header class="nav">
   <div class="nav-inner">
-
-    <a href="/" class="brand">GyanTech Blog</a>
-
-    <div class="nav-right">
-
-      <nav class="nav-links">
-        <a href="/">Home</a>
-        <a href="/articles">Articles</a>
-      </nav>
-
-      <button
-        id="themeToggle"
-        class="theme-toggle"
-        type="button"
-        aria-label="Toggle dark mode"
-        title="Toggle dark mode">
-        🌙
-      </button>
-
-    </div>
+    <a href="/">GyanTech Blog</a>
+    <nav class="nav-links">
+      <a href="/">Home</a>
+      <a href="/articles">Articles</a>
+    </nav>
   </div>
 </header>
 
 <main class="wrap">
-
-  <!-- BREADCRUMBS -->
-  <nav class="breadcrumbs" aria-label="Breadcrumb">
-    <a href="/">Home</a>
-    <span>›</span>
-    <a href="/articles">Articles</a>
-    <span>›</span>
-    <a id="breadcrumbCategory" href="/articles">Technology</a>
-    <span>›</span>
-    <span id="breadcrumbTitle" class="breadcrumb-current">
-      Article
-    </span>
-  </nav>
-
   <a href="/articles" class="back">← Back to Articles</a>
 
-  <div id="loading" class="loading">
-    Loading article...
-  </div>
+  <div id="loading" class="loading">Loading article...</div>
 
   <article id="articleCard" class="article-card hidden">
-
-    <img
-      id="heroImage"
-      class="hero-image hidden"
-      alt="Article image">
+    <img id="heroImage" class="hero-image hidden" alt="Article image">
 
     <div class="article-body">
-
       <div id="category" class="category hidden"></div>
 
       <h1 id="title"></h1>
@@ -765,134 +122,78 @@ footer{
 
       <div id="tags" class="tags hidden"></div>
 
-      <!-- SOCIAL SHARING -->
-      <section class="share-box" aria-label="Share article">
 
-        <h2 class="share-title">🔗 Share this article</h2>
-
-        <div class="share-buttons">
-
-          <a
-            id="whatsappShare"
-            class="share-btn share-whatsapp"
-            href="#"
-            target="_blank"
-            rel="noopener noreferrer">
-            🟢 WhatsApp
-          </a>
-
-          <a
-            id="facebookShare"
-            class="share-btn share-facebook"
-            href="#"
-            target="_blank"
-            rel="noopener noreferrer">
-            🔵 Facebook
-          </a>
-
-          <a
-            id="xShare"
-            class="share-btn share-x"
-            href="#"
-            target="_blank"
-            rel="noopener noreferrer">
-            𝕏 Share
-          </a>
-
-          <button
-            id="copyShare"
-            class="share-btn share-copy"
-            type="button">
-            🔗 Copy Link
-          </button>
-
-        </div>
-
-        <p id="shareStatus" class="share-status"></p>
-
-      </section>
 
       <!-- COMMENTS -->
       <section class="comments-box" aria-label="Comments">
-
-        <h2 class="comments-title">
-          💬 Comments <span id="commentCount">(0)</span>
-        </h2>
-
-        <p class="comments-subtitle">
-          Share your thoughts about this article.
-        </p>
+        <h2 class="comments-title">💬 Comments</h2>
+        <p class="comments-subtitle">Have something to say? Share your thoughts below.</p>
 
         <form id="commentForm" class="comment-form">
-
-          <input
-            id="commentName"
-            type="text"
-            maxlength="60"
-            placeholder="Your name"
-            autocomplete="name"
-            required
-          >
-
-          <textarea
-            id="commentText"
-            maxlength="1000"
-            placeholder="Write your comment..."
-            required
-          ></textarea>
-
-          <button
-            id="commentSubmit"
-            class="comment-submit"
-            type="submit">
-            💬 Post Comment
-          </button>
-
-          <p
-            id="commentStatus"
-            class="comment-status"
-            aria-live="polite">
-          </p>
-
+          <input id="commentName" maxlength="80" required placeholder="Your name">
+          <input id="commentEmail" type="email" maxlength="160" placeholder="Email (optional)">
+          <textarea id="commentText" maxlength="3000" required placeholder="Write your comment..."></textarea>
+          <input id="commentWebsite" class="hidden" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <button id="commentSubmit" class="comment-submit" type="submit">Post Comment</button>
+          <div id="commentStatus" class="comment-status"></div>
         </form>
 
-        <div
-          id="commentsLoading"
-          class="comments-loading">
-          Loading comments...
+        <div id="commentsList">
+          <div class="no-comments">Loading comments...</div>
+        </div>
+      </section>
+
+      <section class="share-box" aria-label="Share article">
+        <h2 class="share-title">🔗 Share this article</h2>
+
+        <div class="share-buttons">
+          <a id="whatsappShare"
+             class="share-btn share-whatsapp"
+             href="#"
+             target="_blank"
+             rel="noopener noreferrer">
+            🟢 WhatsApp
+          </a>
+
+          <a id="facebookShare"
+             class="share-btn share-facebook"
+             href="#"
+             target="_blank"
+             rel="noopener noreferrer">
+            🔵 Facebook
+          </a>
+
+          <a id="xShare"
+             class="share-btn share-x"
+             href="#"
+             target="_blank"
+             rel="noopener noreferrer">
+            𝕏 Share
+          </a>
+
+          <button id="copyShare"
+                  class="share-btn share-copy"
+                  type="button">
+            🔗 Copy Link
+          </button>
         </div>
 
-        <div
-          id="commentsList"
-          class="comments-list">
-        </div>
-
+        <p id="shareStatus" class="share-status"></p>
       </section>
 
     </div>
   </article>
 
   <div id="error" class="error hidden"></div>
-
 </main>
 
-<button
-  id="topBtn"
-  class="top-btn"
-  type="button"
-  aria-label="Back to top"
-  title="Back to top">
-  ↑
-</button>
-
 <footer>
-  <p>&copy; <span id="year"></span> GyanTech Blog. All rights reserved.</p>
+  <p>&copy; 2026 GyanTech Blog. All rights reserved.</p>
 </footer>
 
 <script>
 const $ = id => document.getElementById(id);
 
-/* Escape normal text safely */
 function escapeHTML(value){
   return String(value ?? "")
     .replace(/[&<>"']/g, m => ({
@@ -904,216 +205,181 @@ function escapeHTML(value){
     }[m]));
 }
 
-/*
-  Allow only the formatting produced by the GyanTech editor.
-  This keeps headings, lists, bold, italic, underline and quotes
-  while removing scripts/event attributes and other unsafe markup.
-*/
 function sanitizeHTML(html){
-  const template=document.createElement("template");
-  template.innerHTML=String(html || "");
+  const template = document.createElement("template");
+  template.innerHTML = String(html || "");
 
-  const allowed=new Set([
+  const allowed = new Set([
     "P","BR","H2","H3","STRONG","B","EM","I","U",
     "UL","OL","LI","BLOCKQUOTE","A","IMG","CODE","PRE"
   ]);
 
-  const elements=template.content.querySelectorAll("*");
+  const elements = template.content.querySelectorAll("*");
 
-  elements.forEach(el=>{
+  elements.forEach(el => {
+
     if(!allowed.has(el.tagName)){
-      const parent=el.parentNode;
+      const parent = el.parentNode;
 
-      if(parent){
-        while(el.firstChild){
-          parent.insertBefore(el.firstChild,el);
-        }
+      while(el.firstChild){
+        parent.insertBefore(el.firstChild, el);
       }
 
       el.remove();
       return;
     }
 
-    [...el.attributes].forEach(attr=>{
-      const name=attr.name.toLowerCase();
+    [...el.attributes].forEach(attr => {
 
-      if(el.tagName==="A" && name==="href"){
-        const value=attr.value.trim();
+      const name = attr.name.toLowerCase();
+
+      if(el.tagName === "A" && name === "href"){
+
+        const value = attr.value.trim();
 
         if(!/^https?:\/\//i.test(value)){
           el.removeAttribute(attr.name);
         }
-      }
-      else if(el.tagName==="IMG" && ["src","alt"].includes(name)){
+
+      }else if(
+        el.tagName === "IMG" &&
+        ["src","alt"].includes(name)
+      ){
+
         if(
-          name==="src" &&
-          !/^(https?:\/\/|data:image\/)/i.test(attr.value.trim())
+          name === "src" &&
+          !/^https?:\/\//i.test(attr.value.trim())
         ){
           el.removeAttribute(attr.name);
         }
-      }
-      else{
+
+      }else{
+
         el.removeAttribute(attr.name);
+
       }
+
     });
 
-    if(el.tagName==="A"){
+    if(el.tagName === "A"){
       el.setAttribute("target","_blank");
       el.setAttribute("rel","noopener noreferrer");
     }
+
   });
 
   return template.innerHTML;
 }
 
-/* Get slug from /article/:slug */
 function getSlug(){
-  const parts=location.pathname.split("/").filter(Boolean);
 
-  return parts.length>=2
-    ? decodeURIComponent(parts[parts.length-1])
+  const parts =
+    location.pathname
+      .split("/")
+      .filter(Boolean);
+
+  return parts.length >= 2
+    ? decodeURIComponent(parts[parts.length - 1])
     : "";
 }
 
-/* Theme */
-function updateThemeButton(){
-  const dark=document.documentElement.classList.contains("dark");
+function setupShare(article){
 
-  $("themeToggle").textContent=dark ? "☀️" : "🌙";
-  $("themeToggle").title=dark
-    ? "Switch to light mode"
-    : "Switch to dark mode";
-}
+  const shareURL = location.href;
+  const shareTitle = article.title || "GyanTech Blog";
 
-function toggleTheme(){
-  const dark=document.documentElement.classList.toggle("dark");
-
-  try{
-    localStorage.setItem(
-      "gyantech-theme",
-      dark ? "dark" : "light"
+  $("whatsappShare").href =
+    "https://wa.me/?text=" +
+    encodeURIComponent(
+      shareTitle + " - " + shareURL
     );
-  }catch(e){}
 
-  updateThemeButton();
-}
+  $("facebookShare").href =
+    "https://www.facebook.com/sharer/sharer.php?u=" +
+    encodeURIComponent(shareURL);
 
-$("themeToggle").addEventListener("click",toggleTheme);
-updateThemeButton();
+  $("xShare").href =
+    "https://twitter.com/intent/tweet?text=" +
+    encodeURIComponent(shareTitle) +
+    "&url=" +
+    encodeURIComponent(shareURL);
 
-/* Year */
-$("year").textContent=new Date().getFullYear();
-
-/* Reading progress */
-function updateProgress(){
-  const scrollTop=window.scrollY;
-  const max=document.documentElement.scrollHeight-window.innerHeight;
-
-  const percent=max>0
-    ? Math.min(100,(scrollTop/max)*100)
-    : 0;
-
-  $("progress").style.width=percent+"%";
-}
-
-window.addEventListener("scroll",updateProgress,{passive:true});
-
-/* Back to top */
-function updateTopButton(){
-  if(window.scrollY>450){
-    $("topBtn").classList.add("show");
-  }else{
-    $("topBtn").classList.remove("show");
-  }
-}
-
-window.addEventListener("scroll",updateTopButton,{passive:true});
-
-$("topBtn").addEventListener("click",()=>{
-  window.scrollTo({
-    top:0,
-    behavior:"smooth"
-  });
-});
-
-/* Setup share buttons */
-function setupSharing(article){
-
-  const url=window.location.href;
-  const title=article.title || "GyanTech Blog article";
-
-  const encodedURL=encodeURIComponent(url);
-  const encodedTitle=encodeURIComponent(title);
-
-  $("whatsappShare").href=
-    "https://wa.me/?text="+
-    encodeURIComponent(title+" "+url);
-
-  $("facebookShare").href=
-    "https://www.facebook.com/sharer/sharer.php?u="+
-    encodedURL;
-
-  $("xShare").href=
-    "https://twitter.com/intent/tweet?text="+
-    encodedTitle+
-    "&url="+
-    encodedURL;
-
-  $("copyShare").onclick=async()=>{
+  $("copyShare").onclick = async () => {
 
     try{
 
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(shareURL);
 
-      $("shareStatus").textContent=
-        "✓ Article link copied!";
+      $("shareStatus").textContent =
+        "✅ Article link copied!";
 
-    }catch(error){
+    }catch{
 
-      const textarea=document.createElement("textarea");
+      $("shareStatus").textContent =
+        "Please copy the URL from your browser.";
 
-      textarea.value=url;
-      textarea.style.position="fixed";
-      textarea.style.opacity="0";
-
-      document.body.appendChild(textarea);
-      textarea.select();
-
-      try{
-        document.execCommand("copy");
-        $("shareStatus").textContent=
-          "✓ Article link copied!";
-      }catch(e){
-        $("shareStatus").textContent=
-          "Copy failed. Please copy the URL manually.";
-      }
-
-      textarea.remove();
     }
 
-    setTimeout(()=>{
-      $("shareStatus").textContent="";
-    },2500);
   };
 }
 
-/* Breadcrumb */
-function setupBreadcrumbs(article){
 
-  const category=article.category || "Technology";
-  const title=article.title || "Article";
-
-  $("breadcrumbCategory").textContent=category;
-  $("breadcrumbCategory").href=
-    "/articles?category="+encodeURIComponent(category);
-
-  $("breadcrumbTitle").textContent=title;
+async function loadComments(slug){
+  const box=$("commentsList");
+  try{
+    const response=await fetch("/api/articles/"+encodeURIComponent(slug)+"/comments");
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok) throw new Error(data.error||"Could not load comments.");
+    const comments=data.comments||[];
+    if(!comments.length){
+      box.innerHTML='<div class="no-comments">No comments yet. Be the first to comment!</div>';
+      return;
+    }
+    box.innerHTML=comments.map(c=>{
+      const date=c.created_at?new Date(c.created_at).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}):"";
+      return '<div class="comment-item"><div><span class="comment-name">'+escapeHTML(c.name||"Anonymous")+'</span>'+ (date?'<span class="comment-date">'+escapeHTML(date)+'</span>':'') +'</div><div class="comment-text">'+escapeHTML(c.comment||"")+'</div></div>';
+    }).join('');
+  }catch(error){
+    box.innerHTML='<div class="no-comments">Comments are temporarily unavailable.</div>';
+    console.error(error);
+  }
 }
 
-/* Load article */
+function setupComments(slug){
+  $("commentForm").addEventListener("submit",async event=>{
+    event.preventDefault();
+    const button=$("commentSubmit");
+    const status=$("commentStatus");
+    button.disabled=true;
+    status.textContent="Posting comment...";
+    try{
+      const response=await fetch("/api/articles/"+encodeURIComponent(slug)+"/comments",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          name:$("commentName").value.trim(),
+          email:$("commentEmail").value.trim(),
+          comment:$("commentText").value.trim(),
+          website:$("commentWebsite").value.trim()
+        })
+      });
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok) throw new Error(data.error||"Could not submit comment.");
+      $("commentForm").reset();
+      status.textContent="✅ Comment submitted. It will appear after approval.";
+      await loadComments(slug);
+    }catch(error){
+      status.textContent="❌ "+error.message;
+    }finally{
+      button.disabled=false;
+    }
+  });
+  loadComments(slug);
+}
+
 async function loadArticle(){
 
-  const slug=getSlug();
+  const slug = getSlug();
 
   if(!slug){
     showError("Article not found.");
@@ -1122,17 +388,21 @@ async function loadArticle(){
 
   try{
 
-    const response=await fetch(
-      "/api/articles/"+encodeURIComponent(slug)
-    );
+    const response =
+      await fetch(
+        "/api/articles/" +
+        encodeURIComponent(slug)
+      );
 
-    const data=await response
-      .json()
-      .catch(()=>({}));
+    const data =
+      await response
+        .json()
+        .catch(() => ({}));
 
     if(!response.ok){
       throw new Error(
-        data.error || "Article not found."
+        data.error ||
+        "Article not found."
       );
     }
 
@@ -1143,28 +413,35 @@ async function loadArticle(){
     console.error(error);
 
     showError(
-      error.message || "Unable to load article."
+      error.message ||
+      "Unable to load article."
     );
+
   }
 }
 
-/* Render */
 function renderArticle(article){
 
-  $("loading").classList.add("hidden");
-  $("error").classList.add("hidden");
-  $("articleCard").classList.remove("hidden");
+  $("loading")
+    .classList.add("hidden");
 
-  document.title=
-    (article.title || "Article")+
+  $("error")
+    .classList.add("hidden");
+
+  $("articleCard")
+    .classList.remove("hidden");
+
+  document.title =
+    (article.title || "Article") +
     " — GyanTech";
 
-  $("title").textContent=
-    article.title || "Untitled Article";
+  $("title").textContent =
+    article.title ||
+    "Untitled Article";
 
   if(article.category){
 
-    $("category").textContent=
+    $("category").textContent =
       article.category;
 
     $("category")
@@ -1173,52 +450,59 @@ function renderArticle(article){
 
   }
 
-  const author=
+  const author =
     article.author || "Admin";
 
-  const date=
+  const date =
     article.created_at
       ? new Date(article.created_at)
-          .toLocaleDateString("en-IN",{
-            day:"numeric",
-            month:"short",
-            year:"numeric"
-          })
+          .toLocaleDateString(
+            "en-IN",
+            {
+              day:"numeric",
+              month:"short",
+              year:"numeric"
+            }
+          )
       : "";
 
-  const views=
+  const views =
     Number(article.views || 0);
 
-  $("meta").textContent=
-    `By ${author}`+
-    (date ? ` · ${date}` : "")+
+  $("meta").textContent =
+    `By ${author}` +
+    (date ? ` · ${date}` : "") +
     ` · 👁 ${views} views`;
 
   if(article.excerpt){
 
-    $("excerpt").textContent=
+    $("excerpt").textContent =
       article.excerpt;
 
     $("excerpt")
       .classList
       .remove("hidden");
+
   }
 
-  $("content").innerHTML=
-    sanitizeHTML(article.content || "");
+  $("content").innerHTML =
+    sanitizeHTML(
+      article.content || ""
+    );
 
   if(article.tags){
 
-    const tags=String(article.tags)
-      .split(",")
-      .map(tag=>tag.trim())
-      .filter(Boolean);
+    const tags =
+      String(article.tags)
+        .split(",")
+        .map(tag => tag.trim())
+        .filter(Boolean);
 
     if(tags.length){
 
-      $("tags").innerHTML=
+      $("tags").innerHTML =
         tags
-          .map(tag=>
+          .map(tag =>
             `<span class="tag">#${escapeHTML(tag)}</span>`
           )
           .join("");
@@ -1226,208 +510,30 @@ function renderArticle(article){
       $("tags")
         .classList
         .remove("hidden");
+
     }
+
   }
 
   if(article.image_url){
 
-    $("heroImage").src=
+    $("heroImage").src =
       article.image_url;
 
-    $("heroImage").alt=
-      article.title || "Article image";
+    $("heroImage").alt =
+      article.title ||
+      "Article image";
 
     $("heroImage")
       .classList
       .remove("hidden");
+
   }
 
-  setupSharing(article);
-  setupBreadcrumbs(article);
-  loadComments(getSlug());
-
-  updateProgress();
+  setupShare(article);
+  setupComments(getSlug());
 }
 
-
-/* =========================
-   COMMENTS SYSTEM
-========================= */
-
-function getCommentDate(date){
-  if(!date) return "";
-
-  return new Date(date).toLocaleDateString(
-    "en-IN",
-    {
-      day:"numeric",
-      month:"short",
-      year:"numeric"
-    }
-  );
-}
-
-async function loadComments(slug){
-  const loading=$("commentsLoading");
-  const list=$("commentsList");
-  const count=$("commentCount");
-
-  if(!loading || !list) return;
-
-  loading.classList.remove("hidden");
-  list.innerHTML="";
-
-  try{
-    const response=await fetch(
-      "/api/articles/"+
-      encodeURIComponent(slug)+
-      "/comments"
-    );
-
-    const data=await response
-      .json()
-      .catch(()=>({}));
-
-    if(!response.ok){
-      throw new Error(
-        data.error || "Could not load comments."
-      );
-    }
-
-    const comments=Array.isArray(data.comments)
-      ? data.comments
-      : [];
-
-    if(count){
-      count.textContent="("+comments.length+")";
-    }
-
-    loading.classList.add("hidden");
-
-    if(!comments.length){
-      list.innerHTML=`
-        <div class="comments-empty">
-          No comments yet. Be the first to comment!
-        </div>
-      `;
-      return;
-    }
-
-    list.innerHTML=comments.map(comment=>`
-      <article class="comment-item">
-        <div class="comment-head">
-          <span class="comment-name">
-            ${escapeHTML(comment.name)}
-          </span>
-          <time class="comment-date">
-            ${getCommentDate(comment.created_at)}
-          </time>
-        </div>
-        <p class="comment-text">
-          ${escapeHTML(comment.comment)}
-        </p>
-      </article>
-    `).join("");
-
-  }catch(error){
-    console.error(error);
-    loading.classList.add("hidden");
-    list.innerHTML=`
-      <div class="comments-empty">
-        Unable to load comments right now.
-      </div>
-    `;
-  }
-}
-
-async function submitComment(event){
-  event.preventDefault();
-
-  const name=$("commentName").value.trim();
-  const comment=$("commentText").value.trim();
-  const button=$("commentSubmit");
-  const status=$("commentStatus");
-
-  status.textContent="";
-
-  if(!name || !comment){
-    status.textContent="Please enter your name and comment.";
-    return;
-  }
-
-  if(name.length>60){
-    status.textContent="Name must be 60 characters or less.";
-    return;
-  }
-
-  if(comment.length>1000){
-    status.textContent="Comment must be 1000 characters or less.";
-    return;
-  }
-
-  const slug=getSlug();
-
-  if(!slug){
-    status.textContent="Article not found.";
-    return;
-  }
-
-  button.disabled=true;
-  button.textContent="Posting...";
-
-  try{
-    const response=await fetch(
-      "/api/articles/"+
-      encodeURIComponent(slug)+
-      "/comments",
-      {
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json"
-        },
-        body:JSON.stringify({
-          name:name,
-          comment:comment
-        })
-      }
-    );
-
-    const data=await response
-      .json()
-      .catch(()=>({}));
-
-    if(!response.ok){
-      throw new Error(
-        data.error || "Could not submit comment."
-      );
-    }
-
-    status.textContent="✓ "+(
-      data.message ||
-      "Comment submitted successfully."
-    );
-
-    $("commentName").value="";
-    $("commentText").value="";
-
-  }catch(error){
-    console.error(error);
-    status.textContent="❌ "+(
-      error.message ||
-      "Could not submit comment."
-    );
-  }finally{
-    button.disabled=false;
-    button.textContent="💬 Post Comment";
-  }
-}
-
-$("commentForm").addEventListener(
-  "submit",
-  submitComment
-);
-
-/* Error */
 function showError(message){
 
   $("loading")
@@ -1438,8 +544,8 @@ function showError(message){
     .classList
     .add("hidden");
 
-  $("error").textContent=
-    "❌ "+message;
+  $("error").textContent =
+    "❌ " + message;
 
   $("error")
     .classList
