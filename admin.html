@@ -391,6 +391,9 @@ button:hover{
   }
 
 }
+
+/* COMMENTS MANAGEMENT */
+.commentsToolbar{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}.commentsToolbar button{margin:0}.commentFilter{max-width:220px}.commentAdminItem{border:1px solid #e2e8f0;border-radius:14px;padding:18px;margin-bottom:13px;background:#fff}.commentAdminTop{display:flex;justify-content:space-between;gap:15px;align-items:flex-start}.commentAdminName{font-weight:900;font-size:1.05rem}.commentAdminMeta{color:#64748b;font-size:.82rem;margin-top:4px}.commentAdminText{margin:14px 0;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}.commentStatus{display:inline-block;padding:4px 9px;border-radius:999px;font-size:.75rem;font-weight:800}.commentPending{background:#fef3c7;color:#92400e}.commentApproved{background:#dcfce7;color:#166534}.commentActions{display:flex;gap:8px;flex-wrap:wrap}.commentActions button{margin:0}.approveBtn{background:#16a34a}.approveBtn:hover{background:#15803d}.commentArticle{font-size:.82rem;color:#0369a1;font-weight:700;margin-top:6px}@media(max-width:600px){.commentAdminTop{flex-direction:column}.commentFilter{max-width:none;width:100%}.commentActions button{flex:1}}
 </style>
 </head>
 
@@ -673,6 +676,21 @@ button:hover{
 
   </section>
 
+
+  <!-- COMMENTS MANAGEMENT -->
+  <section class="box">
+    <h2>💬 Manage Comments</h2>
+    <p class="subtitle">Review visitor comments. Approve them to make them visible on articles, or delete them.</p>
+    <div class="commentsToolbar">
+      <select id="commentFilter" class="commentFilter">
+        <option value="all">All Comments</option>
+        <option value="pending">⏳ Pending</option>
+        <option value="approved">✅ Approved</option>
+      </select>
+      <button id="refreshCommentsBtn" type="button" class="secondary">🔄 Refresh Comments</button>
+    </div>
+    <div id="commentsAdminList"><div class="empty">Loading comments...</div></div>
+  </section>
 
   <!-- MANAGE ARTICLES -->
 
@@ -1136,6 +1154,64 @@ $("articleForm")
 /* ARTICLES */
 
 let allArticles = [];
+
+let allComments = [];
+
+async function loadCommentsAdmin(){
+  try{
+    allComments = await api('/api/admin/comments');
+    renderAdminComments();
+  }catch(error){
+    $('commentsAdminList').innerHTML = `<div class="empty">❌ ${escapeHTML(error.message)}</div>`;
+  }
+}
+
+function renderAdminComments(){
+  const list=$('commentsAdminList');
+  const filter=$('commentFilter').value;
+  const comments=filter==='all' ? allComments : allComments.filter(c=>c.status===filter);
+  if(!comments.length){ list.innerHTML='<div class="empty">No comments found.</div>'; return; }
+  list.innerHTML=comments.map(c=>{
+    const approved=c.status==='approved';
+    return `<div class="commentAdminItem">
+      <div class="commentAdminTop">
+        <div>
+          <div class="commentAdminName">${escapeHTML(c.name)}</div>
+          <div class="commentAdminMeta">${new Date(c.created_at).toLocaleString('en-IN')}</div>
+          <div class="commentArticle">📄 ${escapeHTML(c.article_title||'Article')}</div>
+        </div>
+        <span class="commentStatus ${approved?'commentApproved':'commentPending'}">${approved?'APPROVED':'PENDING'}</span>
+      </div>
+      <p class="commentAdminText">${escapeHTML(c.comment)}</p>
+      <div class="commentActions">
+        ${approved ? `<button class="secondary" type="button" onclick="setCommentStatus(${c.id},'pending')">⏳ Move to Pending</button>` : `<button class="approveBtn" type="button" onclick="setCommentStatus(${c.id},'approved')">✅ Approve</button>`}
+        <button class="danger" type="button" onclick="deleteComment(${c.id})">🗑️ Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.setCommentStatus=async function(id,status){
+  try{
+    await api('/api/admin/comments/'+id,{method:'PUT',body:JSON.stringify({status})});
+    await loadCommentsAdmin();
+  }catch(error){ alert('❌ '+error.message); }
+};
+
+window.deleteComment=async function(id){
+  const comment=allComments.find(c=>Number(c.id)===Number(id));
+  if(!comment) return;
+  if(!confirm(`Delete comment by "${comment.name}"?`)) return;
+  try{
+    await api('/api/admin/comments/'+id,{method:'DELETE'});
+    await loadCommentsAdmin();
+  }catch(error){ alert('❌ '+error.message); }
+};
+
+$('commentFilter').addEventListener('change',renderAdminComments);
+$('refreshCommentsBtn').addEventListener('click',loadCommentsAdmin);
+
+
 
 
 async function loadManage(){
