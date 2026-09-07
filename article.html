@@ -87,6 +87,8 @@ footer{text-align:center;padding:30px 20px;color:#64748b;font-size:.9rem}
   .share-buttons{display:grid;grid-template-columns:1fr 1fr}
   .share-btn{justify-content:center}
 }
+
+.comments-title-row{display:flex;justify-content:space-between;align-items:center;gap:12px}.comment-count{display:inline-flex;min-width:30px;height:30px;align-items:center;justify-content:center;border-radius:999px;background:#e0f2fe;color:#0369a1;font-size:.85rem}.comment-replying{display:none;margin:0 0 12px;padding:10px 12px;border-radius:10px;background:#f0f9ff;color:#0369a1;font-size:.88rem}.comment-replying.show{display:flex;justify-content:space-between;align-items:center;gap:10px}.cancel-reply{border:0;background:transparent;color:#0369a1;font-weight:800;cursor:pointer}.comment-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.comment-action{border:1px solid #cbd5e1;background:#fff;border-radius:8px;padding:7px 10px;cursor:pointer;font:inherit;font-size:.82rem}.comment-action:hover{background:#f8fafc}.comment-like.liked{font-weight:800}.comment-replies{margin:12px 0 0 26px;padding-left:14px;border-left:2px solid #e2e8f0}.comment-avatar{width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:#e0f2fe;color:#0369a1;font-weight:800;margin-right:8px}.comment-head{display:flex;align-items:center}.report-menu{padding:8px;border:1px solid #e2e8f0;border-radius:8px;background:#fff}.comment-notice{font-size:.78rem;color:#64748b;margin-top:8px}@media(max-width:650px){.comment-actions{display:grid;grid-template-columns:1fr 1fr}.comment-replies{margin-left:12px}.comment-action{width:100%}}
 </style>
 </head>
 
@@ -126,21 +128,22 @@ footer{text-align:center;padding:30px 20px;color:#64748b;font-size:.9rem}
 
       <!-- COMMENTS -->
       <section class="comments-box" aria-label="Comments">
-        <h2 class="comments-title">💬 Comments</h2>
-        <p class="comments-subtitle">Have something to say? Share your thoughts below.</p>
-
+        <div class="comments-title-row">
+          <h2 class="comments-title">💬 Comments <span id="commentCount" class="comment-count">0</span></h2>
+        </div>
+        <p class="comments-subtitle">Share your thoughts, reply to others, or mark a comment as helpful.</p>
+        <div id="replyingTo" class="comment-replying"><span id="replyingText"></span><button id="cancelReply" class="cancel-reply" type="button">Cancel</button></div>
         <form id="commentForm" class="comment-form">
-          <input id="commentName" maxlength="80" required placeholder="Your name">
-          <input id="commentEmail" type="email" maxlength="160" placeholder="Email (optional)">
+          <input id="commentName" maxlength="80" required placeholder="Your name" autocomplete="name">
+          <input id="commentEmail" type="email" maxlength="160" placeholder="Email (optional)" autocomplete="email">
           <textarea id="commentText" maxlength="3000" required placeholder="Write your comment..."></textarea>
           <input id="commentWebsite" class="hidden" tabindex="-1" autocomplete="off" aria-hidden="true">
-          <button id="commentSubmit" class="comment-submit" type="submit">Post Comment</button>
+          <input id="commentParent" type="hidden" value="">
+          <button id="commentSubmit" class="comment-submit" type="submit">💬 Post Comment</button>
           <div id="commentStatus" class="comment-status"></div>
         </form>
-
-        <div id="commentsList">
-          <div class="no-comments">Loading comments...</div>
-        </div>
+        <div class="comment-notice">Comments are reviewed before appearing publicly. Please keep discussions respectful.</div>
+        <div id="commentsList"><div class="no-comments">Loading comments...</div></div>
       </section>
 
       <section class="share-box" aria-label="Share article">
@@ -324,55 +327,94 @@ function setupShare(article){
 }
 
 
+function commentInitials(name){
+  return String(name||"R").trim().split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0].toUpperCase()).join("")||"R";
+}
+
+function renderCommentTree(comments,parentId=null){
+  return comments.filter(c=>Number(c.parent_id||0)===Number(parentId||0)).map(c=>{
+    const date=c.created_at?new Date(c.created_at).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}):"";
+    const replies=renderCommentTree(comments,c.id);
+    return `<article class="comment-item" id="comment-${c.id}">
+      <div class="comment-head"><span class="comment-avatar" aria-hidden="true">${escapeHTML(commentInitials(c.name))}</span><span class="comment-name">${escapeHTML(c.name||"Anonymous")}</span>${date?`<span class="comment-date">${escapeHTML(date)}</span>`:""}</div>
+      <div class="comment-text">${escapeHTML(c.comment||"")}</div>
+      <div class="comment-actions">
+        <button class="comment-action comment-like" type="button" onclick="likeComment(${c.id},this)">👍 Helpful <span>${Number(c.likes||0)}</span></button>
+        <button class="comment-action" type="button" onclick="startReply(${c.id},${JSON.stringify(String(c.name||"Reader"))})">↩️ Reply</button>
+        <button class="comment-action" type="button" onclick="reportComment(${c.id})">⚑ Report</button>
+      </div>
+      ${replies?`<div class="comment-replies">${replies}</div>`:""}
+    </article>`;
+  }).join("");
+}
+
 async function loadComments(slug){
   const box=$("commentsList");
   try{
     const response=await fetch("/api/articles/"+encodeURIComponent(slug)+"/comments");
     const data=await response.json().catch(()=>({}));
     if(!response.ok) throw new Error(data.error||"Could not load comments.");
-    const comments=data.comments||[];
-    if(!comments.length){
-      box.innerHTML='<div class="no-comments">No comments yet. Be the first to comment!</div>';
-      return;
-    }
-    box.innerHTML=comments.map(c=>{
-      const date=c.created_at?new Date(c.created_at).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}):"";
-      return '<div class="comment-item"><div><span class="comment-name">'+escapeHTML(c.name||"Anonymous")+'</span>'+ (date?'<span class="comment-date">'+escapeHTML(date)+'</span>':'') +'</div><div class="comment-text">'+escapeHTML(c.comment||"")+'</div></div>';
-    }).join('');
+    const comments=Array.isArray(data.comments)?data.comments:[];
+    $("commentCount").textContent=comments.length;
+    if(!comments.length){box.innerHTML='<div class="no-comments">No comments yet. Be the first to comment!</div>';return;}
+    box.innerHTML=renderCommentTree(comments);
   }catch(error){
     box.innerHTML='<div class="no-comments">Comments are temporarily unavailable.</div>';
     console.error(error);
   }
 }
 
+window.likeComment=async function(id,button){
+  if(button.dataset.busy) return;
+  button.dataset.busy="1";
+  try{
+    const r=await fetch("/api/comments/"+id+"/like",{method:"POST",headers:{"Content-Type":"application/json"}});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(d.error||"Could not like comment.");
+    button.querySelector("span").textContent=Number(d.likes||0);
+    button.classList.add("liked");
+  }catch(e){console.error(e);}
+  finally{delete button.dataset.busy;}
+};
+
+window.startReply=function(id,name){
+  $("commentParent").value=id;
+  $("replyingText").textContent="Replying to "+name;
+  $("replyingTo").classList.add("show");
+  $("commentText").focus();
+  window.scrollTo({top:$('commentForm').getBoundingClientRect().top+window.scrollY-100,behavior:"smooth"});
+};
+
+function cancelReply(){
+  $("commentParent").value="";
+  $("replyingTo").classList.remove("show");
+  $("replyingText").textContent="";
+}
+
+window.reportComment=async function(id){
+  const reason=prompt("Why are you reporting this comment? (spam, abuse, off-topic, other)","spam");
+  if(reason===null) return;
+  try{
+    const r=await fetch("/api/comments/"+id+"/report",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({reason:reason.trim().slice(0,40)||"other"})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(d.error||"Could not report comment.");
+    $("commentStatus").textContent="✅ "+(d.message||"Report sent.");
+  }catch(e){$("commentStatus").textContent="❌ "+e.message;}
+};
+
 function setupComments(slug){
+  $("cancelReply").addEventListener("click",cancelReply);
   $("commentForm").addEventListener("submit",async event=>{
     event.preventDefault();
-    const button=$("commentSubmit");
-    const status=$("commentStatus");
-    button.disabled=true;
-    status.textContent="Posting comment...";
+    const button=$("commentSubmit"),status=$("commentStatus");
+    button.disabled=true; status.textContent="Posting comment...";
     try{
-      const response=await fetch("/api/articles/"+encodeURIComponent(slug)+"/comments",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({
-          name:$("commentName").value.trim(),
-          email:$("commentEmail").value.trim(),
-          comment:$("commentText").value.trim(),
-          website:$("commentWebsite").value.trim()
-        })
-      });
+      const response=await fetch("/api/articles/"+encodeURIComponent(slug)+"/comments",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:$("commentName").value.trim(),email:$("commentEmail").value.trim(),comment:$("commentText").value.trim(),website:$("commentWebsite").value.trim(),parent_id:$("commentParent").value||null})});
       const data=await response.json().catch(()=>({}));
       if(!response.ok) throw new Error(data.error||"Could not submit comment.");
-      $("commentForm").reset();
-      status.textContent="✅ Comment submitted. It will appear after approval.";
-      await loadComments(slug);
-    }catch(error){
-      status.textContent="❌ "+error.message;
-    }finally{
-      button.disabled=false;
-    }
+      $("commentForm").reset(); cancelReply(); status.textContent="✅ Comment submitted. It will appear after approval."; await loadComments(slug);
+    }catch(error){status.textContent="❌ "+error.message;}
+    finally{button.disabled=false;}
   });
   loadComments(slug);
 }
