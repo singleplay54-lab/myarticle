@@ -391,6 +391,9 @@ button:hover{
   }
 
 }
+
+.richEditor:empty:before{content:attr(data-placeholder);color:#94a3b8;pointer-events:none}
+.richEditor:focus:before{content:""}
 </style>
 </head>
 
@@ -515,9 +518,7 @@ button:hover{
           >
 
 
-          <div id="contentEditor" class="richEditor" contenteditable="true">
-  Write your complete article here...
-</div>
+          <div id="contentEditor" class="richEditor" contenteditable="true" data-placeholder="Write your complete article here..."></div>
 
 <textarea id="content" class="hidden"></textarea>
 
@@ -734,22 +735,6 @@ const $ =
   id => document.getElementById(id);
 
 
-/* RICH TEXT EDITOR */
-
-function formatText(command, value = null){
-  document.execCommand(command, false, value);
-  syncEditor();
-  $("contentEditor").focus();
-}
-
-function syncEditor(){
-  $("content").value =
-    $("contentEditor").innerHTML;
-}
-
-$("contentEditor").addEventListener("input", syncEditor);
-
-
 /* API */
 
 async function api(url,options={}){
@@ -962,6 +947,21 @@ async function loadStats(){
 }
 
 
+/* RICH TEXT EDITOR */
+window.formatText=function(command,value=null){
+  $("contentEditor").focus();
+  document.execCommand(command,false,value);
+  syncEditor();
+};
+
+function syncEditor(){
+  const html=$("contentEditor").innerHTML.trim();
+  $("content").value=html;
+  return html;
+}
+
+$("contentEditor").addEventListener("input",syncEditor);
+
 /* IMAGE PREVIEW */
 
 $("image_url")
@@ -1035,9 +1035,7 @@ $("articleForm")
             .trim(),
 
         content:
-          $("content")
-            .value
-            .trim(),
+          syncEditor(),
 
         excerpt:
           $("excerpt")
@@ -1513,6 +1511,9 @@ function resetForm(){
 
   $("articleForm")
     .reset();
+
+  $("contentEditor").innerHTML = "";
+  $("content").value = "";
 
 
   $("editId")
