@@ -490,61 +490,111 @@ header{
 
 .trendingGrid{
   display:grid;
-
-  grid-template-columns:
-    repeat(3,1fr);
-
+  grid-template-columns:repeat(3,1fr);
   gap:18px;
 }
 
 .trendingCard{
+  position:relative;
   background:white;
-
   border:1px solid #e2e8f0;
-
-  border-radius:15px;
-
+  border-radius:17px;
   padding:20px;
-
   display:flex;
-
   gap:15px;
+  min-height:125px;
+  overflow:hidden;
+  transition:transform .2s, box-shadow .2s, border-color .2s;
+}
+
+.trendingCard:hover{
+  transform:translateY(-5px);
+  border-color:#bae6fd;
+  box-shadow:0 12px 30px rgba(15,23,42,.09);
+}
+
+.trendingCard::after{
+  content:"";
+  position:absolute;
+  width:90px;
+  height:90px;
+  right:-35px;
+  bottom:-40px;
+  border-radius:50%;
+  background:#f0f9ff;
+  pointer-events:none;
 }
 
 .rank{
-  width:42px;
-  height:42px;
-
+  width:46px;
+  height:46px;
   flex-shrink:0;
-
-  border-radius:12px;
-
+  border-radius:13px;
   background:#e0f2fe;
   color:#0369a1;
-
   display:flex;
   align-items:center;
   justify-content:center;
+  font-weight:900;
+  font-size:1.05rem;
+}
 
+.rank.gold{
+  background:#fef3c7;
+  color:#a16207;
+}
+
+.rank.silver{
+  background:#f1f5f9;
+  color:#475569;
+}
+
+.rank.bronze{
+  background:#ffedd5;
+  color:#c2410c;
+}
+
+.trendingContent{
+  min-width:0;
+  position:relative;
+  z-index:1;
+}
+
+.trendingBadge{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  margin-bottom:7px;
+  padding:3px 8px;
+  border-radius:999px;
+  background:#fff7ed;
+  color:#c2410c;
+  font-size:.7rem;
   font-weight:900;
 }
 
 .trendingCard h3{
-  margin:0 0 5px;
-
+  margin:0 0 7px;
   font-size:1rem;
-
   line-height:1.35;
 }
 
 .trendingCard p{
   margin:0;
-
   color:#64748b;
-
   font-size:.82rem;
 }
 
+.trendingViews{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  font-weight:700;
+}
+
+.trendingDot{
+  margin:0 5px;
+}
 
 /* =========================
    CATEGORIES
@@ -1491,13 +1541,25 @@ function showTrending(articles){
 
   const trending =
     [...articles]
-      .sort(
-        (a,b) =>
-          (b.views || 0) -
-          (a.views || 0)
-      )
+      .sort((a,b) => {
+        const viewsDiff =
+          Number(b.views || 0) -
+          Number(a.views || 0);
+
+        if(viewsDiff !== 0){
+          return viewsDiff;
+        }
+
+        return new Date(b.created_at || 0) -
+               new Date(a.created_at || 0);
+      })
       .slice(0,3);
 
+  const rankClasses = [
+    "gold",
+    "silver",
+    "bronze"
+  ];
 
   grid.innerHTML =
     trending
@@ -1508,31 +1570,31 @@ function showTrending(articles){
             article.slug
           )}"
           class="trendingCard"
+          aria-label="Read trending article: ${escapeHTML(article.title)}"
         >
 
-          <div class="rank">
-            ${index + 1}
+          <div class="rank ${rankClasses[index] || ""}">
+            ${index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉"}
           </div>
 
+          <div class="trendingContent">
 
-          <div>
+            ${index === 0 ? `
+              <span class="trendingBadge">
+                🔥 #1 Most Viewed
+              </span>
+            ` : ""}
 
             <h3>
-
-              ${escapeHTML(
-                article.title
-              )}
-
+              ${escapeHTML(article.title)}
             </h3>
 
-
             <p>
+              <span class="trendingViews">
+                👁 ${Number(article.views || 0).toLocaleString("en-IN")} views
+              </span>
 
-              👁
-              ${article.views || 0}
-              views
-
-              ·
+              <span class="trendingDot">·</span>
 
               ${escapeHTML(
                 article.category ||
