@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Category — GyanTech Blog</title>
+<meta name="description" content="Browse GyanTech Blog articles by category.">
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f8fafc;color:#0f172a}header{background:#fff;border-bottom:1px solid #e2e8f0;position:sticky;top:0;z-index:5}.nav{max-width:1120px;margin:auto;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;gap:20px}.logo{font-weight:900;color:#0f172a;text-decoration:none;font-size:1.2rem}.links{display:flex;gap:18px}.links a{color:#475569;text-decoration:none;font-weight:700}.links a:hover{color:#0284c7}.hero{max-width:1120px;margin:0 auto;padding:54px 20px 25px}.eyebrow{color:#0284c7;font-weight:800;font-size:.85rem;text-transform:uppercase;letter-spacing:.08em}.hero h1{font-size:clamp(2rem,5vw,3.4rem);margin:8px 0}.hero p{color:#64748b;max-width:680px;line-height:1.7}.wrap{max-width:1120px;margin:auto;padding:0 20px 60px}.toolbar{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:22px}.count{color:#64748b}.search{display:flex;gap:10px;max-width:500px}.search input{width:100%;padding:12px 14px;border:1px solid #cbd5e1;border-radius:10px;font:inherit;outline:none}.search button{border:0;border-radius:10px;padding:0 16px;background:#0284c7;color:#fff;font-weight:800;cursor:pointer}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}.card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;transition:.2s}.card:hover{transform:translateY(-4px);box-shadow:0 14px 32px rgba(15,23,42,.09)}.image{height:190px;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:3rem;overflow:hidden}.image img{width:100%;height:100%;object-fit:cover}.body{padding:20px}.cat{display:inline-block;color:#0369a1;background:#e0f2fe;padding:5px 9px;border-radius:999px;font-size:.75rem;font-weight:800}.body h2{font-size:1.2rem;margin:12px 0 7px}.meta{font-size:.8rem;color:#94a3b8}.desc{color:#64748b;line-height:1.6;font-size:.92rem}.read{margin-top:auto;color:#0284c7;font-weight:800;text-decoration:none}.empty{padding:50px;text-align:center;background:#fff;border:1px solid #e2e8f0;border-radius:16px;color:#64748b}.loading{text-align:center;padding:40px;color:#64748b}footer{text-align:center;padding:30px;color:#64748b;border-top:1px solid #e2e8f0}@media(max-width:850px){.grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:600px){.nav{flex-direction:column;align-items:flex-start}.toolbar{flex-direction:column;align-items:stretch}.search{max-width:none}.grid{grid-template-columns:1fr}.hero{padding-top:35px}}
+</style>
+</head>
+<body>
+<header><div class="nav"><a class="logo" href="/">GyanTech Blog</a><nav class="links"><a href="/">Home</a><a href="/articles">Articles</a><a href="/admin">Admin</a></nav></div></header>
+<section class="hero"><div class="eyebrow">GyanTech Category</div><h1 id="categoryTitle">Category</h1><p id="categoryDescription">Explore articles from this topic.</p></section>
+<main class="wrap"><div class="toolbar"><div id="resultCount" class="count">Loading...</div><form id="searchForm" class="search"><input id="searchInput" type="search" placeholder="Search this category..."><button type="submit">Search</button></form></div><div id="grid" class="grid"><div class="loading">Loading articles...</div></div></main>
+<footer>© 2026 GyanTech Blog · Technology explained simply.</footer>
+<script>
+const $=id=>document.getElementById(id);
+function escapeHTML(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));}
+function date(v){return new Date(v).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"});}
+function image(url){return url?`<img src="${escapeHTML(url)}" alt="Article image" loading="lazy" onerror="this.style.display='none'">`:`<span>💻</span>`;}
+const raw=location.pathname.split("/").filter(Boolean).pop()||"";
+const category=decodeURIComponent(raw);
+$("categoryTitle").textContent=category;
+$("categoryDescription").textContent=`Browse all published ${category} articles on GyanTech Blog.`;
+async function load(){
+  const q=$("searchInput").value.trim();
+  const url="/api/articles?category="+encodeURIComponent(category)+"&limit=30"+(q?"&q="+encodeURIComponent(q):"");
+  $("grid").innerHTML='<div class="loading">Loading articles...</div>';
+  try{
+    const r=await fetch(url);
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||"Could not load articles");
+    const articles=d.articles||[];
+    $("resultCount").textContent=`${articles.length} article${articles.length===1?"":"s"}`;
+    if(!articles.length){$("grid").innerHTML='<div class="empty">No articles found in this category.</div>';return;}
+    $("grid").innerHTML=articles.map(a=>`<article class="card"><div class="image">${image(a.image_url)}</div><div class="body"><span class="cat">${escapeHTML(a.category||category)}</span><h2>${escapeHTML(a.title)}</h2><div class="meta">By ${escapeHTML(a.author||"Admin")} · ${date(a.created_at)} · 👁 ${a.views||0}</div><p class="desc">${escapeHTML(a.excerpt||"")}</p><a class="read" href="/article/${encodeURIComponent(a.slug)}">Read Article →</a></div></article>`).join("");
+  }catch(e){$("resultCount").textContent="";$("grid").innerHTML=`<div class="empty">❌ ${escapeHTML(e.message)}</div>`;}
+}
+$("searchForm").addEventListener("submit",e=>{e.preventDefault();load();});
+load();
+</script>
+</body>
+</html>
