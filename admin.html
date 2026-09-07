@@ -391,9 +391,6 @@ button:hover{
   }
 
 }
-
-.richEditor:empty:before{content:attr(data-placeholder);color:#94a3b8;pointer-events:none}
-.richEditor:focus:before{content:""}
 </style>
 </head>
 
@@ -947,21 +944,6 @@ async function loadStats(){
 }
 
 
-/* RICH TEXT EDITOR */
-window.formatText=function(command,value=null){
-  $("contentEditor").focus();
-  document.execCommand(command,false,value);
-  syncEditor();
-};
-
-function syncEditor(){
-  const html=$("contentEditor").innerHTML.trim();
-  $("content").value=html;
-  return html;
-}
-
-$("contentEditor").addEventListener("input",syncEditor);
-
 /* IMAGE PREVIEW */
 
 $("image_url")
@@ -1006,6 +988,34 @@ $("previewImg")
 
     }
   );
+
+
+/* RICH EDITOR SYNC */
+
+function syncEditor(){
+  const editor = $("contentEditor");
+  const hidden = $("content");
+  if(!editor || !hidden) return "";
+
+  const html = editor.innerHTML.trim();
+  hidden.value = html;
+  return html;
+}
+
+window.formatText = function(command, value = null){
+  const editor = $("contentEditor");
+  if(!editor) return;
+
+  editor.focus();
+  try{
+    document.execCommand(command, false, value);
+  }catch(error){
+    console.error("Editor formatting error:", error);
+  }
+  syncEditor();
+};
+
+$("contentEditor").addEventListener("input", syncEditor);
 
 
 /* SAVE ARTICLE */
@@ -1410,100 +1420,60 @@ $("adminSearch")
 
 /* EDIT */
 
-window.startEdit =
-  function(id){
+window.startEdit = async function(id){
 
-    const article =
-      allArticles.find(
-        item => item.id === id
+  let article = allArticles.find(
+    item => Number(item.id) === Number(id)
+  );
+
+  /* If the local list is stale, refresh it once. */
+  if(!article){
+    try{
+      await loadManage();
+      article = allArticles.find(
+        item => Number(item.id) === Number(id)
       );
-
-
-    if(!article){
+    }catch(error){
+      console.error("Edit load error:", error);
+      $("msg").textContent = "❌ " + error.message;
       return;
     }
+  }
 
+  if(!article){
+    $("msg").textContent = "❌ Article not found. Please refresh the Manage Articles list.";
+    return;
+  }
 
-    $("editId").value =
-      article.id;
+  $("editId").value = article.id;
+  $("title").value = article.title || "";
+  $("author").value = article.author || "Admin";
 
-    $("title").value =
-      article.title || "";
+  const content = article.content || "";
+  $("content").value = content;
+  $("contentEditor").innerHTML = content;
 
-    $("author").value =
-      article.author || "Admin";
+  $("excerpt").value = article.excerpt || "";
+  $("category").value = article.category || "Technology";
+  $("tags").value = article.tags || "";
+  $("image_url").value = article.image_url || "";
+  $("status").value = article.status || "published";
+  $("featured").checked = !!article.featured;
 
-    $("content").value =
-      article.content || "";
+  if(article.image_url){
+    $("previewImg").src = article.image_url;
+    $("imagePreview").classList.remove("hidden");
+  }else{
+    $("imagePreview").classList.add("hidden");
+  }
 
-    $("contentEditor").innerHTML =
-      article.content || "";
+  $("editorTitle").textContent = "✏️ Edit Article";
+  $("saveBtn").textContent = "Update Article";
+  $("cancelBtn").classList.remove("hidden");
+  $("msg").textContent = "✏️ Editing: " + (article.title || "Article");
 
-    $("excerpt").value =
-      article.excerpt || "";
-
-    $("category").value =
-      article.category ||
-      "Technology";
-
-    $("tags").value =
-      article.tags || "";
-
-    $("image_url").value =
-      article.image_url || "";
-
-    $("status").value =
-      article.status ||
-      "published";
-
-    $("featured").checked =
-      !!article.featured;
-
-
-    if(article.image_url){
-
-      $("previewImg").src =
-        article.image_url;
-
-      $("imagePreview")
-        .classList
-        .remove("hidden");
-
-    }else{
-
-      $("imagePreview")
-        .classList
-        .add("hidden");
-
-    }
-
-
-    $("editorTitle")
-      .textContent =
-      "✏️ Edit Article";
-
-
-    $("saveBtn")
-      .textContent =
-      "Update Article";
-
-
-    $("cancelBtn")
-      .classList
-      .remove("hidden");
-
-
-    $("msg")
-      .textContent = "";
-
-
-    window.scrollTo({
-      top:0,
-      behavior:"smooth"
-    });
-
-  };
-
+  window.scrollTo({top:0, behavior:"smooth"});
+};
 
 /* RESET */
 
@@ -1512,11 +1482,14 @@ function resetForm(){
   $("articleForm")
     .reset();
 
-  $("contentEditor").innerHTML = "";
-  $("content").value = "";
-
 
   $("editId")
+    .value = "";
+
+  $("contentEditor")
+    .innerHTML = "";
+
+  $("content")
     .value = "";
 
   $("author")
