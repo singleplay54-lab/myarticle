@@ -1,4 +1,10 @@
-const express=require('express'),cookieParser=require('cookie-parser'),bcrypt=require('bcryptjs'),jwt=require('jsonwebtoken'),{Pool}=require('pg'),fs=require('fs'),path=require('path');
+const express=require('express'),
+cookieParser=require('cookie-parser'),
+bcrypt=require('bcryptjs'),
+jwt=require('jsonwebtoken'),
+{Pool}=require('pg'),
+fs=require('fs'),
+path=require('path');
 
 const app=express();
 const PORT=process.env.PORT||10000;
@@ -120,10 +126,6 @@ ${imageTags}
 <script type="application/ld+json">${JSON.stringify(jsonLD).replace(/</g,'\\u003c')}</script>
 `;
 
-  /*
-    Current article.html ko change karne ki zarurat nahi.
-    SEO tags directly </head> se pehle inject honge.
-  */
   return html.replace(
     /<\/head>/i,
     seo+'</head>'
@@ -190,6 +192,18 @@ async function init(){
   await pool.query(`
     CREATE UNIQUE INDEX IF NOT EXISTS articles_slug_unique
     ON articles(slug)
+  `);
+
+  /* =========================
+     NEWSLETTER TABLE
+  ========================= */
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS newsletter_subscribers(
+      id SERIAL PRIMARY KEY,
+      email TEXT UNIQUE NOT NULL,
+      subscribed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
   `);
 }
 
@@ -456,6 +470,67 @@ app.get('/api/admin/check',(q,r)=>{
 
 
 /* =========================
+   NEWSLETTER
+========================= */
+
+app.post('/api/newsletter/subscribe',async(req,res)=>{
+
+  try{
+
+    const email=
+      String(req.body.email||'')
+        .trim()
+        .toLowerCase();
+
+    if(
+      !email ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+    ){
+
+      return res.status(400).json({
+        error:'Please enter a valid email address.'
+      });
+
+    }
+
+    const result=
+      await pool.query(
+        `
+        INSERT INTO newsletter_subscribers(email)
+        VALUES($1)
+        ON CONFLICT(email) DO NOTHING
+        RETURNING id
+        `,
+        [email]
+      );
+
+    if(!result.rows.length){
+
+      return res.json({
+        message:'This email is already subscribed.'
+      });
+
+    }
+
+    res.json({
+      message:
+        "You're subscribed! Thanks for joining GyanTech Blog."
+    });
+
+  }catch(e){
+
+    console.error(e);
+
+    res.status(500).json({
+      error:'Could not subscribe right now.'
+    });
+
+  }
+
+});
+
+
+/* =========================
    PUBLIC ARTICLES
 ========================= */
 
@@ -694,19 +769,24 @@ app.get('/api/admin/stats',auth,async(q,r)=>{
         await pool.query(`
           SELECT
             COUNT(*)::int total,
+
             COUNT(*) FILTER(
               WHERE status='published'
             )::int published,
+
             COUNT(*) FILTER(
               WHERE status='draft'
             )::int drafts,
+
             COALESCE(
               SUM(views),
               0
             )::int views,
+
             COUNT(
               DISTINCT category
             )::int categories
+
           FROM articles
         `)
       ).rows[0]
