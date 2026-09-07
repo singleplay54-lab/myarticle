@@ -527,6 +527,158 @@ footer{
   html{scroll-behavior:auto}
   *{transition:none!important}
 }
+
+
+/* =========================
+   COMMENTS
+========================= */
+
+.comments-box{
+  margin-top:36px;
+  padding-top:28px;
+  border-top:1px solid var(--border);
+}
+
+.comments-title{
+  margin:0 0 6px;
+  color:var(--heading);
+  font-size:1.35rem;
+}
+
+.comments-subtitle{
+  margin:0 0 20px;
+  color:var(--muted);
+  font-size:.9rem;
+}
+
+.comment-form{
+  background:var(--surface-2);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:18px;
+  margin-bottom:25px;
+}
+
+.comment-form input,
+.comment-form textarea{
+  width:100%;
+  border:1px solid var(--border);
+  background:var(--surface);
+  color:var(--text);
+  border-radius:10px;
+  padding:12px 13px;
+  font:inherit;
+  outline:none;
+  margin-bottom:12px;
+}
+
+.comment-form input:focus,
+.comment-form textarea:focus{
+  border-color:var(--primary);
+  box-shadow:0 0 0 3px var(--primary-soft);
+}
+
+.comment-form textarea{
+  min-height:120px;
+  resize:vertical;
+}
+
+.comment-submit{
+  border:0;
+  background:var(--primary);
+  color:#fff;
+  padding:11px 18px;
+  border-radius:10px;
+  font-weight:800;
+  cursor:pointer;
+  transition:.2s;
+}
+
+.comment-submit:hover{
+  transform:translateY(-1px);
+  opacity:.92;
+}
+
+.comment-submit:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+  transform:none;
+}
+
+.comment-status{
+  min-height:20px;
+  margin:10px 0 0;
+  color:var(--primary);
+  font-size:.85rem;
+  font-weight:600;
+}
+
+.comments-list{
+  display:flex;
+  flex-direction:column;
+  gap:13px;
+}
+
+.comment-item{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:13px;
+  padding:16px;
+}
+
+.comment-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-bottom:7px;
+}
+
+.comment-name{
+  color:var(--heading);
+  font-weight:800;
+}
+
+.comment-date{
+  color:var(--muted);
+  font-size:.78rem;
+}
+
+.comment-text{
+  margin:0;
+  color:var(--text);
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+}
+
+.comments-empty,
+.comments-loading{
+  color:var(--muted);
+  font-size:.9rem;
+  padding:15px 0;
+}
+
+@media(max-width:700px){
+  .comments-box{
+    margin-top:30px;
+    padding-top:23px;
+  }
+
+  .comment-form{
+    padding:14px;
+  }
+
+  .comment-head{
+    align-items:flex-start;
+    flex-direction:column;
+    gap:2px;
+  }
+
+  .comment-submit{
+    width:100%;
+  }
+}
+
 </style>
 
 <script>
@@ -657,6 +809,63 @@ footer{
         </div>
 
         <p id="shareStatus" class="share-status"></p>
+
+      </section>
+
+      <!-- COMMENTS -->
+      <section class="comments-box" aria-label="Comments">
+
+        <h2 class="comments-title">
+          💬 Comments <span id="commentCount">(0)</span>
+        </h2>
+
+        <p class="comments-subtitle">
+          Share your thoughts about this article.
+        </p>
+
+        <form id="commentForm" class="comment-form">
+
+          <input
+            id="commentName"
+            type="text"
+            maxlength="60"
+            placeholder="Your name"
+            autocomplete="name"
+            required
+          >
+
+          <textarea
+            id="commentText"
+            maxlength="1000"
+            placeholder="Write your comment..."
+            required
+          ></textarea>
+
+          <button
+            id="commentSubmit"
+            class="comment-submit"
+            type="submit">
+            💬 Post Comment
+          </button>
+
+          <p
+            id="commentStatus"
+            class="comment-status"
+            aria-live="polite">
+          </p>
+
+        </form>
+
+        <div
+          id="commentsLoading"
+          class="comments-loading">
+          Loading comments...
+        </div>
+
+        <div
+          id="commentsList"
+          class="comments-list">
+        </div>
 
       </section>
 
@@ -1035,9 +1244,188 @@ function renderArticle(article){
 
   setupSharing(article);
   setupBreadcrumbs(article);
+  loadComments(getSlug());
 
   updateProgress();
 }
+
+
+/* =========================
+   COMMENTS SYSTEM
+========================= */
+
+function getCommentDate(date){
+  if(!date) return "";
+
+  return new Date(date).toLocaleDateString(
+    "en-IN",
+    {
+      day:"numeric",
+      month:"short",
+      year:"numeric"
+    }
+  );
+}
+
+async function loadComments(slug){
+  const loading=$("commentsLoading");
+  const list=$("commentsList");
+  const count=$("commentCount");
+
+  if(!loading || !list) return;
+
+  loading.classList.remove("hidden");
+  list.innerHTML="";
+
+  try{
+    const response=await fetch(
+      "/api/articles/"+
+      encodeURIComponent(slug)+
+      "/comments"
+    );
+
+    const data=await response
+      .json()
+      .catch(()=>({}));
+
+    if(!response.ok){
+      throw new Error(
+        data.error || "Could not load comments."
+      );
+    }
+
+    const comments=Array.isArray(data.comments)
+      ? data.comments
+      : [];
+
+    if(count){
+      count.textContent="("+comments.length+")";
+    }
+
+    loading.classList.add("hidden");
+
+    if(!comments.length){
+      list.innerHTML=`
+        <div class="comments-empty">
+          No comments yet. Be the first to comment!
+        </div>
+      `;
+      return;
+    }
+
+    list.innerHTML=comments.map(comment=>`
+      <article class="comment-item">
+        <div class="comment-head">
+          <span class="comment-name">
+            ${escapeHTML(comment.name)}
+          </span>
+          <time class="comment-date">
+            ${getCommentDate(comment.created_at)}
+          </time>
+        </div>
+        <p class="comment-text">
+          ${escapeHTML(comment.comment)}
+        </p>
+      </article>
+    `).join("");
+
+  }catch(error){
+    console.error(error);
+    loading.classList.add("hidden");
+    list.innerHTML=`
+      <div class="comments-empty">
+        Unable to load comments right now.
+      </div>
+    `;
+  }
+}
+
+async function submitComment(event){
+  event.preventDefault();
+
+  const name=$("commentName").value.trim();
+  const comment=$("commentText").value.trim();
+  const button=$("commentSubmit");
+  const status=$("commentStatus");
+
+  status.textContent="";
+
+  if(!name || !comment){
+    status.textContent="Please enter your name and comment.";
+    return;
+  }
+
+  if(name.length>60){
+    status.textContent="Name must be 60 characters or less.";
+    return;
+  }
+
+  if(comment.length>1000){
+    status.textContent="Comment must be 1000 characters or less.";
+    return;
+  }
+
+  const slug=getSlug();
+
+  if(!slug){
+    status.textContent="Article not found.";
+    return;
+  }
+
+  button.disabled=true;
+  button.textContent="Posting...";
+
+  try{
+    const response=await fetch(
+      "/api/articles/"+
+      encodeURIComponent(slug)+
+      "/comments",
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+          name:name,
+          comment:comment
+        })
+      }
+    );
+
+    const data=await response
+      .json()
+      .catch(()=>({}));
+
+    if(!response.ok){
+      throw new Error(
+        data.error || "Could not submit comment."
+      );
+    }
+
+    status.textContent="✓ "+(
+      data.message ||
+      "Comment submitted successfully."
+    );
+
+    $("commentName").value="";
+    $("commentText").value="";
+
+  }catch(error){
+    console.error(error);
+    status.textContent="❌ "+(
+      error.message ||
+      "Could not submit comment."
+    );
+  }finally{
+    button.disabled=false;
+    button.textContent="💬 Post Comment";
+  }
+}
+
+$("commentForm").addEventListener(
+  "submit",
+  submitComment
+);
 
 /* Error */
 function showError(message){
