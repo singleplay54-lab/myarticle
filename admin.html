@@ -1250,65 +1250,6 @@ $("articleForm")
 
 let allArticles = [];
 
-let allComments = [];
-
-async function loadCommentsAdmin(){
-  try{
-    allComments = await api('/api/admin/comments');
-    renderAdminComments();
-  }catch(error){
-    $('commentsAdminList').innerHTML = `<div class="empty">❌ ${escapeHTML(error.message)}</div>`;
-  }
-}
-
-function renderAdminComments(){
-  const list=$('commentsAdminList');
-  const filter=$('commentFilter').value;
-  const comments=filter==='all' ? allComments : allComments.filter(c=>c.status===filter);
-  if(!comments.length){ list.innerHTML='<div class="empty">No comments found.</div>'; return; }
-  list.innerHTML=comments.map(c=>{
-    const approved=c.status==='approved';
-    return `<div class="commentAdminItem">
-      <div class="commentAdminTop">
-        <div>
-          <div class="commentAdminName">${escapeHTML(c.name)}</div>
-          <div class="commentAdminMeta">${new Date(c.created_at).toLocaleString('en-IN')}</div>
-          <div class="commentArticle">📄 ${escapeHTML(c.article_title||'Article')}</div>
-        </div>
-        <span class="commentStatus ${approved?'commentApproved':'commentPending'}">${approved?'APPROVED':'PENDING'}</span>
-      </div>
-      <p class="commentAdminText">${escapeHTML(c.comment)}</p>
-      <div class="commentActions">
-        ${approved ? `<button class="secondary" type="button" onclick="setCommentStatus(${c.id},'pending')">⏳ Move to Pending</button>` : `<button class="approveBtn" type="button" onclick="setCommentStatus(${c.id},'approved')">✅ Approve</button>`}
-        <button class="danger" type="button" onclick="deleteComment(${c.id})">🗑️ Delete</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-window.setCommentStatus=async function(id,status){
-  try{
-    await api('/api/admin/comments/'+id,{method:'PUT',body:JSON.stringify({status})});
-    await loadCommentsAdmin();
-  }catch(error){ alert('❌ '+error.message); }
-};
-
-window.deleteComment=async function(id){
-  const comment=allComments.find(c=>Number(c.id)===Number(id));
-  if(!comment) return;
-  if(!confirm(`Delete comment by "${comment.name}"?`)) return;
-  try{
-    await api('/api/admin/comments/'+id,{method:'DELETE'});
-    await loadCommentsAdmin();
-  }catch(error){ alert('❌ '+error.message); }
-};
-
-$('commentFilter').addEventListener('change',renderAdminComments);
-$('refreshCommentsBtn').addEventListener('click',loadCommentsAdmin);
-
-
-
-
 async function loadManage(){
 
   try{
