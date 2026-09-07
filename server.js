@@ -472,7 +472,6 @@ app.post('/api/newsletter/subscribe',async(req,res)=>{
   }
 
 });
-
 app.get('/article/:slug',async(req,res)=>{
 
   try{
