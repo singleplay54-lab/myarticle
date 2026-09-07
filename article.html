@@ -52,6 +52,17 @@ h1{margin:0 0 14px;font-size:clamp(2rem,5vw,3rem);line-height:1.2;color:#0f172a}
 .share-copy{background:#e0f2fe;color:#0369a1}
 .share-status{margin:10px 0 0;color:#64748b;font-size:.82rem;min-height:20px}
 
+/* Related articles */
+.related-box{margin-top:34px;padding:24px;border:1px solid #e2e8f0;border-radius:18px;background:#fff}
+.related-title{margin:0 0 16px;font-size:1.35rem;color:#0f172a}
+.related-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.related-card{display:block;padding:16px;border:1px solid #e2e8f0;border-radius:14px;background:#f8fafc;text-decoration:none;color:inherit;transition:.2s}
+.related-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(15,23,42,.08);border-color:#bae6fd}
+.related-category{display:inline-block;font-size:.72rem;font-weight:800;color:#0284c7;margin-bottom:6px}
+.related-card h3{margin:0;font-size:1rem;line-height:1.4;color:#0f172a}
+.related-empty{color:#64748b;font-size:.9rem}
+@media(max-width:700px){.related-grid{grid-template-columns:1fr}}
+
 .back{display:inline-block;margin-bottom:18px;color:#0284c7;text-decoration:none;font-weight:700}
 .loading,.error{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:40px 25px;text-align:center;color:#64748b}
 .error{color:#b91c1c}
@@ -68,53 +79,10 @@ footer{text-align:center;padding:30px 20px;color:#64748b;font-size:.9rem}
   .share-buttons{display:grid;grid-template-columns:1fr 1fr}
   .share-btn{justify-content:center}
 }
-
-/* Stage 5 — professional reading experience */
-#readingProgress{position:fixed;top:0;left:0;width:0;height:4px;background:#0284c7;z-index:9999;transition:width .08s linear}
-.related-section{margin-top:34px}
-.section-title{margin:0 0 16px;font-size:1.45rem;color:#0f172a}
-.article-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
-.related-card{display:flex;flex-direction:column;min-height:170px;padding:18px;background:#fff;border:1px solid #e2e8f0;border-radius:14px;text-decoration:none;color:#10203a;box-shadow:0 5px 18px rgba(15,23,42,.05);transition:transform .2s,box-shadow .2s,border-color .2s}
-.related-card:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(15,23,42,.09);border-color:#bae6fd}
-.related-category{display:inline-block;align-self:flex-start;margin-bottom:9px;padding:4px 9px;border-radius:999px;background:#e0f2fe;color:#0369a1;font-size:.72rem;font-weight:800}
-.related-card h3{margin:0 0 8px;font-size:1.02rem;line-height:1.4;color:#0f172a}
-.related-meta{margin-top:auto;color:#64748b;font-size:.78rem}
-.back-top{position:fixed;right:20px;bottom:20px;width:44px;height:44px;border:0;border-radius:50%;background:#0f172a;color:#fff;font-size:1.1rem;cursor:pointer;display:none;box-shadow:0 8px 20px rgba(15,23,42,.18);z-index:1000}
-.back-top.show{display:block}
-@media(max-width:800px){.article-grid{grid-template-columns:1fr 1fr}}
-@media(max-width:520px){.article-grid{grid-template-columns:1fr}.back-top{right:14px;bottom:14px}}
-
-
-/* Share buttons near article title */
-.share-box{margin:18px 0 28px;padding:18px 20px;border:1px solid #bae6fd;border-radius:16px;background:#f0f9ff}
-.share-title{margin:0 0 12px;font-size:1rem}
-.share-buttons{display:flex;flex-wrap:wrap;gap:10px}
-.share-btn{min-height:42px}
-@media(max-width:520px){.share-buttons{display:grid;grid-template-columns:1fr 1fr}.share-btn{justify-content:center}}
-
-
-/* Guaranteed visible sharing bar */
-.share-box{
-  display:block!important;
-  visibility:visible!important;
-  margin:0 0 22px;
-  padding:18px 20px;
-  border:1px solid #bae6fd;
-  border-radius:16px;
-  background:#f0f9ff;
-  position:relative;
-  z-index:2;
-}
-.share-title{margin:0 0 12px;font-size:1rem;font-weight:800;color:#0f172a}
-.share-buttons{display:flex;flex-wrap:wrap;gap:10px}
-.share-btn{border:0;border-radius:10px;padding:10px 15px;min-height:42px;font:inherit;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:7px}
-@media(max-width:520px){.share-buttons{display:grid;grid-template-columns:1fr 1fr}.share-btn{width:100%}}
-
 </style>
 </head>
 
 <body>
-<div id="readingProgress" aria-hidden="true"></div>
 <header class="nav">
   <div class="nav-inner">
     <a href="/">GyanTech Blog</a>
@@ -128,7 +96,25 @@ footer{text-align:center;padding:30px 20px;color:#64748b;font-size:.9rem}
 <main class="wrap">
   <a href="/articles" class="back">← Back to Articles</a>
 
-  <section class="share-box" aria-label="Share article">
+  <div id="loading" class="loading">Loading article...</div>
+
+  <article id="articleCard" class="article-card hidden">
+    <img id="heroImage" class="hero-image hidden" alt="Article image">
+
+    <div class="article-body">
+      <div id="category" class="category hidden"></div>
+
+      <h1 id="title"></h1>
+
+      <div id="meta" class="meta"></div>
+
+      <div id="excerpt" class="excerpt hidden"></div>
+
+      <div id="content" class="content"></div>
+
+      <div id="tags" class="tags hidden"></div>
+
+      <section class="share-box" aria-label="Share article">
         <h2 class="share-title">🔗 Share this article</h2>
 
         <div class="share-buttons">
@@ -166,44 +152,17 @@ footer{text-align:center;padding:30px 20px;color:#64748b;font-size:.9rem}
         <p id="shareStatus" class="share-status"></p>
       </section>
 
-  <div id="loading" class="loading">Loading article...</div>
-
-  <article id="articleCard" class="article-card hidden">
-    <img id="heroImage" class="hero-image hidden" alt="Article image">
-
-    <div class="article-body">
-      <div id="category" class="category hidden"></div>
-
-      <h1 id="title"></h1>
-
-      <div id="meta" class="meta"></div>
-
-      
-
-      <div id="excerpt" class="excerpt hidden"></div>
-
-      <div id="content" class="content"></div>
-
-      <div id="tags" class="tags hidden"></div>
-
-
     </div>
   </article>
 
+
+  <section id="relatedBox" class="related-box hidden" aria-label="Related articles">
+    <h2 class="related-title">📚 Related Articles</h2>
+    <div id="relatedGrid" class="related-grid"></div>
+  </section>
+
   <div id="error" class="error hidden"></div>
-
-  <section id="relatedSection" class="related-section hidden" aria-label="Related articles">
-    <h2 class="section-title">📚 Related Articles</h2>
-    <div id="relatedGrid" class="article-grid"></div>
-  </section>
-  <section id="latestSection" class="related-section hidden" aria-label="Latest articles">
-    <h2 class="section-title">📰 Latest Articles</h2>
-    <div id="latestGrid" class="article-grid"></div>
-  </section>
-
 </main>
-
-<button id="backTop" class="back-top" type="button" aria-label="Back to top">↑</button>
 
 <footer>
   <p>&copy; 2026 GyanTech Blog. All rights reserved.</p>
@@ -342,86 +301,34 @@ function setupShare(article){
 }
 
 
-function articleCardHTML(article){
-  const title = escapeHTML(article.title || "Untitled Article");
-  const category = escapeHTML(article.category || "Technology");
-  const date = article.created_at ? new Date(article.created_at).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}) : "";
-  return `<a class="related-card" href="/article/${encodeURIComponent(article.slug || "")}">
-    <span class="related-category">${category}</span>
-    <h3>${title}</h3>
-    <div class="related-meta">${date ? date + " · " : ""}👁 ${Number(article.views || 0)} views</div>
-  </a>`;
-}
+async function loadRelatedArticles(article){
+  const category = String(article.category || "").trim();
+  if(!category) return;
 
-async function loadArticleLists(currentArticle){
   try{
-    const response = await fetch("/api/articles?limit=8");
-    const data = await response.json().catch(() => []);
+    const response = await fetch("/api/articles?category=" + encodeURIComponent(category));
     if(!response.ok) return;
+
+    const data = await response.json();
     const articles = Array.isArray(data) ? data : (Array.isArray(data.articles) ? data.articles : []);
-    const currentSlug = getSlug();
-    const candidates = articles.filter(article => article && article.slug && article.slug !== currentSlug);
+    const currentId = Number(article.id);
+    const related = articles
+      .filter(item => Number(item.id) !== currentId)
+      .slice(0,3);
 
-    const related = candidates.filter(article =>
-      currentArticle.category && article.category === currentArticle.category
-    ).slice(0,3);
+    if(!related.length) return;
 
-    if(related.length){
-      $("relatedGrid").innerHTML = related.map(articleCardHTML).join("");
-      $("relatedSection").classList.remove("hidden");
-    }
+    $("relatedGrid").innerHTML = related.map(item => {
+      const slug = item.slug || item.id;
+      return `<a class="related-card" href="/article/${encodeURIComponent(slug)}">
+        <span class="related-category">${escapeHTML(item.category || category)}</span>
+        <h3>${escapeHTML(item.title || "Untitled Article")}</h3>
+      </a>`;
+    }).join("");
 
-    const latest = candidates.filter(article => !related.some(r => r.slug === article.slug)).slice(0,3);
-    if(latest.length){
-      $("latestGrid").innerHTML = latest.map(articleCardHTML).join("");
-      $("latestSection").classList.remove("hidden");
-    }
+    $("relatedBox").classList.remove("hidden");
   }catch(error){
-    console.warn("Related/latest articles unavailable:", error);
-  }
-}
-
-function setupReadingProgress(){
-  const update = () => {
-    const doc = document.documentElement;
-    const max = doc.scrollHeight - window.innerHeight;
-    const progress = max > 0 ? (window.scrollY / max) * 100 : 0;
-    $("readingProgress").style.width = Math.min(100,Math.max(0,progress)) + "%";
-    $("backTop").classList.toggle("show",window.scrollY > 450);
-  };
-  window.addEventListener("scroll",update,{passive:true});
-  update();
-}
-
-$("backTop").addEventListener("click",() => {
-  window.scrollTo({top:0,behavior:"smooth"});
-});
-
-
-function initializeShareButtons(){
-  const url = window.location.href;
-  const title = document.title || "GyanTech Blog";
-
-  const wa = $("whatsappShare");
-  const fb = $("facebookShare");
-  const x = $("xShare");
-  const copy = $("copyShare");
-
-  if(wa) wa.href = "https://wa.me/?text=" + encodeURIComponent(title + " - " + url);
-  if(fb) fb.href = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(url);
-  if(x) x.href = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(title) + "&url=" + encodeURIComponent(url);
-
-  if(copy){
-    copy.onclick = async function(){
-      try{
-        await navigator.clipboard.writeText(url);
-        const status = $("shareStatus");
-        if(status) status.textContent = "✅ Article link copied!";
-      }catch(error){
-        const status = $("shareStatus");
-        if(status) status.textContent = "Please copy the URL from your browser.";
-      }
-    };
+    console.warn("Related articles unavailable", error);
   }
 }
 
@@ -579,8 +486,7 @@ function renderArticle(article){
   }
 
   setupShare(article);
-  loadArticleLists(article);
-  setupReadingProgress();
+  loadRelatedArticles(article);
 }
 
 function showError(message){
@@ -601,7 +507,6 @@ function showError(message){
     .remove("hidden");
 }
 
-initializeShareButtons();
 loadArticle();
 </script>
 
