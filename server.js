@@ -1,10 +1,4 @@
-const express=require('express'),
-cookieParser=require('cookie-parser'),
-bcrypt=require('bcryptjs'),
-jwt=require('jsonwebtoken'),
-{Pool}=require('pg'),
-fs=require('fs'),
-path=require('path');
+const express=require('express'),cookieParser=require('cookie-parser'),bcrypt=require('bcryptjs'),jwt=require('jsonwebtoken'),{Pool}=require('pg'),fs=require('fs'),path=require('path');
 
 const app=express();
 const PORT=process.env.PORT||10000;
@@ -21,6 +15,11 @@ app.use(express.json({limit:'1mb'}));
 app.use(cookieParser());
 app.use(express.static(__dirname,{extensions:['html']}));
 
+
+/* =========================
+   HELPERS
+========================= */
+
 const slugify=s=>
   String(s||'')
     .toLowerCase()
@@ -30,6 +29,7 @@ const slugify=s=>
     .replace(/-+/g,'-')
     .replace(/^-|-$/g,'')
     .slice(0,80)||'article';
+
 
 function escapeHTML(value){
   return String(value??'').replace(/[&<>"']/g,m=>({
@@ -41,6 +41,7 @@ function escapeHTML(value){
   }[m]));
 }
 
+
 function plainText(value){
   return String(value||'')
     .replace(/<script[\s\S]*?<\/script>/gi,' ')
@@ -50,10 +51,16 @@ function plainText(value){
     .trim();
 }
 
+
 function seoDescription(article){
-  const text=plainText(article.excerpt||article.content||'');
-  return text.slice(0,155)+(text.length>155?'...':'');
+  const text=plainText(
+    article.excerpt||article.content||''
+  );
+
+  return text.slice(0,155)+
+    (text.length>155?'...':'');
 }
+
 
 function seoArticleHTML(html,article){
 
@@ -67,7 +74,8 @@ function seoArticleHTML(html,article){
   );
 
   const url=
-    SITE_URL+'/article/'+
+    SITE_URL+
+    '/article/'+
     encodeURIComponent(article.slug);
 
   const image=article.image_url
@@ -90,7 +98,9 @@ function seoArticleHTML(html,article){
       'Read this article on GyanTech Blog.',
     url:url,
     datePublished:article.created_at,
-    dateModified:article.updated_at||article.created_at,
+    dateModified:
+      article.updated_at||
+      article.created_at,
     author:{
       '@type':'Person',
       name:String(article.author||'Admin')
@@ -103,7 +113,9 @@ function seoArticleHTML(html,article){
   };
 
   if(article.image_url){
-    jsonLD.image=[String(article.image_url)];
+    jsonLD.image=[
+      String(article.image_url)
+    ];
   }
 
   const seo=`
@@ -132,6 +144,11 @@ ${imageTags}
   );
 }
 
+
+/* =========================
+   DATABASE INIT
+========================= */
+
 async function init(){
 
   await pool.query(`
@@ -144,29 +161,40 @@ async function init(){
     )
   `);
 
+
   for(const q of [
 
-    `ALTER TABLE articles ADD COLUMN IF NOT EXISTS slug TEXT`,
+    `ALTER TABLE articles
+     ADD COLUMN IF NOT EXISTS slug TEXT`,
 
-    `ALTER TABLE articles ADD COLUMN IF NOT EXISTS excerpt TEXT DEFAULT ''`,
+    `ALTER TABLE articles
+     ADD COLUMN IF NOT EXISTS excerpt TEXT DEFAULT ''`,
 
-    `ALTER TABLE articles ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'Technology'`,
+    `ALTER TABLE articles
+     ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'Technology'`,
 
-    `ALTER TABLE articles ADD COLUMN IF NOT EXISTS tags TEXT DEFAULT ''`,
+    `ALTER TABLE articles
+     ADD COLUMN IF NOT EXISTS tags TEXT DEFAULT ''`,
 
-    `ALTER TABLE articles ADD COLUMN IF NOT EXISTS image_url TEXT DEFAULT ''`,
+    `ALTER TABLE articles
+     ADD COLUMN IF NOT EXISTS image_url TEXT DEFAULT ''`,
 
-    `ALTER TABLE articles ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'published'`,
+    `ALTER TABLE articles
+     ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'published'`,
 
-    `ALTER TABLE articles ADD COLUMN IF NOT EXISTS featured BOOLEAN DEFAULT FALSE`,
+    `ALTER TABLE articles
+     ADD COLUMN IF NOT EXISTS featured BOOLEAN DEFAULT FALSE`,
 
-    `ALTER TABLE articles ADD COLUMN IF NOT EXISTS views INTEGER DEFAULT 0`,
+    `ALTER TABLE articles
+     ADD COLUMN IF NOT EXISTS views INTEGER DEFAULT 0`,
 
-    `ALTER TABLE articles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`
+    `ALTER TABLE articles
+     ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`
 
   ]){
     await pool.query(q);
   }
+
 
   await pool.query(`
     UPDATE articles
@@ -183,20 +211,21 @@ async function init(){
     WHERE slug IS NULL OR slug=''
   `);
 
+
   await pool.query(`
     UPDATE articles
     SET status='published'
     WHERE status IS NULL
   `);
 
+
   await pool.query(`
     CREATE UNIQUE INDEX IF NOT EXISTS articles_slug_unique
     ON articles(slug)
   `);
 
-  /* =========================
-     NEWSLETTER TABLE
-  ========================= */
+
+  /* NEWSLETTER TABLE */
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS newsletter_subscribers(
@@ -205,7 +234,35 @@ async function init(){
       subscribed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `);
+
+
+  /* COMMENTS TABLE */
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS comments(
+      id SERIAL PRIMARY KEY,
+      article_id INTEGER NOT NULL
+        REFERENCES articles(id)
+        ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      comment TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS comments_article_idx
+    ON comments(article_id,created_at DESC)
+  `);
+
 }
+
+
+/* =========================
+   AUTH
+========================= */
 
 function auth(req,res,next){
 
@@ -227,6 +284,7 @@ function auth(req,res,next){
     });
 
   }
+
 }
 
 
@@ -235,15 +293,26 @@ function auth(req,res,next){
 ========================= */
 
 app.get('/',(q,r)=>
-  r.sendFile('index.html',{root:__dirname})
+  r.sendFile(
+    'index.html',
+    {root:__dirname}
+  )
 );
+
 
 app.get('/articles',(q,r)=>
-  r.sendFile('articles.html',{root:__dirname})
+  r.sendFile(
+    'articles.html',
+    {root:__dirname}
+  )
 );
 
+
 app.get('/admin',(q,r)=>
-  r.sendFile('admin.html',{root:__dirname})
+  r.sendFile(
+    'admin.html',
+    {root:__dirname}
+  )
 );
 
 
@@ -266,24 +335,42 @@ app.get('/article/:slug',async(req,res)=>{
       [req.params.slug]
     );
 
+
     if(!result.rows.length){
 
       return res
         .status(404)
-        .sendFile('article.html',{root:__dirname});
+        .sendFile(
+          'article.html',
+          {root:__dirname}
+        );
 
     }
 
+
     const article=result.rows[0];
 
+
     const articlePath=
-      path.join(__dirname,'article.html');
+      path.join(
+        __dirname,
+        'article.html'
+      );
+
 
     const html=
-      fs.readFileSync(articlePath,'utf8');
+      fs.readFileSync(
+        articlePath,
+        'utf8'
+      );
+
 
     const finalHTML=
-      seoArticleHTML(html,article);
+      seoArticleHTML(
+        html,
+        article
+      );
+
 
     res.send(finalHTML);
 
@@ -293,7 +380,10 @@ app.get('/article/:slug',async(req,res)=>{
 
     res
       .status(500)
-      .sendFile('article.html',{root:__dirname});
+      .sendFile(
+        'article.html',
+        {root:__dirname}
+      );
 
   }
 
@@ -309,44 +399,55 @@ app.get('/sitemap.xml',async(q,r)=>{
   try{
 
     const result=await pool.query(`
-      SELECT slug,created_at,updated_at
+      SELECT
+        slug,
+        created_at,
+        updated_at
       FROM articles
       WHERE status='published'
       ORDER BY created_at DESC
     `);
+
 
     const urls=[
       `${SITE_URL}/`,
       `${SITE_URL}/articles`
     ];
 
+
     for(const article of result.rows){
 
       urls.push(
-        `${SITE_URL}/article/${encodeURIComponent(article.slug)}`
+        `${SITE_URL}/article/`+
+        encodeURIComponent(article.slug)
       );
 
     }
 
-    const articleURLs=result.rows.map(article=>{
 
-      const url=
-        `${SITE_URL}/article/`+
-        encodeURIComponent(article.slug);
+    const articleURLs=
+      result.rows.map(article=>{
 
-      const date=
-        article.updated_at||
-        article.created_at;
+        const url=
+          `${SITE_URL}/article/`+
+          encodeURIComponent(article.slug);
 
-      return `
+        const date=
+          article.updated_at||
+          article.created_at;
+
+
+        return `
   <url>
     <loc>${escapeHTML(url)}</loc>
     <lastmod>${new Date(date).toISOString()}</lastmod>
   </url>`;
 
-    }).join('\n');
+      }).join('\n');
 
-    const sitemap=`<?xml version="1.0" encoding="UTF-8"?>
+
+    const sitemap=
+`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
   <url>
@@ -360,6 +461,7 @@ app.get('/sitemap.xml',async(q,r)=>{
 ${articleURLs}
 
 </urlset>`;
+
 
     r
       .type('application/xml')
@@ -388,7 +490,10 @@ app.post('/api/login',async(req,res)=>{
   try{
 
     const password=
-      String(req.body.password||'');
+      String(
+        req.body.password||''
+      );
+
 
     const validPassword=
       await bcrypt.compare(
@@ -396,13 +501,17 @@ app.post('/api/login',async(req,res)=>{
         process.env.ADMIN_PASSWORD_HASH||''
       );
 
+
     if(!validPassword){
 
-      return res.status(401).json({
-        error:'Invalid password'
-      });
+      return res
+        .status(401)
+        .json({
+          error:'Invalid password'
+        });
 
     }
+
 
     const token=
       jwt.sign(
@@ -411,38 +520,53 @@ app.post('/api/login',async(req,res)=>{
         {expiresIn:'7d'}
       );
 
+
     res.cookie(
       'admin_token',
       token,
       {
         httpOnly:true,
         sameSite:'lax',
-        secure:process.env.NODE_ENV==='production',
+        secure:
+          process.env.NODE_ENV==='production',
         maxAge:604800000
       }
     );
 
-    res.json({ok:true});
+
+    res.json({
+      ok:true
+    });
 
   }catch{
 
-    res.status(500).json({
-      error:'Login failed'
-    });
+    res
+      .status(500)
+      .json({
+        error:'Login failed'
+      });
 
   }
 
 });
 
 
+/* LOGOUT */
+
 app.post('/api/logout',(q,r)=>{
 
-  r.clearCookie('admin_token');
+  r.clearCookie(
+    'admin_token'
+  );
 
-  r.json({ok:true});
+  r.json({
+    ok:true
+  });
 
 });
 
+
+/* ADMIN CHECK */
 
 app.get('/api/admin/check',(q,r)=>{
 
@@ -454,8 +578,10 @@ app.get('/api/admin/check',(q,r)=>{
         process.env.JWT_SECRET
       );
 
+
     r.json({
-      authenticated:d.role==='admin'
+      authenticated:
+        d.role==='admin'
     });
 
   }catch{
@@ -473,338 +599,780 @@ app.get('/api/admin/check',(q,r)=>{
    NEWSLETTER
 ========================= */
 
-app.post('/api/newsletter/subscribe',async(req,res)=>{
+app.post(
+  '/api/newsletter/subscribe',
+  async(req,res)=>{
 
-  try{
+    try{
 
-    const email=
-      String(req.body.email||'')
+      const email=
+        String(
+          req.body.email||''
+        )
         .trim()
         .toLowerCase();
 
-    if(
-      !email ||
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-    ){
 
-      return res.status(400).json({
-        error:'Please enter a valid email address.'
+      if(
+        !email ||
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+      ){
+
+        return res
+          .status(400)
+          .json({
+            error:
+              'Please enter a valid email address.'
+          });
+
+      }
+
+
+      const result=
+        await pool.query(
+          `INSERT INTO newsletter_subscribers(email)
+           VALUES($1)
+           ON CONFLICT(email) DO NOTHING
+           RETURNING id`,
+          [email]
+        );
+
+
+      if(!result.rows.length){
+
+        return res.json({
+          message:
+            'This email is already subscribed.'
+        });
+
+      }
+
+
+      res.json({
+        message:
+          "You're subscribed! Thanks for joining GyanTech Blog."
       });
 
-    }
+    }catch(e){
 
-    const result=
-      await pool.query(
-        `
-        INSERT INTO newsletter_subscribers(email)
-        VALUES($1)
-        ON CONFLICT(email) DO NOTHING
-        RETURNING id
-        `,
-        [email]
-      );
+      console.error(e);
 
-    if(!result.rows.length){
-
-      return res.json({
-        message:'This email is already subscribed.'
-      });
+      res
+        .status(500)
+        .json({
+          error:
+            'Could not subscribe right now.'
+        });
 
     }
-
-    res.json({
-      message:
-        "You're subscribed! Thanks for joining GyanTech Blog."
-    });
-
-  }catch(e){
-
-    console.error(e);
-
-    res.status(500).json({
-      error:'Could not subscribe right now.'
-    });
 
   }
+);
 
-});
+
+/* =========================
+   COMMENTS
+========================= */
+
+
+/*
+  GET APPROVED COMMENTS
+*/
+
+app.get(
+  '/api/articles/:slug/comments',
+  async(req,res)=>{
+
+    try{
+
+      const article=
+        await pool.query(
+          `SELECT id
+           FROM articles
+           WHERE slug=$1
+           AND status='published'
+           LIMIT 1`,
+          [req.params.slug]
+        );
+
+
+      if(!article.rows.length){
+
+        return res
+          .status(404)
+          .json({
+            error:'Article not found'
+          });
+
+      }
+
+
+      const comments=
+        await pool.query(
+          `SELECT
+             id,
+             name,
+             comment,
+             created_at
+           FROM comments
+           WHERE article_id=$1
+           AND status='approved'
+           ORDER BY created_at DESC`,
+          [article.rows[0].id]
+        );
+
+
+      res.json({
+        comments:comments.rows,
+        total:comments.rows.length
+      });
+
+    }catch(e){
+
+      console.error(e);
+
+      res
+        .status(500)
+        .json({
+          error:'Could not load comments'
+        });
+
+    }
+
+  }
+);
+
+
+/*
+  SUBMIT COMMENT
+*/
+
+app.post(
+  '/api/articles/:slug/comments',
+  async(req,res)=>{
+
+    try{
+
+      const name=
+        String(
+          req.body.name||''
+        ).trim();
+
+
+      const comment=
+        String(
+          req.body.comment||''
+        ).trim();
+
+
+      if(!name || !comment){
+
+        return res
+          .status(400)
+          .json({
+            error:
+              'Name and comment are required.'
+          });
+
+      }
+
+
+      if(name.length>60){
+
+        return res
+          .status(400)
+          .json({
+            error:
+              'Name is too long.'
+          });
+
+      }
+
+
+      if(comment.length>1000){
+
+        return res
+          .status(400)
+          .json({
+            error:
+              'Comment is too long.'
+          });
+
+      }
+
+
+      const article=
+        await pool.query(
+          `SELECT id
+           FROM articles
+           WHERE slug=$1
+           AND status='published'
+           LIMIT 1`,
+          [req.params.slug]
+        );
+
+
+      if(!article.rows.length){
+
+        return res
+          .status(404)
+          .json({
+            error:'Article not found'
+          });
+
+      }
+
+
+      await pool.query(
+        `INSERT INTO comments(
+           article_id,
+           name,
+           comment,
+           status
+         )
+         VALUES(
+           $1,
+           $2,
+           $3,
+           'pending'
+         )`,
+        [
+          article.rows[0].id,
+          name,
+          comment
+        ]
+      );
+
+
+      res
+        .status(201)
+        .json({
+          message:
+            'Comment submitted. It will appear after admin approval.'
+        });
+
+    }catch(e){
+
+      console.error(e);
+
+      res
+        .status(500)
+        .json({
+          error:
+            'Could not submit comment right now.'
+        });
+
+    }
+
+  }
+);
+
+
+/*
+  ADMIN: ALL COMMENTS
+*/
+
+app.get(
+  '/api/admin/comments',
+  auth,
+  async(q,r)=>{
+
+    try{
+
+      const result=
+        await pool.query(`
+          SELECT
+            c.id,
+            c.article_id,
+            c.name,
+            c.comment,
+            c.status,
+            c.created_at,
+            a.title AS article_title,
+            a.slug AS article_slug
+          FROM comments c
+          JOIN articles a
+            ON a.id=c.article_id
+          ORDER BY
+            CASE
+              WHEN c.status='pending'
+              THEN 0
+              ELSE 1
+            END,
+            c.created_at DESC
+        `);
+
+
+      r.json(
+        result.rows
+      );
+
+    }catch(e){
+
+      console.error(e);
+
+      r
+        .status(500)
+        .json({
+          error:
+            'Could not load comments'
+        });
+
+    }
+
+  }
+);
+
+
+/*
+  ADMIN: APPROVE / PENDING
+*/
+
+app.put(
+  '/api/admin/comments/:id',
+  auth,
+  async(req,res)=>{
+
+    try{
+
+      const status=
+        req.body.status==='approved'
+          ?'approved'
+          :'pending';
+
+
+      const result=
+        await pool.query(
+          `UPDATE comments
+           SET status=$1
+           WHERE id=$2
+           RETURNING *`,
+          [
+            status,
+            +req.params.id
+          ]
+        );
+
+
+      if(!result.rows.length){
+
+        return res
+          .status(404)
+          .json({
+            error:
+              'Comment not found'
+          });
+
+      }
+
+
+      res.json(
+        result.rows[0]
+      );
+
+    }catch(e){
+
+      console.error(e);
+
+      res
+        .status(500)
+        .json({
+          error:
+            'Could not update comment'
+        });
+
+    }
+
+  }
+);
+
+
+/*
+  ADMIN: DELETE COMMENT
+*/
+
+app.delete(
+  '/api/admin/comments/:id',
+  auth,
+  async(req,res)=>{
+
+    try{
+
+      const result=
+        await pool.query(
+          `DELETE FROM comments
+           WHERE id=$1
+           RETURNING id`,
+          [+req.params.id]
+        );
+
+
+      if(!result.rows.length){
+
+        return res
+          .status(404)
+          .json({
+            error:
+              'Comment not found'
+          });
+
+      }
+
+
+      res.json({
+        ok:true
+      });
+
+    }catch(e){
+
+      console.error(e);
+
+      res
+        .status(500)
+        .json({
+          error:
+            'Could not delete comment'
+        });
+
+    }
+
+  }
+);
 
 
 /* =========================
    PUBLIC ARTICLES
 ========================= */
 
-app.get('/api/articles',async(req,res)=>{
+app.get(
+  '/api/articles',
+  async(req,res)=>{
 
-  try{
+    try{
 
-    const {
-      q='',
-      category='',
-      page='1',
-      limit='9'
-    }=req.query;
+      const {
+        q='',
+        category='',
+        page='1',
+        limit='9'
+      }=req.query;
 
-    const p=
-      Math.max(1,+page||1);
 
-    const lim=
-      Math.min(
-        30,
-        Math.max(1,+limit||9)
-      );
+      const p=
+        Math.max(
+          1,
+          +page||1
+        );
 
-    const params=[];
 
-    const w=[
-      `status='published'`
-    ];
+      const lim=
+        Math.min(
+          30,
+          Math.max(
+            1,
+            +limit||9
+          )
+        );
 
-    if(q.trim()){
+
+      const params=[];
+
+
+      const w=[
+        `status='published'`
+      ];
+
+
+      if(q.trim()){
+
+        params.push(
+          '%'+q.trim()+'%'
+        );
+
+
+        w.push(`
+          (
+            title ILIKE $${params.length}
+            OR content ILIKE $${params.length}
+            OR tags ILIKE $${params.length}
+            OR category ILIKE $${params.length}
+          )
+        `);
+
+      }
+
+
+      if(category.trim()){
+
+        params.push(
+          category.trim()
+        );
+
+
+        w.push(
+          `category=$${params.length}`
+        );
+
+      }
+
+
+      const where=
+        w.join(' AND ');
+
+
+      const count=
+        await pool.query(
+          `
+          SELECT COUNT(*)::int total
+          FROM articles
+          WHERE ${where}
+          `,
+          params
+        );
+
 
       params.push(
-        '%'+q.trim()+'%'
+        lim,
+        (p-1)*lim
       );
 
-      w.push(`
-        (
-          title ILIKE $${params.length}
-          OR content ILIKE $${params.length}
-          OR tags ILIKE $${params.length}
-          OR category ILIKE $${params.length}
-        )
-      `);
+
+      const data=
+        await pool.query(
+          `
+          SELECT
+            id,
+            title,
+            slug,
+            excerpt,
+            author,
+            category,
+            tags,
+            image_url,
+            featured,
+            views,
+            created_at
+          FROM articles
+          WHERE ${where}
+          ORDER BY
+            featured DESC,
+            created_at DESC
+          LIMIT $${params.length-1}
+          OFFSET $${params.length}
+          `,
+          params
+        );
+
+
+      res.json({
+        articles:data.rows,
+        total:
+          count.rows[0].total,
+        page:p,
+        limit:lim
+      });
+
+    }catch(e){
+
+      console.error(e);
+
+      res
+        .status(500)
+        .json({
+          error:
+            'Could not load articles'
+        });
 
     }
-
-    if(category.trim()){
-
-      params.push(
-        category.trim()
-      );
-
-      w.push(
-        `category=$${params.length}`
-      );
-
-    }
-
-    const where=
-      w.join(' AND ');
-
-    const count=
-      await pool.query(
-        `
-        SELECT COUNT(*)::int total
-        FROM articles
-        WHERE ${where}
-        `,
-        params
-      );
-
-    params.push(
-      lim,
-      (p-1)*lim
-    );
-
-    const data=
-      await pool.query(
-        `
-        SELECT
-          id,
-          title,
-          slug,
-          excerpt,
-          author,
-          category,
-          tags,
-          image_url,
-          featured,
-          views,
-          created_at
-        FROM articles
-        WHERE ${where}
-        ORDER BY
-          featured DESC,
-          created_at DESC
-        LIMIT $${params.length-1}
-        OFFSET $${params.length}
-        `,
-        params
-      );
-
-    res.json({
-      articles:data.rows,
-      total:count.rows[0].total,
-      page:p,
-      limit:lim
-    });
-
-  }catch(e){
-
-    console.error(e);
-
-    res.status(500).json({
-      error:'Could not load articles'
-    });
 
   }
-
-});
+);
 
 
 /* =========================
    SINGLE ARTICLE API
 ========================= */
 
-app.get('/api/articles/:slug',async(req,res)=>{
+app.get(
+  '/api/articles/:slug',
+  async(req,res)=>{
 
-  try{
+    try{
 
-    const x=
-      await pool.query(
-        `
-        UPDATE articles
-        SET views=views+1
-        WHERE slug=$1
-        AND status='published'
-        RETURNING *
-        `,
-        [req.params.slug]
+      const x=
+        await pool.query(
+          `
+          UPDATE articles
+          SET views=views+1
+          WHERE slug=$1
+          AND status='published'
+          RETURNING *
+          `,
+          [req.params.slug]
+        );
+
+
+      if(!x.rows.length){
+
+        return res
+          .status(404)
+          .json({
+            error:
+              'Article not found'
+          });
+
+      }
+
+
+      res.json(
+        x.rows[0]
       );
 
-    if(!x.rows.length){
+    }catch{
 
-      return res.status(404).json({
-        error:'Article not found'
-      });
+      res
+        .status(500)
+        .json({
+          error:
+            'Could not load article'
+        });
 
     }
 
-    res.json(x.rows[0]);
-
-  }catch{
-
-    res.status(500).json({
-      error:'Could not load article'
-    });
-
   }
-
-});
+);
 
 
 /* =========================
    CATEGORIES
 ========================= */
 
-app.get('/api/categories',async(q,r)=>{
+app.get(
+  '/api/categories',
+  async(q,r)=>{
 
-  try{
+    try{
 
-    r.json(
-      (
-        await pool.query(`
-          SELECT
-            category,
-            COUNT(*)::int count
-          FROM articles
-          WHERE status='published'
-          GROUP BY category
-          ORDER BY count DESC,category
-        `)
-      ).rows
-    );
+      r.json(
+        (
+          await pool.query(`
+            SELECT
+              category,
+              COUNT(*)::int count
+            FROM articles
+            WHERE status='published'
+            GROUP BY category
+            ORDER BY
+              count DESC,
+              category
+          `)
+        ).rows
+      );
 
-  }catch{
+    }catch{
 
-    r.status(500).json({
-      error:'Failed'
-    });
+      r
+        .status(500)
+        .json({
+          error:'Failed'
+        });
+
+    }
 
   }
-
-});
+);
 
 
 /* =========================
    ADMIN ARTICLES
 ========================= */
 
-app.get('/api/admin/articles',auth,async(q,r)=>{
+app.get(
+  '/api/admin/articles',
+  auth,
+  async(q,r)=>{
 
-  try{
+    try{
 
-    r.json(
-      (
-        await pool.query(`
-          SELECT *
-          FROM articles
-          ORDER BY created_at DESC
-        `)
-      ).rows
-    );
+      r.json(
+        (
+          await pool.query(`
+            SELECT *
+            FROM articles
+            ORDER BY created_at DESC
+          `)
+        ).rows
+      );
 
-  }catch{
+    }catch{
 
-    r.status(500).json({
-      error:'Failed'
-    });
+      r
+        .status(500)
+        .json({
+          error:'Failed'
+        });
+
+    }
 
   }
-
-});
+);
 
 
 /* =========================
    ADMIN STATS
 ========================= */
 
-app.get('/api/admin/stats',auth,async(q,r)=>{
+app.get(
+  '/api/admin/stats',
+  auth,
+  async(q,r)=>{
 
-  try{
+    try{
 
-    r.json(
-      (
-        await pool.query(`
-          SELECT
-            COUNT(*)::int total,
+      r.json(
+        (
+          await pool.query(`
+            SELECT
+              COUNT(*)::int total,
 
-            COUNT(*) FILTER(
-              WHERE status='published'
-            )::int published,
+              COUNT(*) FILTER(
+                WHERE status='published'
+              )::int published,
 
-            COUNT(*) FILTER(
-              WHERE status='draft'
-            )::int drafts,
+              COUNT(*) FILTER(
+                WHERE status='draft'
+              )::int drafts,
 
-            COALESCE(
-              SUM(views),
-              0
-            )::int views,
+              COALESCE(
+                SUM(views),
+                0
+              )::int views,
 
-            COUNT(
-              DISTINCT category
-            )::int categories
+              COUNT(
+                DISTINCT category
+              )::int categories
 
-          FROM articles
-        `)
-      ).rows[0]
-    );
+            FROM articles
+          `)
+        ).rows[0]
+      );
 
-  }catch{
+    }catch{
 
-    r.status(500).json({
-      error:'Failed'
-    });
+      r
+        .status(500)
+        .json({
+          error:'Failed'
+        });
+
+    }
 
   }
-
-});
+);
 
 
 /* =========================
-   VALIDATION
+   ARTICLE VALIDATION
 ========================= */
 
 function valid(b){
@@ -812,29 +1380,41 @@ function valid(b){
   const a={
 
     title:
-      String(b.title||'').trim(),
+      String(
+        b.title||''
+      ).trim(),
 
     content:
-      String(b.content||'').trim(),
+      String(
+        b.content||''
+      ).trim(),
 
     author:
       String(
         b.author||'Admin'
-      ).trim()||'Admin',
+      ).trim()||
+      'Admin',
 
     category:
       String(
         b.category||'Technology'
-      ).trim()||'Technology',
+      ).trim()||
+      'Technology',
 
     excerpt:
-      String(b.excerpt||'').trim(),
+      String(
+        b.excerpt||''
+      ).trim(),
 
     tags:
-      String(b.tags||'').trim(),
+      String(
+        b.tags||''
+      ).trim(),
 
     image_url:
-      String(b.image_url||'').trim(),
+      String(
+        b.image_url||''
+      ).trim(),
 
     status:
       b.status==='draft'
@@ -846,7 +1426,11 @@ function valid(b){
 
   };
 
-  if(!a.title||!a.content){
+
+  if(
+    !a.title||
+    !a.content
+  ){
 
     throw Error(
       'Title and content are required'
@@ -854,7 +1438,9 @@ function valid(b){
 
   }
 
+
   return a;
+
 }
 
 
@@ -862,180 +1448,215 @@ function valid(b){
    CREATE ARTICLE
 ========================= */
 
-app.post('/api/articles',auth,async(req,res)=>{
+app.post(
+  '/api/articles',
+  auth,
+  async(req,res)=>{
 
-  try{
+    try{
 
-    const a=
-      valid(req.body);
+      const a=
+        valid(req.body);
 
-    const base=
-      slugify(a.title);
 
-    const slug=
-      base+'-'+
-      Date.now().toString(36);
+      const base=
+        slugify(a.title);
 
-    const x=
-      await pool.query(
-        `
-        INSERT INTO articles(
-          title,
-          content,
-          author,
-          category,
-          excerpt,
-          tags,
-          image_url,
-          status,
-          featured,
-          slug,
-          updated_at
-        )
-        VALUES(
-          $1,$2,$3,$4,$5,
-          $6,$7,$8,$9,$10,
-          NOW()
-        )
-        RETURNING *
-        `,
-        [
-          a.title,
-          a.content,
-          a.author,
-          a.category,
-          a.excerpt,
-          a.tags,
-          a.image_url,
-          a.status,
-          a.featured,
-          slug
-        ]
-      );
 
-    res
-      .status(201)
-      .json(x.rows[0]);
+      const slug=
+        base+'-'+
+        Date.now()
+          .toString(36);
 
-  }catch(e){
 
-    res.status(400).json({
-      error:e.message
-    });
+      const x=
+        await pool.query(
+          `
+          INSERT INTO articles(
+            title,
+            content,
+            author,
+            category,
+            excerpt,
+            tags,
+            image_url,
+            status,
+            featured,
+            slug,
+            updated_at
+          )
+          VALUES(
+            $1,$2,$3,$4,$5,
+            $6,$7,$8,$9,$10,
+            NOW()
+          )
+          RETURNING *
+          `,
+          [
+            a.title,
+            a.content,
+            a.author,
+            a.category,
+            a.excerpt,
+            a.tags,
+            a.image_url,
+            a.status,
+            a.featured,
+            slug
+          ]
+        );
+
+
+      res
+        .status(201)
+        .json(
+          x.rows[0]
+        );
+
+    }catch(e){
+
+      res
+        .status(400)
+        .json({
+          error:e.message
+        });
+
+    }
 
   }
-
-});
+);
 
 
 /* =========================
    UPDATE ARTICLE
 ========================= */
 
-app.put('/api/articles/:id',auth,async(req,res)=>{
+app.put(
+  '/api/articles/:id',
+  auth,
+  async(req,res)=>{
 
-  try{
+    try{
 
-    const a=
-      valid(req.body);
+      const a=
+        valid(req.body);
 
-    const id=
-      +req.params.id;
 
-    const x=
-      await pool.query(
-        `
-        UPDATE articles
-        SET
-          title=$1,
-          content=$2,
-          author=$3,
-          category=$4,
-          excerpt=$5,
-          tags=$6,
-          image_url=$7,
-          status=$8,
-          featured=$9,
-          updated_at=NOW()
-        WHERE id=$10
-        RETURNING *
-        `,
-        [
-          a.title,
-          a.content,
-          a.author,
-          a.category,
-          a.excerpt,
-          a.tags,
-          a.image_url,
-          a.status,
-          a.featured,
-          id
-        ]
+      const id=
+        +req.params.id;
+
+
+      const x=
+        await pool.query(
+          `
+          UPDATE articles
+          SET
+            title=$1,
+            content=$2,
+            author=$3,
+            category=$4,
+            excerpt=$5,
+            tags=$6,
+            image_url=$7,
+            status=$8,
+            featured=$9,
+            updated_at=NOW()
+          WHERE id=$10
+          RETURNING *
+          `,
+          [
+            a.title,
+            a.content,
+            a.author,
+            a.category,
+            a.excerpt,
+            a.tags,
+            a.image_url,
+            a.status,
+            a.featured,
+            id
+          ]
+        );
+
+
+      if(!x.rows.length){
+
+        return res
+          .status(404)
+          .json({
+            error:'Not found'
+          });
+
+      }
+
+
+      res.json(
+        x.rows[0]
       );
 
-    if(!x.rows.length){
+    }catch(e){
 
-      return res.status(404).json({
-        error:'Not found'
-      });
+      res
+        .status(400)
+        .json({
+          error:e.message
+        });
 
     }
 
-    res.json(
-      x.rows[0]
-    );
-
-  }catch(e){
-
-    res.status(400).json({
-      error:e.message
-    });
-
   }
-
-});
+);
 
 
 /* =========================
    DELETE ARTICLE
 ========================= */
 
-app.delete('/api/articles/:id',auth,async(req,res)=>{
+app.delete(
+  '/api/articles/:id',
+  auth,
+  async(req,res)=>{
 
-  try{
+    try{
 
-    const x=
-      await pool.query(
-        `
-        DELETE FROM articles
-        WHERE id=$1
-        RETURNING id
-        `,
-        [+req.params.id]
-      );
+      const x=
+        await pool.query(
+          `
+          DELETE FROM articles
+          WHERE id=$1
+          RETURNING id
+          `,
+          [+req.params.id]
+        );
 
-    if(!x.rows.length){
 
-      return res.status(404).json({
-        error:'Not found'
+      if(!x.rows.length){
+
+        return res
+          .status(404)
+          .json({
+            error:'Not found'
+          });
+
+      }
+
+
+      res.json({
+        ok:true
       });
+
+    }catch{
+
+      res
+        .status(500)
+        .json({
+          error:'Delete failed'
+        });
 
     }
 
-    res.json({
-      ok:true
-    });
-
-  }catch{
-
-    res.status(500).json({
-      error:'Delete failed'
-    });
-
   }
-
-});
+);
 
 
 /* =========================
@@ -1044,16 +1665,24 @@ app.delete('/api/articles/:id',auth,async(req,res)=>{
 
 init()
   .then(()=>{
+
     app.listen(
       PORT,
       ()=>{
+
         console.log(
-          'GyanTech Advanced running on '+PORT
+          'GyanTech Advanced running on '+
+          PORT
         );
+
       }
     );
+
   })
   .catch(e=>{
+
     console.error(e);
+
     process.exit(1);
+
   });
