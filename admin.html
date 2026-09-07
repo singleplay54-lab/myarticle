@@ -394,6 +394,71 @@ button:hover{
 
 /* COMMENTS MANAGEMENT */
 .commentsToolbar{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}.commentsToolbar button{margin:0}.commentFilter{max-width:220px}.commentAdminItem{border:1px solid #e2e8f0;border-radius:14px;padding:18px;margin-bottom:13px;background:#fff}.commentAdminTop{display:flex;justify-content:space-between;gap:15px;align-items:flex-start}.commentAdminName{font-weight:900;font-size:1.05rem}.commentAdminMeta{color:#64748b;font-size:.82rem;margin-top:4px}.commentAdminText{margin:14px 0;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}.commentStatus{display:inline-block;padding:4px 9px;border-radius:999px;font-size:.75rem;font-weight:800}.commentPending{background:#fef3c7;color:#92400e}.commentApproved{background:#dcfce7;color:#166534}.commentActions{display:flex;gap:8px;flex-wrap:wrap}.commentActions button{margin:0}.approveBtn{background:#16a34a}.approveBtn:hover{background:#15803d}.commentArticle{font-size:.82rem;color:#0369a1;font-weight:700;margin-top:6px}@media(max-width:600px){.commentAdminTop{flex-direction:column}.commentFilter{max-width:none;width:100%}.commentActions button{flex:1}}
+
+/* COMMENTS DASHBOARD */
+.commentToolbar{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+  margin:18px 0;
+}
+.commentFilter{
+  width:auto;
+  min-width:150px;
+  margin:0;
+}
+.commentAdmin{
+  border:1px solid #e2e8f0;
+  border-radius:14px;
+  padding:18px;
+  margin-bottom:13px;
+  background:#fff;
+}
+.commentAdminTop{
+  display:flex;
+  justify-content:space-between;
+  gap:14px;
+  align-items:flex-start;
+}
+.commentAdminName{
+  font-weight:900;
+  font-size:1rem;
+}
+.commentAdminMeta{
+  color:#64748b;
+  font-size:.82rem;
+  margin-top:4px;
+}
+.commentAdminText{
+  margin:13px 0;
+  color:#334155;
+  line-height:1.6;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+}
+.commentStatus{
+  display:inline-block;
+  padding:4px 9px;
+  border-radius:999px;
+  font-size:.75rem;
+  font-weight:900;
+}
+.commentStatus.pending{
+  background:#fef3c7;
+  color:#92400e;
+}
+.commentStatus.approved{
+  background:#dcfce7;
+  color:#166534;
+}
+.pendingStat{
+  border-color:#f59e0b;
+}
+.pendingStat .statNumber{
+  color:#b45309;
+}
+
 </style>
 </head>
 
@@ -455,6 +520,11 @@ button:hover{
   <!-- STATS -->
 
   <section class="stats">
+
+    <div class="stat pendingStat">
+      <div class="statTitle">Pending Comments</div>
+      <div id="pendingCommentsStat" class="statNumber">0</div>
+    </div>
 
     <div class="stat">
       <div class="statTitle">Total Articles</div>
@@ -731,6 +801,30 @@ button:hover{
 
     </div>
 
+    <!-- MANAGE COMMENTS -->
+    <section class="box" id="commentsPanel">
+      <h2>💬 Manage Comments</h2>
+      <p class="subtitle">
+        Review visitor comments before they appear publicly.
+      </p>
+
+      <div class="commentToolbar">
+        <select id="commentFilter" class="commentFilter">
+          <option value="all">All Comments</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+        </select>
+
+        <button id="refreshCommentsBtn" type="button" class="secondary">
+          🔄 Refresh Comments
+        </button>
+      </div>
+
+      <div id="commentsAdminList">
+        <div class="empty">Loading comments...</div>
+      </div>
+    </section>
+
 
     <button
       id="logout"
@@ -919,7 +1013,8 @@ async function loadDashboard(){
 
   await Promise.all([
     loadStats(),
-    loadManage()
+    loadManage(),
+    loadCommentsAdmin()
   ]);
 
 }
@@ -1654,6 +1749,177 @@ window.deleteArticle =
     }
 
   };
+
+
+/* COMMENTS MANAGEMENT */
+let allComments = [];
+
+async function loadCommentsAdmin(){
+  try{
+    allComments = await api("/api/admin/comments");
+    renderCommentsAdmin();
+    updatePendingCommentsStat();
+  }catch(error){
+    $("commentsAdminList").innerHTML = `
+      <div class="empty">
+        ❌ ${escapeHTML(error.message)}
+      </div>
+    `;
+    $("pendingCommentsStat").textContent = "—";
+  }
+}
+
+function updatePendingCommentsStat(){
+  const pending = allComments.filter(
+    comment => comment.status === "pending"
+  ).length;
+
+  $("pendingCommentsStat").textContent = pending;
+}
+
+function renderCommentsAdmin(){
+  const list = $("commentsAdminList");
+  const filter = $("commentFilter").value;
+
+  const comments = filter === "all"
+    ? allComments
+    : allComments.filter(
+        comment => comment.status === filter
+      );
+
+  if(!comments.length){
+    list.innerHTML = `
+      <div class="empty">
+        No ${filter === "all" ? "" : filter + " "}comments found.
+      </div>
+    `;
+    return;
+  }
+
+  list.innerHTML = comments.map(comment => {
+    const pending = comment.status === "pending";
+
+    return `
+      <article class="commentAdmin">
+        <div class="commentAdminTop">
+          <div>
+            <div class="commentAdminName">
+              👤 ${escapeHTML(comment.name)}
+            </div>
+            <div class="commentAdminMeta">
+              📰 ${escapeHTML(comment.article_title || "Article")}
+              · ${new Date(comment.created_at).toLocaleString("en-IN")}
+            </div>
+          </div>
+
+          <span class="commentStatus ${pending ? "pending" : "approved"}">
+            ${pending ? "⏳ Pending" : "✅ Approved"}
+          </span>
+        </div>
+
+        <p class="commentAdminText">
+          ${escapeHTML(comment.comment)}
+        </p>
+
+        <div>
+          ${
+            pending
+            ? `
+              <button
+                type="button"
+                onclick="approveComment(${comment.id})">
+                ✅ Approve
+              </button>
+            `
+            : `
+              <button
+                type="button"
+                class="secondary"
+                onclick="setCommentPending(${comment.id})">
+                ⏳ Move to Pending
+              </button>
+            `
+          }
+
+          <button
+            type="button"
+            class="danger"
+            onclick="deleteComment(${comment.id})">
+            🗑️ Delete
+          </button>
+
+          ${
+            comment.article_slug
+            ? `
+              <a
+                href="/article/${encodeURIComponent(comment.article_slug)}"
+                target="_blank"
+                rel="noopener noreferrer">
+                <button type="button" class="secondary">
+                  👁 View Article
+                </button>
+              </a>
+            `
+            : ""
+          }
+        </div>
+      </article>
+    `;
+  }).join("");
+}
+
+async function updateCommentStatus(id,status){
+  try{
+    await api("/api/admin/comments/" + id,{
+      method:"PUT",
+      body:JSON.stringify({status})
+    });
+
+    await loadCommentsAdmin();
+  }catch(error){
+    alert("❌ " + error.message);
+  }
+}
+
+window.approveComment = function(id){
+  updateCommentStatus(id,"approved");
+};
+
+window.setCommentPending = function(id){
+  updateCommentStatus(id,"pending");
+};
+
+window.deleteComment = async function(id){
+  const comment = allComments.find(
+    item => Number(item.id) === Number(id)
+  );
+
+  if(!confirm(
+    `Delete comment by "${comment ? comment.name : "this user"}"?`
+  )){
+    return;
+  }
+
+  try{
+    await api("/api/admin/comments/" + id,{
+      method:"DELETE"
+    });
+
+    await loadCommentsAdmin();
+  }catch(error){
+    alert("❌ " + error.message);
+  }
+};
+
+$("commentFilter").addEventListener(
+  "change",
+  renderCommentsAdmin
+);
+
+$("refreshCommentsBtn").addEventListener(
+  "click",
+  loadCommentsAdmin
+);
 
 
 /* REFRESH */
