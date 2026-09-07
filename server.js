@@ -2183,31 +2183,33 @@ app.delete('/api/articles/:id',auth,async(req,res)=>{
   }
 
 });
+/* =========================
+   START SERVER
+   ========================= */
 
-init()
-  .then(()=>{
+const server = app.listen(PORT, () => {
+  console.log(
+    'GyanTech Blog running on port ' + PORT
+  );
 
-    app.listen(
-      PORT,
-      ()=>{
+  // Database initialization background mein chalega
+  init()
+    .then(() => {
+      console.log(
+        'Database initialization completed successfully.'
+      );
+    })
+    .catch((error) => {
+      console.error(
+        'Database initialization failed:',
+        error
+      );
+    });
+});
 
-        console.log(
-          'GyanTech Advanced running on '+
-          PORT
-        );
-
-      }
-    );
-
-  })
-  .catch(e=>{
-
-    console.error(e);
-
-    process.exit(1);
-
-  });
-
-  }
-
+server.on('error', (error) => {
+  console.error(
+    'Server error:',
+    error
+  );
 });
