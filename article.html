@@ -90,6 +90,11 @@ footer{text-align:center;padding:30px 20px;color:#64748b;font-size:.9rem}
 
 .comments-title-row{display:flex;justify-content:space-between;align-items:center;gap:12px}.comment-count{display:inline-flex;min-width:30px;height:30px;align-items:center;justify-content:center;border-radius:999px;background:#e0f2fe;color:#0369a1;font-size:.85rem}.comment-replying{display:none;margin:0 0 12px;padding:10px 12px;border-radius:10px;background:#f0f9ff;color:#0369a1;font-size:.88rem}.comment-replying.show{display:flex;justify-content:space-between;align-items:center;gap:10px}.cancel-reply{border:0;background:transparent;color:#0369a1;font-weight:800;cursor:pointer}.comment-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.comment-action{border:1px solid #cbd5e1;background:#fff;border-radius:8px;padding:7px 10px;cursor:pointer;font:inherit;font-size:.82rem}.comment-action:hover{background:#f8fafc}.comment-like.liked{font-weight:800}.comment-replies{margin:12px 0 0 26px;padding-left:14px;border-left:2px solid #e2e8f0}.comment-avatar{width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:#e0f2fe;color:#0369a1;font-weight:800;margin-right:8px}.comment-head{display:flex;align-items:center}.report-menu{padding:8px;border:1px solid #e2e8f0;border-radius:8px;background:#fff}.comment-notice{font-size:.78rem;color:#64748b;margin-top:8px}@media(max-width:650px){.comment-actions{display:grid;grid-template-columns:1fr 1fr}.comment-replies{margin-left:12px}.comment-action{width:100%}}
 </style>
+<link rel="manifest" href="/manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/icon-192.png">
 </head>
 
 <body>
@@ -597,5 +602,6 @@ function showError(message){
 loadArticle();
 </script>
 
+<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(e=>console.error('PWA service worker error:',e)));}</script>
 </body>
 </html>
