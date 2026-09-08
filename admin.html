@@ -409,9 +409,6 @@ button:hover{
   }
 
 }
-
-.comment-notification{display:none;margin:0 0 18px;padding:12px 16px;border-radius:12px;background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;font-weight:700}.comment-notification.show{display:block}
-.comment-chart{display:grid;gap:10px;margin-top:18px}.bar-row{display:grid;grid-template-columns:65px 1fr 28px;gap:10px;align-items:center;font-size:.85rem}.bar{height:10px;background:#e2e8f0;border-radius:999px;overflow:hidden}.bar i{display:block;height:100%;background:#0284c7;border-radius:999px}.report-card{padding:14px;border:1px solid #e2e8f0;border-radius:12px;margin-top:10px;background:#fff}.report-meta{color:#64748b;font-size:.8rem;margin-top:4px}.report-text{margin-top:8px;white-space:pre-wrap;overflow-wrap:anywhere}
 </style>
 </head>
 
@@ -527,28 +524,6 @@ button:hover{
   </section>
 
 
-  <div id="commentNotification" class="comment-notification"></div>
-
-  <section class="box">
-    <h2>📊 Comment Analytics</h2>
-    <p class="subtitle">Comment activity and most helpful comments.</p>
-    <div class="comments-stats">
-      <div class="comments-mini"><span>Total</span><strong id="commentsTotal2">0</strong></div>
-      <div class="comments-mini"><span>Pending</span><strong id="commentsPending2">0</strong></div>
-      <div class="comments-mini"><span>Approved</span><strong id="commentsApproved2">0</strong></div>
-      <div class="comments-mini"><span>Open Reports</span><strong id="openReports2">0</strong></div>
-    </div>
-    <div id="commentChart" class="comment-chart"><div class="empty">Loading analytics...</div></div>
-    <h3 style="margin:22px 0 10px">🏆 Most Helpful</h3>
-    <div id="topComments"><div class="empty">Loading...</div></div>
-  </section>
-
-  <section class="box">
-    <h2>⚑ Comment Reports</h2>
-    <p class="subtitle">Review comments reported by readers.</p>
-    <div id="reportsList"><div class="empty">Loading reports...</div></div>
-  </section>
-
   <!-- ARTICLE EDITOR -->
 
   <section class="box">
@@ -608,6 +583,20 @@ button:hover{
   <button type="button" onclick="formatText('formatBlock','BLOCKQUOTE')">❝ Quote</button>
 </div>
 
+<script>
+function formatText(command, value){
+  document.execCommand(command, false, value || null);
+  const editor=document.getElementById("contentEditor");
+  const hidden=document.getElementById("content");
+  if(editor && hidden) hidden.value=editor.innerHTML.trim();
+  if(editor) editor.focus();
+}
+const richEditor=document.getElementById("contentEditor");
+const hiddenContent=document.getElementById("content");
+if(richEditor && hiddenContent){
+  richEditor.addEventListener("input",()=>{hiddenContent.value=richEditor.innerHTML.trim();});
+}
+</script>
 
           <label>
             Excerpt
@@ -973,7 +962,6 @@ $("loginForm")
 
 /* COMMENTS MANAGEMENT */
 let allComments=[];
-let lastPendingCount=0;
 
 async function loadCommentStats(){
   try{
@@ -982,15 +970,7 @@ async function loadCommentStats(){
     $("commentsPending").textContent=data.pending||0;
     $("commentsApproved").textContent=data.approved||0;
     $("commentsRejected").textContent=data.rejected||0;
-    $("commentsTotal2").textContent=data.total||0;
-    $("commentsPending2").textContent=data.pending||0;
-    $("commentsApproved2").textContent=data.approved||0;
-    $("openReports2").textContent=data.openReports||0;
-    const notice=$("commentNotification");
-    if((data.pending||0)>0){notice.textContent="🔔 "+data.pending+" pending comment(s) waiting for review.";notice.classList.add("show");}
-    else{notice.classList.remove("show");}
-    lastPendingCount=data.pending||0;
-  }catch(error){console.error(error);}
+  }catch(error){ console.error(error); }
 }
 
 async function loadCommentsAdmin(){
@@ -999,46 +979,60 @@ async function loadCommentsAdmin(){
     allComments=data.comments||[];
     renderCommentsAdmin();
     await loadCommentStats();
-  }catch(error){$("commentsAdminList").innerHTML='<div class="empty">❌ '+escapeHTML(error.message)+'</div>';}
+  }catch(error){
+    $("commentsAdminList").innerHTML='<div class="empty">❌ '+escapeHTML(error.message)+'</div>';
+  }
 }
 
 function renderCommentsAdmin(){
   const filter=$("commentFilter").value;
   const list=filter==="all"?allComments:allComments.filter(c=>c.status===filter);
-  if(!list.length){$("commentsAdminList").innerHTML='<div class="empty">No comments found.</div>';return;}
+  if(!list.length){
+    $("commentsAdminList").innerHTML='<div class="empty">No comments found.</div>';
+    return;
+  }
   $("commentsAdminList").innerHTML=list.map(c=>{
     const date=c.created_at?new Date(c.created_at).toLocaleString("en-IN"):"";
     const badgeClass=c.status==="approved"?"badge-approved":c.status==="rejected"?"badge-rejected":"badge-pending";
-    return `<div class="comment-card"><div class="comment-card-head"><div><div class="comment-card-name">👤 ${escapeHTML(c.name||"Anonymous")}</div><div class="comment-card-meta">${escapeHTML(c.email||"No email")} · ${escapeHTML(date)}</div><div class="comment-card-meta">Article: ${escapeHTML(c.article_title||"Unknown article")}</div></div><span class="comment-status-badge ${badgeClass}">${escapeHTML(c.status||"pending")}</span></div><div class="comment-card-text">${escapeHTML(c.comment||"")}</div><div class="comment-actions">${c.status!=="approved"?`<button type="button" onclick="approveComment(${c.id})">✅ Approve</button>`:""}${c.status!=="rejected"?`<button type="button" class="secondary" onclick="rejectComment(${c.id})">🚫 Reject</button>`:`<button type="button" class="secondary" onclick="approveComment(${c.id})">↩️ Restore</button>`}<button type="button" class="danger" onclick="deleteComment(${c.id})">🗑 Delete</button></div></div>`;
+    const article=escapeHTML(c.article_title||"Unknown article");
+    return `<div class="comment-card">
+      <div class="comment-card-head">
+        <div>
+          <div class="comment-card-name">${escapeHTML(c.name||"Anonymous")}</div>
+          <div class="comment-card-meta">${escapeHTML(c.email||"No email")} · ${escapeHTML(date)}</div>
+          <div class="comment-card-meta">Article: ${article}</div>
+        </div>
+        <span class="comment-status-badge ${badgeClass}">${escapeHTML(c.status||"pending")}</span>
+      </div>
+      <div class="comment-card-text">${escapeHTML(c.comment||"")}</div>
+      <div class="comment-actions">
+        ${c.status!=="approved"?`<button type="button" onclick="approveComment(${c.id})">✅ Approve</button>`:""}
+        ${c.status!=="rejected"?`<button type="button" class="secondary" onclick="rejectComment(${c.id})">🚫 Reject</button>`:""}
+        <button type="button" class="danger" onclick="deleteComment(${c.id})">🗑 Delete</button>
+      </div>
+    </div>`;
   }).join('');
 }
 
-async function setCommentStatus(id,status){await api("/api/admin/comments/"+id,{method:"PATCH",body:JSON.stringify({status})});await loadCommentsAdmin();await loadReports();}
-window.approveComment=async function(id){try{await setCommentStatus(id,"approved");}catch(e){alert("❌ "+e.message);}};
-window.rejectComment=async function(id){try{await setCommentStatus(id,"rejected");}catch(e){alert("❌ "+e.message);}};
-window.deleteComment=async function(id){if(!confirm("Delete this comment?"))return;try{await api("/api/admin/comments/"+id,{method:"DELETE"});await loadCommentsAdmin();await loadReports();}catch(e){alert("❌ "+e.message);}};
+window.approveComment=async function(id){
+  try{ await api("/api/admin/comments/"+id+"/approve",{method:"PUT"}); await loadCommentsAdmin(); }
+  catch(error){ alert("❌ "+error.message); }
+};
 
-async function loadAnalytics(){
-  try{
-    const data=await api("/api/admin/comments/analytics");
-    const max=Math.max(1,...(data.days||[]).map(x=>Number(x.comments||0)));
-    $("commentChart").innerHTML=(data.days||[]).map(x=>`<div class="bar-row"><span>${escapeHTML(x.label)}</span><div class="bar"><i style="width:${Math.round(Number(x.comments||0)/max*100)}%"></i></div><strong>${Number(x.comments||0)}</strong></div>`).join("")||'<div class="empty">No data yet.</div>';
-    $("topComments").innerHTML=(data.top||[]).slice(0,5).map(x=>`<div class="report-card"><strong>👍 ${Number(x.likes||0)} · ${escapeHTML(x.name||"Reader")}</strong><div class="report-meta">${escapeHTML(x.title||"Article")}</div><div class="report-text">${escapeHTML(x.comment||"")}</div></div>`).join("")||'<div class="empty">No liked comments yet.</div>';
-  }catch(e){console.error(e);}
-}
+window.rejectComment=async function(id){
+  try{ await api("/api/admin/comments/"+id+"/reject",{method:"PUT"}); await loadCommentsAdmin(); }
+  catch(error){ alert("❌ "+error.message); }
+};
 
-async function loadReports(){
-  try{
-    const data=await api("/api/admin/comment-reports");
-    const reports=data.reports||[];
-    $("reportsList").innerHTML=reports.length?reports.map(r=>`<div class="report-card"><strong>⚑ ${escapeHTML(r.reason||"other")}</strong><div class="report-meta">${escapeHTML(r.name||"Reader")} · ${escapeHTML(r.article_title||"Article")} · ${new Date(r.created_at).toLocaleString("en-IN")}</div><div class="report-text">${escapeHTML(r.comment||"")}</div><div class="comment-actions">${r.status==="open"?`<button type="button" onclick="resolveReport(${r.id})">✅ Resolve</button>`:`<span class="comment-status-badge badge-approved">Resolved</span>`}<button type="button" class="danger" onclick="deleteReport(${r.id})">🗑 Delete Report</button></div></div>`).join(""):'<div class="empty">No reports found.</div>';
-  }catch(e){$("reportsList").innerHTML='<div class="empty">❌ '+escapeHTML(e.message)+'</div>';}
-}
-window.resolveReport=async function(id){try{await api("/api/admin/comment-reports/"+id,{method:"PATCH",body:JSON.stringify({status:"resolved"})});await loadReports();await loadCommentStats();}catch(e){alert("❌ "+e.message);}};
-window.deleteReport=async function(id){if(!confirm("Delete this report?"))return;try{await api("/api/admin/comment-reports/"+id,{method:"DELETE"});await loadReports();await loadCommentStats();}catch(e){alert("❌ "+e.message);}};
+window.deleteComment=async function(id){
+  if(!confirm("Delete this comment?")) return;
+  try{ await api("/api/admin/comments/"+id,{method:"DELETE"}); await loadCommentsAdmin(); }
+  catch(error){ alert("❌ "+error.message); }
+};
 
 $("commentFilter").addEventListener("change",renderCommentsAdmin);
-$("refreshComments").addEventListener("click",async()=>{await loadCommentsAdmin();await loadReports();await loadAnalytics();});
+$("refreshComments").addEventListener("click",loadCommentsAdmin);
+
 
 /* DASHBOARD */
 
@@ -1047,9 +1041,7 @@ async function loadDashboard(){
   await Promise.all([
     loadStats(),
     loadManage(),
-    loadCommentsAdmin(),
-    loadAnalytics(),
-    loadReports()
+    loadCommentsAdmin()
   ]);
 
 }
@@ -1151,6 +1143,7 @@ $("articleForm")
       const id =
         $("editId").value;
 
+      $("content").value = $("contentEditor").innerHTML.trim();
 
       const article = {
 
@@ -1547,7 +1540,7 @@ window.startEdit =
 
     const article =
       allArticles.find(
-        item => item.id === id
+        item => Number(item.id) === Number(id)
       );
 
 
@@ -1566,6 +1559,9 @@ window.startEdit =
       article.author || "Admin";
 
     $("content").value =
+      article.content || "";
+
+    $("contentEditor").innerHTML =
       article.content || "";
 
     $("excerpt").value =
@@ -1654,6 +1650,10 @@ function resetForm(){
   $("status")
     .value = "published";
 
+  $("contentEditor").innerHTML =
+    "Write your complete article here...";
+  $("content").value = "";
+
   $("editorTitle")
     .textContent =
     "✍️ Create New Article";
@@ -1687,7 +1687,7 @@ window.deleteArticle =
 
     const article =
       allArticles.find(
-        item => item.id === id
+        item => Number(item.id) === Number(id)
       );
 
 
