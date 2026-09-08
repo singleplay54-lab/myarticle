@@ -39,7 +39,7 @@
 
 
     button.textContent =
-      "🔔 Enable Notifications";
+      "🔔";
 
 
     button.style.cssText = `
@@ -54,20 +54,24 @@
 
       border:0;
 
-      border-radius:14px;
-
-      padding:13px 18px;
+      border-radius:50%;
 
       background:#0f172a;
 
       color:white;
 
-      font-size:14px;
+      font-size:22px;
 
       font-weight:700;
 
       cursor:pointer;
 
+       display:flex;
+
+       align-items:center;
+
+        justify-content:center;
+        
       box-shadow:
         0 8px 25px
         rgba(0,0,0,.18);
