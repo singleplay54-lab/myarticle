@@ -895,19 +895,13 @@ footer{
 
 }
 
-
-/* STEP 8 GLOBAL SEARCH */
-.homeSearch{margin:0 auto 34px;max-width:820px;padding:18px;border:1px solid #e2e8f0;border-radius:18px;background:#fff;box-shadow:0 10px 30px rgba(15,23,42,.06)}
-.homeSearchForm{display:flex;gap:10px}
-.homeSearchInput{flex:1;border:1px solid #cbd5e1;border-radius:12px;padding:14px 16px;font:inherit;outline:none}
-.homeSearchInput:focus{border-color:#0284c7;box-shadow:0 0 0 3px rgba(2,132,199,.12)}
-.homeSearchBtn{border:0;border-radius:12px;padding:0 20px;background:#0284c7;color:#fff;font:inherit;font-weight:800;cursor:pointer}
-.homeSearchHint{margin:9px 2px 0;color:#64748b;font-size:.82rem}
-.categoryCard{transition:transform .2s,box-shadow .2s}
-.categoryCard:hover{transform:translateY(-4px);box-shadow:0 12px 28px rgba(15,23,42,.10)}
-@media(max-width:600px){.homeSearchForm{flex-direction:column}.homeSearchBtn{padding:13px}.homeSearch{margin-left:12px;margin-right:12px}}
 </style>
 
+<link rel="manifest" href="/manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/icon-192.png">
 </head>
 
 
@@ -1804,7 +1798,7 @@ async function loadCategories(){
         .map((item,index) => `
 
           <a
-            href="/category/${encodeURIComponent(item.category)}"
+            href="/articles"
             class="categoryCard"
           >
 
@@ -2027,30 +2021,39 @@ function setupNewsletter(){
 
 
 /* =================================
-   GLOBAL SEARCH
-================================= */
-function setupHomeSearch(){
-  const form=document.getElementById("homeSearchForm");
-  const input=document.getElementById("homeSearchInput");
-  if(!form||!input)return;
-  form.addEventListener("submit",function(event){
-    event.preventDefault();
-    const q=input.value.trim();
-    if(!q)return;
-    window.location.href="/articles?q="+encodeURIComponent(q);
-  });
-}
-
-/* =================================
    START
 ================================= */
 
 setupNewsletter();
-setupHomeSearch();
+
 loadHome();
 
 </script>
 
 
+
+<!-- PWA Install -->
+<button id="pwaInstallBtn" type="button" aria-label="Install GyanTech Blog" style="display:none;position:fixed;right:18px;bottom:18px;z-index:9999;border:0;border-radius:999px;padding:12px 16px;background:#0f172a;color:#fff;font-weight:800;box-shadow:0 10px 30px rgba(15,23,42,.25);cursor:pointer;">📲 Install GyanTech</button>
+<script>
+(function(){
+  if('serviceWorker' in navigator){
+    window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(err=>console.error('PWA service worker error:',err)));
+  }
+  let deferredPrompt=null;
+  const btn=document.getElementById('pwaInstallBtn');
+  window.addEventListener('beforeinstallprompt',e=>{
+    e.preventDefault(); deferredPrompt=e; if(btn) btn.style.display='block';
+  });
+  if(btn){
+    btn.addEventListener('click',async()=>{
+      if(!deferredPrompt) return;
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      deferredPrompt=null; btn.style.display='none';
+    });
+  }
+  window.addEventListener('appinstalled',()=>{ if(btn) btn.style.display='none'; deferredPrompt=null; });
+})();
+</script>
 </body>
 </html>
