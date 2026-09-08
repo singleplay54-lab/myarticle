@@ -601,7 +601,15 @@ function showError(message){
 
 loadArticle();
 </script>
-
-<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(e=>console.error('PWA service worker error:',e)));}</script>
+  
+<script src="/notifications.js"></script>
+  
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/sw.js');
+  });
+}
+</script>
 </body>
 </html>
