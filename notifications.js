@@ -48,7 +48,7 @@
 
       right:20px;
 
-      bottom:20px;
+      bottom:90px;
 
       z-index:9999;
 
