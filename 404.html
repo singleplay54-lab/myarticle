@@ -122,6 +122,11 @@
       }
     }
   </style>
+<link rel="manifest" href="/manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/icon-192.png">
 </head>
 
 <body>
@@ -146,7 +151,6 @@
     </p>
 
     <div class="actions">
-
       <a href="/" class="btn">
         ← Back to Home
       </a>
@@ -154,7 +158,6 @@
       <a href="/articles" class="btn secondary">
         Browse Articles
       </a>
-
     </div>
 
     <div class="hint">
@@ -163,5 +166,5 @@
 
   </main>
 
-</body>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{});}</script></body>
 </html>
