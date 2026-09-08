@@ -1,4 +1,4 @@
-const express=require('express'),cookieParser=require('cookie-parser'),bcrypt=require('bcryptjs'),jwt=require('jsonwebtoken'),{Pool}=require('pg'),fs=require('fs'),path=require('path'),crypto=require('crypto');
+const express=require('express'),cookieParser=require('cookie-parser'),bcrypt=require('bcryptjs'),jwt=require('jsonwebtoken'),{Pool}=require('pg'),fs=require('fs'),path=require('path'),crypto=require('crypto'),webpush=require('web-push');
 
 const app=express();
 const PORT=process.env.PORT||10000;
@@ -208,16 +208,23 @@ async function init(){
   `);
 
   const missingTokens=await pool.query(`
-    SELECT id FROM newsletter_subscribers
+    SELECT id
+    FROM newsletter_subscribers
     WHERE unsubscribe_token IS NULL
   `);
 
   for(const row of missingTokens.rows){
+
     await pool.query(`
       UPDATE newsletter_subscribers
       SET unsubscribe_token=$1
-      WHERE id=$2 AND unsubscribe_token IS NULL
-    `,[crypto.randomBytes(24).toString('hex'),row.id]);
+      WHERE id=$2
+      AND unsubscribe_token IS NULL
+    `,[
+      crypto.randomBytes(24).toString('hex'),
+      row.id
+    ]);
+
   }
 
 
@@ -239,11 +246,17 @@ async function init(){
   `);
 
   for(const q of [
+
     `ALTER TABLE comments ADD COLUMN IF NOT EXISTS email TEXT DEFAULT ''`,
+
     `ALTER TABLE comments ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending'`,
+
     `ALTER TABLE comments ADD COLUMN IF NOT EXISTS ip_hash TEXT DEFAULT ''`,
+
     `ALTER TABLE comments ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()`,
+
     `ALTER TABLE comments ADD COLUMN IF NOT EXISTS parent_id INTEGER REFERENCES comments(id) ON DELETE CASCADE`
+
   ]){
     await pool.query(q);
   }
@@ -252,6 +265,11 @@ async function init(){
     CREATE INDEX IF NOT EXISTS comments_article_idx
     ON comments(article_id,created_at DESC)
   `);
+
+
+  /* =========================
+     COMMENT LIKES
+  ========================= */
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS comment_likes(
@@ -262,6 +280,11 @@ async function init(){
       UNIQUE(comment_id,ip_hash)
     )
   `);
+
+
+  /* =========================
+     COMMENT REPORTS
+  ========================= */
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS comment_reports(
@@ -278,6 +301,22 @@ async function init(){
     CREATE INDEX IF NOT EXISTS comment_reports_status_idx
     ON comment_reports(status,created_at DESC)
   `);
+
+
+  /* =========================
+     PUSH SUBSCRIPTIONS
+  ========================= */
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS push_subscriptions(
+      id SERIAL PRIMARY KEY,
+      endpoint TEXT UNIQUE NOT NULL,
+      p256dh TEXT NOT NULL,
+      auth TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
 }
 
 
@@ -301,6 +340,7 @@ function auth(req,res,next){
     });
 
   }
+
 }
 
 
@@ -309,21 +349,28 @@ function auth(req,res,next){
 ========================= */
 
 const commentRateLimit=new Map();
+
 const COMMENT_WINDOW_MS=10*60*1000;
+
 const COMMENT_MAX_REQUESTS=3;
 
+
 function getClientIP(req){
+
   return (
     req.ip||
     req.headers['x-forwarded-for']?.split(',')[0]?.trim()||
     req.socket?.remoteAddress||
     'unknown'
   );
+
 }
+
 
 function isCommentRateLimited(req){
 
   const ip=getClientIP(req);
+
   const now=Date.now();
 
   const previous=
@@ -364,15 +411,20 @@ function isCommentRateLimited(req){
 
   }
 
-  return recent.length>COMMENT_MAX_REQUESTS;
+  return recent.length>
+    COMMENT_MAX_REQUESTS;
+
 }
+
 
 function normalizeComment(text){
 
   return String(text||'')
     .trim()
     .replace(/\s+/g,' ');
+
 }
+
 
 function looksLikeCommentSpam(text){
 
@@ -398,7 +450,9 @@ function looksLikeCommentSpam(text){
     return true;
 
   return false;
+
 }
+
 
 function hashIP(ip){
 
@@ -413,6 +467,310 @@ function hashIP(ip){
       )
     )
     .digest('hex');
+
+}
+
+
+/* =========================
+   PUSH NOTIFICATIONS
+========================= */
+
+let PUSH_ENABLED=false;
+
+if(
+  process.env.VAPID_PUBLIC_KEY&&
+  process.env.VAPID_PRIVATE_KEY
+){
+
+  try{
+
+    webpush.setVapidDetails(
+
+      process.env.VAPID_SUBJECT||
+      'mailto:admin@example.com',
+
+      process.env.VAPID_PUBLIC_KEY,
+
+      process.env.VAPID_PRIVATE_KEY
+
+    );
+
+    PUSH_ENABLED=true;
+
+    console.log(
+      'Push notifications enabled.'
+    );
+
+  }catch(e){
+
+    console.error(
+      'VAPID configuration failed:',
+      e.message
+    );
+
+  }
+
+}else{
+
+  console.log(
+    'Push notifications disabled: VAPID keys are not configured.'
+  );
+
+}
+
+
+app.get(
+  '/api/push/public-key',
+  (req,res)=>{
+
+    if(!process.env.VAPID_PUBLIC_KEY){
+
+      return res
+        .status(503)
+        .json({
+          error:
+            'Push notifications are not configured.'
+        });
+
+    }
+
+    res.json({
+      publicKey:
+        process.env.VAPID_PUBLIC_KEY
+    });
+
+  }
+);
+
+
+app.post(
+  '/api/push/subscribe',
+  async(req,res)=>{
+
+    try{
+
+      const s=req.body;
+
+      if(
+        !s||
+        !s.endpoint||
+        !s.keys?.p256dh||
+        !s.keys?.auth
+      ){
+
+        return res
+          .status(400)
+          .json({
+            error:
+              'Invalid push subscription.'
+          });
+
+      }
+
+      await pool.query(`
+        INSERT INTO push_subscriptions(
+          endpoint,
+          p256dh,
+          auth
+        )
+        VALUES($1,$2,$3)
+
+        ON CONFLICT(endpoint)
+
+        DO UPDATE SET
+          p256dh=EXCLUDED.p256dh,
+          auth=EXCLUDED.auth
+      `,[
+        s.endpoint,
+        s.keys.p256dh,
+        s.keys.auth
+      ]);
+
+      res.json({
+        ok:true
+      });
+
+    }catch(e){
+
+      console.error(
+        'Push subscribe error:',
+        e
+      );
+
+      res
+        .status(500)
+        .json({
+          error:
+            'Could not save push subscription.'
+        });
+
+    }
+
+  }
+);
+
+
+app.post(
+  '/api/push/unsubscribe',
+  async(req,res)=>{
+
+    try{
+
+      const endpoint=
+        String(
+          req.body.endpoint||''
+        ).trim();
+
+      if(endpoint){
+
+        await pool.query(
+          `
+          DELETE FROM push_subscriptions
+          WHERE endpoint=$1
+          `,
+          [endpoint]
+        );
+
+      }
+
+      res.json({
+        ok:true
+      });
+
+    }catch(e){
+
+      console.error(
+        'Push unsubscribe error:',
+        e
+      );
+
+      res
+        .status(500)
+        .json({
+          error:
+            'Could not unsubscribe.'
+        });
+
+    }
+
+  }
+);
+
+
+async function sendPushForArticle(article){
+
+  if(!PUSH_ENABLED){
+
+    console.log(
+      'Push broadcast skipped: VAPID not configured.'
+    );
+
+    return;
+
+  }
+
+  const result=
+    await pool.query(`
+      SELECT
+        id,
+        endpoint,
+        p256dh,
+        auth
+      FROM push_subscriptions
+    `);
+
+  if(!result.rows.length){
+
+    console.log(
+      'Push broadcast skipped: no subscribers.'
+    );
+
+    return;
+
+  }
+
+  const payload=
+    JSON.stringify({
+
+      title:
+        'GyanTech Blog',
+
+      body:
+        String(
+          article.title||
+          'New article published'
+        ),
+
+      url:
+        SITE_URL+
+        '/article/'+
+        encodeURIComponent(
+          article.slug
+        ),
+
+      icon:
+        SITE_URL+
+        '/icon-192.png',
+
+      badge:
+        SITE_URL+
+        '/icon-192.png'
+
+    });
+
+
+  for(const row of result.rows){
+
+    try{
+
+      await webpush.sendNotification(
+
+        {
+          endpoint:row.endpoint,
+
+          keys:{
+            p256dh:row.p256dh,
+            auth:row.auth
+          }
+        },
+
+        payload
+
+      );
+
+      console.log(
+        'Push notification sent:',
+        row.id
+      );
+
+    }catch(e){
+
+      console.error(
+        'Push notification failed:',
+        row.id,
+        e.statusCode,
+        e.message
+      );
+
+      if(
+        e.statusCode===404||
+        e.statusCode===410
+      ){
+
+        await pool.query(
+          `
+          DELETE FROM push_subscriptions
+          WHERE id=$1
+          `,
+          [row.id]
+        ).catch(()=>{});
+
+      }
+
+    }
+
+  }
+
 }
 
 
@@ -420,32 +778,47 @@ function hashIP(ip){
    MAIN PAGES
 ========================= */
 
-app.get('/',(q,r)=>
-  r.sendFile(
-    'index.html',
-    {root:__dirname}
-  )
+app.get(
+  '/',
+  (req,res)=>
+    res.sendFile(
+      'index.html',
+      {root:__dirname}
+    )
 );
 
-app.get('/articles',(q,r)=>
-  r.sendFile(
-    'articles.html',
-    {root:__dirname}
-  )
+
+app.get(
+  '/articles',
+  (req,res)=>
+    res.sendFile(
+      'articles.html',
+      {root:__dirname}
+    )
 );
 
-app.get('/admin',(q,r)=>
-  r.sendFile(
-    'admin.html',
-    {root:__dirname}
-  )
+
+app.get(
+  '/admin',
+  (req,res)=>
+    res.sendFile(
+      'admin.html',
+      {root:__dirname}
+    )
 );
 
-app.get('/category/:category',(q,r)=>
-  r.sendFile(
-    'category.html',
-    {root:__dirname}
-  )
+
+/* =========================
+   CATEGORY PAGE
+========================= */
+
+app.get(
+  '/category/:category',
+  (req,res)=>
+    res.sendFile(
+      'category.html',
+      {root:__dirname}
+    )
 );
 
 
@@ -493,7 +866,10 @@ app.post(
             unsubscribe_token
           )
           VALUES($1,$2)
-          ON CONFLICT(email) DO NOTHING
+
+          ON CONFLICT(email)
+          DO NOTHING
+
           RETURNING id
           `,
           [
@@ -560,7 +936,9 @@ app.get(
         await pool.query(
           `
           DELETE FROM newsletter_subscribers
+
           WHERE unsubscribe_token=$1
+
           RETURNING email
           `,
           [token]
@@ -582,7 +960,9 @@ app.get(
         <html>
 
         <head>
+
           <title>Unsubscribed</title>
+
         </head>
 
         <body
@@ -628,10 +1008,6 @@ app.get(
 );
 
 
-/* =========================
-   NEWSLETTER SEND
-========================= */
-
 async function sendNewsletterForArticle(article){
 
   const apiKey=
@@ -644,6 +1020,7 @@ async function sendNewsletterForArticle(article){
     );
 
     return;
+
   }
 
   const subscribers=
@@ -662,6 +1039,7 @@ async function sendNewsletterForArticle(article){
     );
 
     return;
+
   }
 
   const from=
@@ -688,6 +1066,7 @@ async function sendNewsletterForArticle(article){
       article.slug
     );
 
+
   for(
     const subscriber
     of subscribers.rows
@@ -700,7 +1079,9 @@ async function sendNewsletterForArticle(article){
         subscriber.unsubscribe_token||''
       );
 
+
     const html=`
+
       <div
         style="
           font-family:Arial,sans-serif;
@@ -720,11 +1101,7 @@ async function sendNewsletterForArticle(article){
           "
         >
 
-          <h1
-            style="
-              margin:0 0 8px
-            "
-          >
+          <h1 style="margin:0 0 8px">
             GyanTech Blog
           </h1>
 
@@ -738,6 +1115,7 @@ async function sendNewsletterForArticle(article){
           </p>
 
         </div>
+
 
         <div
           style="
@@ -784,12 +1162,14 @@ async function sendNewsletterForArticle(article){
 
         </div>
 
+
         <hr
           style="
             border:0;
             border-top:1px solid #e2e8f0
           "
         >
+
 
         <p
           style="
@@ -801,14 +1181,18 @@ async function sendNewsletterForArticle(article){
           You received this email because
           you subscribed to GyanTech Blog.
 
-          <a href="${escapeHTML(unsubscribeURL)}">
+          <a
+            href="${escapeHTML(unsubscribeURL)}"
+          >
             Unsubscribe
           </a>
 
         </p>
 
       </div>
+
     `;
+
 
     try{
 
@@ -826,23 +1210,26 @@ async function sendNewsletterForArticle(article){
                 'application/json'
             },
 
-            body:JSON.stringify({
+            body:
+              JSON.stringify({
 
-              from,
+                from,
 
-              to:[
-                subscriber.email
-              ],
+                to:[
+                  subscriber.email
+                ],
 
-              subject:
-                'New article on GyanTech: '+
-                title,
+                subject:
+                  'New article on GyanTech: '+
+                  title,
 
-              html
+                html
 
-            })
+              })
+
           }
         );
+
 
       const data=
         await response
@@ -850,6 +1237,7 @@ async function sendNewsletterForArticle(article){
           .catch(
             ()=>({})
           );
+
 
       if(!response.ok){
 
@@ -885,7 +1273,7 @@ async function sendNewsletterForArticle(article){
 
 
 /* =========================
-   ARTICLE PAGE + SEO
+   ARTICLE ROUTE + SEO
 ========================= */
 
 app.get(
@@ -906,6 +1294,7 @@ app.get(
           [req.params.slug]
         );
 
+
       if(!result.rows.length){
 
         return res
@@ -917,8 +1306,10 @@ app.get(
 
       }
 
+
       const article=
         result.rows[0];
+
 
       const articlePath=
         path.join(
@@ -926,17 +1317,20 @@ app.get(
           'article.html'
         );
 
+
       const html=
         fs.readFileSync(
           articlePath,
           'utf8'
         );
 
+
       const finalHTML=
         seoArticleHTML(
           html,
           article
         );
+
 
       res.send(
         finalHTML
@@ -965,7 +1359,7 @@ app.get(
 
 app.get(
   '/sitemap.xml',
-  async(q,r)=>{
+  async(req,res)=>{
 
     try{
 
@@ -980,10 +1374,12 @@ app.get(
           ORDER BY created_at DESC
         `);
 
+
       const urls=[
         `${SITE_URL}/`,
         `${SITE_URL}/articles`
       ];
+
 
       for(
         const article
@@ -991,13 +1387,11 @@ app.get(
       ){
 
         urls.push(
-          `${SITE_URL}/article/`+
-          encodeURIComponent(
-            article.slug
-          )
+          `${SITE_URL}/article/${encodeURIComponent(article.slug)}`
         );
 
       }
+
 
       const articleURLs=
         result.rows
@@ -1013,6 +1407,7 @@ app.get(
               article.updated_at||
               article.created_at;
 
+
             return `
   <url>
     <loc>${escapeHTML(url)}</loc>
@@ -1022,31 +1417,46 @@ app.get(
           })
           .join('\n');
 
+
       const sitemap=
-`<?xml version="1.0" encoding="UTF-8"?>
+        `<?xml version="1.0" encoding="UTF-8"?>
+
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
   <url>
-    <loc>${escapeHTML(urls[0])}</loc>
+
+    <loc>
+      ${escapeHTML(urls[0])}
+    </loc>
+
   </url>
 
+
   <url>
-    <loc>${escapeHTML(urls[1])}</loc>
+
+    <loc>
+      ${escapeHTML(urls[1])}
+    </loc>
+
   </url>
+
 
 ${articleURLs}
 
 </urlset>`;
 
-      r
+
+      res
         .type('application/xml')
-        .send(sitemap);
+        .send(
+          sitemap
+        );
 
     }catch(e){
 
       console.error(e);
 
-      r
+      res
         .status(500)
         .type('text/plain')
         .send(
@@ -1074,11 +1484,13 @@ app.post(
           req.body.password||''
         );
 
+
       const validPassword=
         await bcrypt.compare(
           password,
           process.env.ADMIN_PASSWORD_HASH||''
         );
+
 
       if(!validPassword){
 
@@ -1091,25 +1503,38 @@ app.post(
 
       }
 
+
       const token=
         jwt.sign(
-          {role:'admin'},
+          {
+            role:'admin'
+          },
+
           process.env.JWT_SECRET,
-          {expiresIn:'7d'}
+
+          {
+            expiresIn:'7d'
+          }
         );
+
 
       res.cookie(
         'admin_token',
         token,
         {
           httpOnly:true,
+
           sameSite:'lax',
+
           secure:
-            process.env.NODE_ENV==='production',
+            process.env.NODE_ENV===
+            'production',
+
           maxAge:
             604800000
         }
       );
+
 
       res.json({
         ok:true
@@ -1132,13 +1557,13 @@ app.post(
 
 app.post(
   '/api/logout',
-  (q,r)=>{
+  (req,res)=>{
 
-    r.clearCookie(
+    res.clearCookie(
       'admin_token'
     );
 
-    r.json({
+    res.json({
       ok:true
     });
 
@@ -1148,24 +1573,25 @@ app.post(
 
 app.get(
   '/api/admin/check',
-  (q,r)=>{
+  (req,res)=>{
 
     try{
 
       const d=
         jwt.verify(
-          q.cookies.admin_token,
+          req.cookies.admin_token,
           process.env.JWT_SECRET
         );
 
-      r.json({
+
+      res.json({
         authenticated:
           d.role==='admin'
       });
 
     }catch{
 
-      r.json({
+      res.json({
         authenticated:false
       });
 
@@ -1192,11 +1618,13 @@ app.get(
         limit='9'
       }=req.query;
 
+
       const p=
         Math.max(
           1,
           +page||1
         );
+
 
       const lim=
         Math.min(
@@ -1207,11 +1635,14 @@ app.get(
           )
         );
 
+
       const params=[];
+
 
       const w=[
         `status='published'`
       ];
+
 
       if(q.trim()){
 
@@ -1221,16 +1652,21 @@ app.get(
           '%'
         );
 
+
         w.push(`
           (
             title ILIKE $${params.length}
+
             OR content ILIKE $${params.length}
+
             OR tags ILIKE $${params.length}
+
             OR category ILIKE $${params.length}
           )
         `);
 
       }
+
 
       if(category.trim()){
 
@@ -1238,34 +1674,41 @@ app.get(
           category.trim()
         );
 
+
         w.push(
           `category=$${params.length}`
         );
 
       }
 
+
       const where=
         w.join(' AND ');
+
 
       const count=
         await pool.query(
           `
-          SELECT COUNT(*)::int total
+          SELECT
+            COUNT(*)::int total
           FROM articles
           WHERE ${where}
           `,
           params
         );
 
+
       params.push(
         lim,
         (p-1)*lim
       );
 
+
       const data=
         await pool.query(
           `
           SELECT
+
             id,
             title,
             slug,
@@ -1277,18 +1720,25 @@ app.get(
             featured,
             views,
             created_at
+
           FROM articles
+
           WHERE ${where}
+
           ORDER BY
             featured DESC,
             created_at DESC
+
           LIMIT $${params.length-1}
+
           OFFSET $${params.length}
           `,
           params
         );
 
+
       res.json({
+
         articles:
           data.rows,
 
@@ -1298,6 +1748,7 @@ app.get(
         page:p,
 
         limit:lim
+
       });
 
     }catch(e){
@@ -1331,13 +1782,17 @@ app.get(
         await pool.query(
           `
           UPDATE articles
+
           SET views=views+1
+
           WHERE slug=$1
           AND status='published'
+
           RETURNING *
           `,
           [req.params.slug]
         );
+
 
       if(!x.rows.length){
 
@@ -1350,19 +1805,27 @@ app.get(
 
       }
 
+
       const article=
         x.rows[0];
 
+
       const commentCount=
-        await pool.query(`
-          SELECT COUNT(*)::int AS count
+        await pool.query(
+          `
+          SELECT
+            COUNT(*)::int AS count
           FROM comments
           WHERE article_id=$1
           AND status='approved'
-        `,[article.id]);
+          `,
+          [article.id]
+        );
+
 
       article.comment_count=
         commentCount.rows[0].count;
+
 
       res.json(
         article
@@ -1384,16 +1847,17 @@ app.get(
 
 
 /* =========================
-   CATEGORIES
+   CATEGORIES API
 ========================= */
 
 app.get(
   '/api/categories',
-  async(q,r)=>{
+  async(req,res)=>{
 
     try{
 
-      r.json(
+      res.json(
+
         (
           await pool.query(`
             SELECT
@@ -1402,19 +1866,19 @@ app.get(
             FROM articles
             WHERE status='published'
             GROUP BY category
-            ORDER BY
-              count DESC,
-              category
+            ORDER BY count DESC,category
           `)
         ).rows
+
       );
 
     }catch{
 
-      r
+      res
         .status(500)
         .json({
-          error:'Failed'
+          error:
+            'Failed'
         });
 
     }
@@ -1434,13 +1898,17 @@ app.get(
     try{
 
       const article=
-        await pool.query(`
+        await pool.query(
+          `
           SELECT id
           FROM articles
           WHERE slug=$1
           AND status='published'
           LIMIT 1
-        `,[req.params.slug]);
+          `,
+          [req.params.slug]
+        );
+
 
       if(!article.rows.length){
 
@@ -1453,14 +1921,22 @@ app.get(
 
       }
 
+
       const comments=
-        await pool.query(`
+        await pool.query(
+          `
           SELECT
+
             c.id,
+
             c.name,
+
             c.comment,
+
             c.created_at,
+
             c.parent_id,
+
             COALESCE(
               l.likes,
               0
@@ -1469,12 +1945,17 @@ app.get(
           FROM comments c
 
           LEFT JOIN (
+
             SELECT
               comment_id,
               COUNT(*)::int AS likes
+
             FROM comment_likes
+
             GROUP BY comment_id
+
           ) l
+
           ON l.comment_id=c.id
 
           WHERE
@@ -1483,14 +1964,19 @@ app.get(
 
           ORDER BY
             c.created_at ASC
-        `,[article.rows[0].id]);
+          `,
+          [article.rows[0].id]
+        );
+
 
       res.json({
+
         comments:
           comments.rows,
 
         total:
           comments.rows.length
+
       });
 
     }catch(e){
@@ -1529,10 +2015,12 @@ app.post(
 
       }
 
+
       const website=
         String(
           req.body.website||''
         ).trim();
+
 
       if(website){
 
@@ -1545,21 +2033,24 @@ app.post(
 
       }
 
+
       const name=
         normalizeComment(
           req.body.name
         );
 
+
       const email=
         normalizeComment(
           req.body.email
-        )
-        .toLowerCase();
+        ).toLowerCase();
+
 
       const comment=
         normalizeComment(
           req.body.comment
         );
+
 
       if(
         name.length<2||
@@ -1575,8 +2066,9 @@ app.post(
 
       }
 
+
       if(
-        email &&
+        email&&
         (
           email.length>160||
           !/^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -1593,6 +2085,7 @@ app.post(
 
       }
 
+
       if(
         comment.length<2||
         comment.length>3000
@@ -1606,6 +2099,7 @@ app.post(
           });
 
       }
+
 
       if(
         looksLikeCommentSpam(
@@ -1622,14 +2116,19 @@ app.post(
 
       }
 
+
       const article=
-        await pool.query(`
+        await pool.query(
+          `
           SELECT id
           FROM articles
           WHERE slug=$1
           AND status='published'
           LIMIT 1
-        `,[req.params.slug]);
+          `,
+          [req.params.slug]
+        );
+
 
       if(!article.rows.length){
 
@@ -1642,20 +2141,22 @@ app.post(
 
       }
 
+
       const articleId=
         article.rows[0].id;
+
 
       const ipHash=
         hashIP(
           getClientIP(req)
         );
 
+
       const parentId=
         req.body.parent_id
-          ?Number(
-            req.body.parent_id
-          )
+          ?Number(req.body.parent_id)
           :null;
+
 
       if(parentId!==null){
 
@@ -1673,19 +2174,23 @@ app.post(
 
         }
 
+
         const parent=
-          await pool.query(`
+          await pool.query(
+            `
             SELECT id
             FROM comments
-            WHERE
-              id=$1
-              AND article_id=$2
-              AND status='approved'
+            WHERE id=$1
+            AND article_id=$2
+            AND status='approved'
             LIMIT 1
-          `,[
-            parentId,
-            articleId
-          ]);
+            `,
+            [
+              parentId,
+              articleId
+            ]
+          );
+
 
         if(!parent.rows.length){
 
@@ -1700,26 +2205,28 @@ app.post(
 
       }
 
+
       const duplicate=
-        await pool.query(`
+        await pool.query(
+          `
           SELECT id
           FROM comments
-          WHERE
-            article_id=$1
-            AND ip_hash=$2
-            AND LOWER(comment)=LOWER($3)
-            AND created_at>
-              NOW()-INTERVAL '10 minutes'
+          WHERE article_id=$1
+          AND ip_hash=$2
+          AND LOWER(comment)=LOWER($3)
+          AND created_at>
+            NOW()-INTERVAL '10 minutes'
           LIMIT 1
-        `,[
-          articleId,
-          ipHash,
-          comment
-        ]);
+          `,
+          [
+            articleId,
+            ipHash,
+            comment
+          ]
+        );
 
-      if(
-        duplicate.rows.length
-      ){
+
+      if(duplicate.rows.length){
 
         return res
           .status(409)
@@ -1730,9 +2237,12 @@ app.post(
 
       }
 
+
       const result=
-        await pool.query(`
+        await pool.query(
+          `
           INSERT INTO comments(
+
             article_id,
             name,
             email,
@@ -1740,7 +2250,9 @@ app.post(
             status,
             ip_hash,
             parent_id
+
           )
+
           VALUES(
             $1,
             $2,
@@ -1750,6 +2262,7 @@ app.post(
             $5,
             $6
           )
+
           RETURNING
             id,
             name,
@@ -1757,14 +2270,17 @@ app.post(
             status,
             created_at,
             parent_id
-        `,[
-          articleId,
-          name,
-          email,
-          comment,
-          ipHash,
-          parentId
-        ]);
+          `,
+          [
+            articleId,
+            name,
+            email,
+            comment,
+            ipHash,
+            parentId
+          ]
+        );
+
 
       res
         .status(201)
@@ -1798,7 +2314,7 @@ app.post(
 
 
 /* =========================
-   COMMENT INTERACTIONS
+   COMMENT LIKE
 ========================= */
 
 app.post(
@@ -1811,6 +2327,7 @@ app.post(
         Number(
           req.params.id
         );
+
 
       if(
         !Number.isInteger(id)||
@@ -1826,20 +2343,25 @@ app.post(
 
       }
 
+
       const ipHash=
         hashIP(
           getClientIP(req)
         );
 
+
       const exists=
-        await pool.query(`
+        await pool.query(
+          `
           SELECT id
           FROM comments
-          WHERE
-            id=$1
-            AND status='approved'
+          WHERE id=$1
+          AND status='approved'
           LIMIT 1
-        `,[id]);
+          `,
+          [id]
+        );
+
 
       if(!exists.rows.length){
 
@@ -1852,34 +2374,47 @@ app.post(
 
       }
 
-      await pool.query(`
+
+      await pool.query(
+        `
         INSERT INTO comment_likes(
           comment_id,
           ip_hash
         )
         VALUES($1,$2)
+
         ON CONFLICT(
           comment_id,
           ip_hash
         )
         DO NOTHING
-      `,[
-        id,
-        ipHash
-      ]);
+        `,
+        [
+          id,
+          ipHash
+        ]
+      );
+
 
       const count=
-        await pool.query(`
+        await pool.query(
+          `
           SELECT
             COUNT(*)::int AS likes
           FROM comment_likes
           WHERE comment_id=$1
-        `,[id]);
+          `,
+          [id]
+        );
+
 
       res.json({
+
         ok:true,
+
         likes:
           count.rows[0].likes
+
       });
 
     }catch(e){
@@ -1899,6 +2434,10 @@ app.post(
 );
 
 
+/* =========================
+   COMMENT REPORT
+========================= */
+
 app.post(
   '/api/comments/:id/report',
   async(req,res)=>{
@@ -1910,6 +2449,7 @@ app.post(
           req.params.id
         );
 
+
       const reason=
         String(
           req.body.reason||
@@ -1918,6 +2458,7 @@ app.post(
         .trim()
         .slice(0,40)||
         'other';
+
 
       if(
         !Number.isInteger(id)||
@@ -1933,15 +2474,19 @@ app.post(
 
       }
 
+
       const exists=
-        await pool.query(`
+        await pool.query(
+          `
           SELECT id
           FROM comments
-          WHERE
-            id=$1
-            AND status='approved'
+          WHERE id=$1
+          AND status='approved'
           LIMIT 1
-        `,[id]);
+          `,
+          [id]
+        );
+
 
       if(!exists.rows.length){
 
@@ -1954,49 +2499,57 @@ app.post(
 
       }
 
+
       const ipHash=
         hashIP(
           getClientIP(req)
         );
 
+
       const prior=
-        await pool.query(`
+        await pool.query(
+          `
           SELECT id
           FROM comment_reports
-          WHERE
-            comment_id=$1
-            AND ip_hash=$2
+          WHERE comment_id=$1
+          AND ip_hash=$2
           LIMIT 1
-        `,[
-          id,
-          ipHash
-        ]);
+          `,
+          [
+            id,
+            ipHash
+          ]
+        );
+
 
       if(!prior.rows.length){
 
-        await pool.query(`
+        await pool.query(
+          `
           INSERT INTO comment_reports(
             comment_id,
             reason,
             ip_hash
           )
-          VALUES(
-            $1,
-            $2,
-            $3
-          )
-        `,[
-          id,
-          reason,
-          ipHash
-        ]);
+          VALUES($1,$2,$3)
+          `,
+          [
+            id,
+            reason,
+            ipHash
+          ]
+        );
 
       }
 
+
       res.json({
+
         ok:true,
+
         message:
           'Thanks. Your report was sent to the admin.'
+
       });
 
     }catch(e){
@@ -2028,23 +2581,38 @@ app.get(
     try{
 
       const result=
-        await pool.query(`
+        await pool.query(
+          `
           SELECT
+
             c.id,
+
             c.name,
+
             c.email,
+
             c.comment,
+
             c.status,
+
             c.created_at,
+
             c.article_id,
+
             a.title AS article_title,
+
             a.slug AS article_slug
+
           FROM comments c
+
           JOIN articles a
-            ON a.id=c.article_id
+          ON a.id=c.article_id
+
           ORDER BY
             c.created_at DESC
-        `);
+          `
+        );
+
 
       res.json({
 
@@ -2085,12 +2653,14 @@ app.patch(
           req.params.id
         );
 
+
       const status=
         String(
           req.body.status||''
         )
         .trim()
         .toLowerCase();
+
 
       if(
         !Number.isInteger(id)||
@@ -2105,6 +2675,7 @@ app.patch(
           });
 
       }
+
 
       if(
         ![
@@ -2123,16 +2694,24 @@ app.patch(
 
       }
 
+
       const result=
-        await pool.query(`
+        await pool.query(
+          `
           UPDATE comments
+
           SET status=$1
+
           WHERE id=$2
+
           RETURNING *
-        `,[
-          status,
-          id
-        ]);
+          `,
+          [
+            status,
+            id
+          ]
+        );
+
 
       if(!result.rows.length){
 
@@ -2145,10 +2724,14 @@ app.patch(
 
       }
 
+
       res.json({
+
         ok:true,
+
         comment:
           result.rows[0]
+
       });
 
     }catch(e){
@@ -2176,8 +2759,10 @@ app.get(
     try{
 
       const r=
-        await pool.query(`
+        await pool.query(
+          `
           SELECT
+
             COUNT(*)::int total,
 
             COUNT(*)
@@ -2196,20 +2781,28 @@ app.get(
             )::int rejected
 
           FROM comments
-        `);
+          `
+        );
+
 
       const reports=
-        await pool.query(`
+        await pool.query(
+          `
           SELECT
             COUNT(*)::int open
           FROM comment_reports
           WHERE status='open'
-        `);
+          `
+        );
+
 
       res.json({
+
         ...r.rows[0],
+
         openReports:
           reports.rows[0].open
+
       });
 
     }catch(e){
@@ -2239,63 +2832,77 @@ app.get(
       const [
         top,
         days
-      ]=
-        await Promise.all([
+      ]=await Promise.all([
 
-          pool.query(`
-            SELECT
-              c.id,
-              c.name,
-              c.comment,
-              a.title,
-              COUNT(l.id)::int likes
-            FROM comments c
-            JOIN articles a
-              ON a.id=c.article_id
-            LEFT JOIN comment_likes l
-              ON l.comment_id=c.id
-            WHERE
-              c.status='approved'
-            GROUP BY
-              c.id,
-              a.title
-            ORDER BY
-              likes DESC,
-              c.created_at DESC
-            LIMIT 10
-          `),
+        pool.query(`
+          SELECT
 
-          pool.query(`
-            SELECT
-              TO_CHAR(
-                d.day,
-                'Mon DD'
-              ) label,
+            c.id,
 
-              COUNT(c.id)::int comments
+            c.name,
 
-            FROM generate_series(
-              CURRENT_DATE-6,
-              CURRENT_DATE,
-              INTERVAL '1 day'
-            ) d(day)
+            c.comment,
 
-            LEFT JOIN comments c
-              ON c.created_at::date=d.day
+            a.title,
 
-            GROUP BY d.day
+            COUNT(l.id)::int likes
 
-            ORDER BY d.day
-          `)
+          FROM comments c
 
-        ]);
+          JOIN articles a
+          ON a.id=c.article_id
+
+          LEFT JOIN comment_likes l
+          ON l.comment_id=c.id
+
+          WHERE c.status='approved'
+
+          GROUP BY
+            c.id,
+            a.title
+
+          ORDER BY
+            likes DESC,
+            c.created_at DESC
+
+          LIMIT 10
+        `),
+
+        pool.query(`
+          SELECT
+
+            TO_CHAR(
+              d.day,
+              'Mon DD'
+            ) label,
+
+            COUNT(c.id)::int comments
+
+          FROM generate_series(
+            CURRENT_DATE-6,
+            CURRENT_DATE,
+            INTERVAL '1 day'
+          ) d(day)
+
+          LEFT JOIN comments c
+          ON c.created_at::date=d.day
+
+          GROUP BY d.day
+
+          ORDER BY d.day
+        `)
+
+      ]);
+
 
       res.json({
+
         top:
           top.rows,
 
         days:
           days.rows
+
       });
 
     }catch(e){
@@ -2315,6 +2922,10 @@ app.get(
 );
 
 
+/* =========================
+   ADMIN COMMENT REPORTS
+========================= */
+
 app.get(
   '/api/admin/comment-reports',
   auth,
@@ -2323,24 +2934,33 @@ app.get(
     try{
 
       const r=
-        await pool.query(`
+        await pool.query(
+          `
           SELECT
+
             r.id,
+
             r.comment_id,
+
             r.reason,
+
             r.status,
+
             r.created_at,
+
             c.name,
+
             c.comment,
+
             a.title AS article_title
 
           FROM comment_reports r
 
           JOIN comments c
-            ON c.id=r.comment_id
+          ON c.id=r.comment_id
 
           JOIN articles a
-            ON a.id=c.article_id
+          ON a.id=c.article_id
 
           ORDER BY
 
@@ -2351,14 +2971,18 @@ app.get(
             END,
 
             r.created_at DESC
-        `);
+          `
+        );
+
 
       res.json({
+
         reports:
           r.rows,
 
         total:
           r.rows.length
+
       });
 
     }catch(e){
@@ -2390,21 +3014,31 @@ app.patch(
           req.params.id
         );
 
+
       const status=
-        req.body.status==='resolved'
+        req.body.status===
+        'resolved'
           ?'resolved'
           :'open';
 
+
       const r=
-        await pool.query(`
+        await pool.query(
+          `
           UPDATE comment_reports
+
           SET status=$1
+
           WHERE id=$2
+
           RETURNING *
-        `,[
-          status,
-          id
-        ]);
+          `,
+          [
+            status,
+            id
+          ]
+        );
+
 
       if(!r.rows.length){
 
@@ -2417,10 +3051,14 @@ app.patch(
 
       }
 
+
       res.json({
+
         ok:true,
+
         report:
           r.rows[0]
+
       });
 
     }catch(e){
@@ -2452,6 +3090,7 @@ app.delete(
           req.params.id
         );
 
+
       await pool.query(
         `
         DELETE FROM comment_reports
@@ -2459,6 +3098,7 @@ app.delete(
         `,
         [id]
       );
+
 
       res.json({
         ok:true
@@ -2493,6 +3133,7 @@ app.delete(
           req.params.id
         );
 
+
       if(
         !Number.isInteger(id)||
         id<1
@@ -2507,12 +3148,19 @@ app.delete(
 
       }
 
+
       const result=
-        await pool.query(`
+        await pool.query(
+          `
           DELETE FROM comments
+
           WHERE id=$1
+
           RETURNING id
-        `,[id]);
+          `,
+          [id]
+        );
+
 
       if(!result.rows.length){
 
@@ -2524,6 +3172,7 @@ app.delete(
           });
 
       }
+
 
       res.json({
         ok:true
@@ -2554,7 +3203,8 @@ app.get(
     try{
 
       const result=
-        await pool.query(`
+        await pool.query(
+          `
           SELECT
 
             COUNT(*)::int AS total,
@@ -2575,7 +3225,9 @@ app.get(
             )::int AS rejected
 
           FROM comments
-        `);
+          `
+        );
+
 
       res.json(
         result.rows[0]
@@ -2605,11 +3257,12 @@ app.get(
 app.get(
   '/api/admin/articles',
   auth,
-  async(q,r)=>{
+  async(req,res)=>{
 
     try{
 
-      r.json(
+      res.json(
+
         (
           await pool.query(`
             SELECT *
@@ -2617,11 +3270,12 @@ app.get(
             ORDER BY created_at DESC
           `)
         ).rows
+
       );
 
     }catch{
 
-      r
+      res
         .status(500)
         .json({
           error:
@@ -2641,11 +3295,12 @@ app.get(
 app.get(
   '/api/admin/stats',
   auth,
-  async(q,r)=>{
+  async(req,res)=>{
 
     try{
 
-      r.json(
+      res.json(
+
         (
           await pool.query(`
             SELECT
@@ -2674,11 +3329,12 @@ app.get(
             FROM articles
           `)
         ).rows[0]
+
       );
 
     }catch{
 
-      r
+      res
         .status(500)
         .json({
           error:
@@ -2692,7 +3348,7 @@ app.get(
 
 
 /* =========================
-   VALIDATION
+   ARTICLE VALIDATION
 ========================= */
 
 function valid(b){
@@ -2711,7 +3367,8 @@ function valid(b){
 
     author:
       String(
-        b.author||'Admin'
+        b.author||
+        'Admin'
       )
       .trim()||
       'Admin',
@@ -2726,21 +3383,25 @@ function valid(b){
 
     excerpt:
       String(
-        b.excerpt||''
+        b.excerpt||
+        ''
       ).trim(),
 
     tags:
       String(
-        b.tags||''
+        b.tags||
+        ''
       ).trim(),
 
     image_url:
       String(
-        b.image_url||''
+        b.image_url||
+        ''
       ).trim(),
 
     status:
-      b.status==='draft'
+      b.status===
+      'draft'
         ?'draft'
         :'published',
 
@@ -2748,6 +3409,7 @@ function valid(b){
       !!b.featured
 
   };
+
 
   if(
     !a.title||
@@ -2760,7 +3422,9 @@ function valid(b){
 
   }
 
+
   return a;
+
 }
 
 
@@ -2780,16 +3444,19 @@ app.post(
           req.body
         );
 
+
       const base=
         slugify(
           a.title
         );
+
 
       const slug=
         base+
         '-'+
         Date.now()
           .toString(36);
+
 
       const x=
         await pool.query(
@@ -2844,20 +3511,24 @@ app.post(
           ]
         );
 
+
       res
         .status(201)
         .json(
           x.rows[0]
         );
 
+
       if(
-        a.status==='published'
+        a.status===
+        'published'
       ){
 
         console.log(
-          'Newsletter trigger: new article published:',
+          'Push/Newsletter trigger: article published:',
           x.rows[0].title
         );
+
 
         sendNewsletterForArticle(
           x.rows[0]
@@ -2870,11 +3541,21 @@ app.post(
             )
         );
 
+
+        sendPushForArticle(
+          x.rows[0]
+        )
+        .catch(
+          error=>
+            console.error(
+              'Push broadcast error:',
+              error
+            )
+        );
+
       }
 
     }catch(e){
-
-      console.error(e);
 
       res
         .status(400)
@@ -2905,20 +3586,24 @@ app.put(
           req.body
         );
 
+
       const id=
         +req.params.id;
 
+
       const before=
-        await pool.query(`
+        await pool.query(
+          `
           SELECT status
           FROM articles
           WHERE id=$1
           LIMIT 1
-        `,[id]);
+          `,
+          [id]
+        );
 
-      if(
-        !before.rows.length
-      ){
+
+      if(!before.rows.length){
 
         return res
           .status(404)
@@ -2929,25 +3614,37 @@ app.put(
 
       }
 
+
       const wasPublished=
         before.rows[0].status===
         'published';
+
 
       const x=
         await pool.query(
           `
           UPDATE articles
+
           SET
 
             title=$1,
+
             content=$2,
+
             author=$3,
+
             category=$4,
+
             excerpt=$5,
+
             tags=$6,
+
             image_url=$7,
+
             status=$8,
+
             featured=$9,
+
             updated_at=NOW()
 
           WHERE id=$10
@@ -2970,9 +3667,8 @@ app.put(
           ]
         );
 
-      if(
-        !x.rows.length
-      ){
+
+      if(!x.rows.length){
 
         return res
           .status(404)
@@ -2983,27 +3679,22 @@ app.put(
 
       }
 
+
       res.json(
         x.rows[0]
       );
 
-      /*
-        Newsletter intentionally triggers
-        whenever an article is saved as
-        published.
-
-        Isse existing published article ko
-        update karne par bhi test ho jayega.
-      */
 
       if(
-        a.status==='published'
+        a.status===
+        'published'
       ){
 
         console.log(
-          'Newsletter trigger: article published/updated:',
+          'Push/Newsletter trigger: article published/updated:',
           x.rows[0].title
         );
+
 
         sendNewsletterForArticle(
           x.rows[0]
@@ -3016,11 +3707,21 @@ app.put(
             )
         );
 
+
+        sendPushForArticle(
+          x.rows[0]
+        )
+        .catch(
+          error=>
+            console.error(
+              'Push broadcast error:',
+              error
+            )
+        );
+
       }
 
     }catch(e){
-
-      console.error(e);
 
       res
         .status(400)
@@ -3050,7 +3751,9 @@ app.delete(
         await pool.query(
           `
           DELETE FROM articles
+
           WHERE id=$1
+
           RETURNING id
           `,
           [
@@ -3058,9 +3761,8 @@ app.delete(
           ]
         );
 
-      if(
-        !x.rows.length
-      ){
+
+      if(!x.rows.length){
 
         return res
           .status(404)
@@ -3070,6 +3772,7 @@ app.delete(
           });
 
       }
+
 
       res.json({
         ok:true
@@ -3104,25 +3807,33 @@ const server=
         PORT
       );
 
+
       init()
-        .then(()=>{
 
-          console.log(
-            'Database initialization completed successfully.'
-          );
+        .then(
+          ()=>{
 
-        })
-        .catch(e=>{
+            console.log(
+              'Database initialization completed successfully.'
+            );
 
-          console.error(
-            'Database initialization failed:',
-            e
-          );
+          }
+        )
 
-        });
+        .catch(
+          e=>{
+
+            console.error(
+              'Database initialization failed:',
+              e
+            );
+
+          }
+        );
 
     }
   );
+
 
 server.on(
   'error',
