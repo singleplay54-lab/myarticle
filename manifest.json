@@ -1,17 +1,24 @@
 {
   "name": "GyanTech Blog",
   "short_name": "GyanTech",
-  "description": "AI, coding, web development and technology explained simply.",
+  "description": "Technology, coding and web development articles from GyanTech Blog.",
   "start_url": "/",
-  "scope": "/",
   "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
   "orientation": "portrait-primary",
-  "background_color": "#f5f7fb",
-  "theme_color": "#0f172a",
-  "lang": "en-IN",
-  "categories": ["education", "technology", "news"],
   "icons": [
-    {"src":"/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
-    {"src":"/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
   ]
 }
