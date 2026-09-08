@@ -3792,7 +3792,15 @@ app.delete(
   }
 );
 
+// ========================================
+// CURRENT AFFAIRS PAGE
+// ========================================
 
+app.get('/current-affairs', (req, res) => {
+  res.sendFile('current-affairs.html', {
+    root: __dirname
+  });
+});
 /* =========================
    START SERVER
 ========================= */
