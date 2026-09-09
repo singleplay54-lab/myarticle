@@ -632,14 +632,85 @@ if(richEditor && hiddenContent){
 
 
           <label>
-            Category
-          </label>
+  Category
+</label>
 
-          <input
-            id="category"
-            value="Technology"
-            placeholder="AI"
-          >
+<select id="category">
+  <option value="Technology">Technology</option>
+  <option value="Current Affairs">Current Affairs</option>
+  <option value="National">National</option>
+  <option value="International">International</option>
+  <option value="Sports">Sports</option>
+  <option value="Awards">Awards</option>
+  <option value="Appointments">Appointments</option>
+  <option value="Government">Government</option>
+  <option value="Economy">Economy</option>
+  <option value="Science & Technology">Science & Technology</option>
+  <option value="Defence">Defence</option>
+  <option value="Important Days">Important Days</option>
+</select>
+
+<!-- CURRENT AFFAIRS MONTH -->
+
+<div id="currentAffairsOptions">
+
+  <label style="margin-top:15px;">
+    📅 Month
+  </label>
+
+  <select id="currentAffairsMonth">
+    <option value="">Select Month</option>
+    <option>January</option>
+    <option>February</option>
+    <option>March</option>
+    <option>April</option>
+    <option>May</option>
+    <option>June</option>
+    <option>July</option>
+    <option>August</option>
+    <option>September</option>
+    <option>October</option>
+    <option>November</option>
+    <option>December</option>
+  </select>
+
+  <!-- URL -->
+
+  <label style="margin-top:15px;">
+    🔗 Source URL
+  </label>
+
+  <input
+    id="resourceUrl"
+    type="url"
+    placeholder="https://example.com/current-affairs"
+  >
+
+  <!-- PDF -->
+
+  <label style="margin-top:15px;">
+    📄 PDF Upload
+  </label>
+
+  <input
+    id="resourcePdf"
+    type="file"
+    accept="application/pdf"
+  >
+
+  <div
+    id="pdfName"
+    style="
+      margin-top:8px;
+      padding:8px;
+      border-radius:6px;
+      background:#f1f5f9;
+      display:none;
+      font-size:13px;
+    "
+  ></div>
+
+</div>
 
 
           <label>
@@ -1772,6 +1843,72 @@ $("logout")
 
 checkLogin();
 
+const categorySelect =
+  document.getElementById("category");
+
+const currentAffairsOptions =
+  document.getElementById("currentAffairsOptions");
+
+const resourcePdf =
+  document.getElementById("resourcePdf");
+
+const pdfName =
+  document.getElementById("pdfName");
+
+function updateCurrentAffairsFields(){
+
+  if(categorySelect.value === "Current Affairs"){
+
+    currentAffairsOptions.style.display = "block";
+
+  }else{
+
+    currentAffairsOptions.style.display = "none";
+
+  }
+
+}
+
+categorySelect.addEventListener(
+  "change",
+  updateCurrentAffairsFields
+);
+
+resourcePdf.addEventListener(
+  "change",
+  function(){
+
+    const file = this.files[0];
+
+    if(!file){
+
+      pdfName.style.display = "none";
+      pdfName.textContent = "";
+
+      return;
+    }
+
+    if(file.type !== "application/pdf"){
+
+      alert("❌ Sirf PDF file select karo.");
+
+      this.value = "";
+
+      pdfName.style.display = "none";
+
+      return;
+    }
+
+    pdfName.textContent =
+      "📎 " + file.name;
+
+    pdfName.style.display = "block";
+
+  }
+);
+
+updateCurrentAffairsFields();
+  
 </script>
 
 </body>
