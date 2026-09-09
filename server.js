@@ -3631,7 +3631,12 @@ function valid(b){
     pdf_url:
       String(
         b.pdf_url || ''
-      ).trim()
+      ).trim(),
+   
+    quiz_url:
+  String(
+    b.quiz_url || ''
+  ).trim()
 
   };
 
@@ -3697,6 +3702,7 @@ app.post(
   month,
   source_url,
   pdf_url,
+  quiz_url,
   slug,
   updated_at
 )
@@ -3704,7 +3710,7 @@ app.post(
           VALUES(
   $1,$2,$3,$4,$5,
   $6,$7,$8,$9,$10,
-  $11,$12,$13,
+  $11,$12,$13,$14,
   NOW()
 )
 
@@ -3724,6 +3730,7 @@ app.post(
   a.month,
 a.source_url,
 a.pdf_url,
+a.quiz_url,            
 slug
 
           ]
@@ -3863,9 +3870,10 @@ featured=$9,
 month=$10,
 source_url=$11,
 pdf_url=$12,
+quiz_url=$13,
 updated_at=NOW()
 
-          WHERE id=$13
+          WHERE id=$14
 
           RETURNING *
           `,
@@ -3883,6 +3891,7 @@ a.featured,
 a.month,
 a.source_url,
 a.pdf_url,
+a.quiz_url,            
 id
 
           ]
