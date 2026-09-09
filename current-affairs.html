@@ -853,21 +853,35 @@ function renderArticles(){
 
   if(selectedMonth !== null){
 
-    articles =
-      articles.filter(article =>{
+  const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December"
+  ];
 
-        const date =
-          new Date(
-            article.created_at ||
-            article.updated_at
-          );
+  const selectedMonthName =
+    monthNames[selectedMonth];
 
-        return date.getMonth() ===
-          Number(selectedMonth);
+  articles =
+    articles.filter(article => {
 
-      });
+      return String(
+        article.month || ""
+      ).toLowerCase() ===
+      selectedMonthName.toLowerCase();
 
-  }
+    });
+
+}
 
 
   /* SEARCH */
