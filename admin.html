@@ -695,7 +695,7 @@ if(richEditor && hiddenContent){
   <input
     id="resourcePdf"
     type="file"
-    accept="application/pdf"
+    accept=".pdf,application/pdf"
   >
 
   <div
@@ -709,6 +709,42 @@ if(richEditor && hiddenContent){
       font-size:13px;
     "
   ></div>
+
+  <!-- HTML QUIZ -->
+
+  <label style="margin-top:15px;">
+    🧩 HTML Quiz Upload
+  </label>
+
+  <input
+    id="resourceQuiz"
+    type="file"
+    accept=".html,.htm,text/html"
+  >
+
+  <div
+    id="quizName"
+    style="
+      margin-top:8px;
+      padding:8px;
+      border-radius:6px;
+      background:#f1f5f9;
+      display:none;
+      font-size:13px;
+    "
+  ></div>
+
+  <div
+    id="existingResources"
+    style="
+      margin-top:10px;
+      font-size:13px;
+      line-height:1.7;
+    "
+  ></div>
+
+  <input id="pdf_url" type="hidden">
+  <input id="quiz_url" type="hidden">
 
 </div>
 
@@ -1203,6 +1239,48 @@ $("previewImg")
 
 /* SAVE ARTICLE */
 
+async function uploadResource(file){
+
+  if(!file){
+    return "";
+  }
+
+  const formData =
+    new FormData();
+
+  formData.append(
+    "file",
+    file
+  );
+
+  const response =
+    await fetch(
+      "/api/admin/upload-resource",
+      {
+        method:"POST",
+        body:formData
+      }
+    );
+
+  const data =
+    await response
+      .json()
+      .catch(() => ({}));
+
+  if(!response.ok){
+
+    throw new Error(
+      data.error ||
+      "File upload failed."
+    );
+
+  }
+
+  return data.url || "";
+
+}
+
+
 $("articleForm")
   .addEventListener(
     "submit",
@@ -1210,90 +1288,159 @@ $("articleForm")
 
       event.preventDefault();
 
-
       const id =
         $("editId").value;
 
-      $("content").value = $("contentEditor").innerHTML.trim();
+      $("content").value =
+        $("contentEditor")
+          .innerHTML
+          .trim();
 
-      const article = {
+      const msg =
+        $("msg");
 
-        title:
-          $("title")
-            .value
-            .trim(),
-
-        author:
-          $("author")
-            .value
-            .trim(),
-
-        content:
-          $("content")
-            .value
-            .trim(),
-
-        excerpt:
-          $("excerpt")
-            .value
-            .trim(),
-
-        category:
-          $("category")
-            .value
-            .trim(),
-
-        month:
-  $("currentAffairsMonth")
-    .value
-    .trim(),
-
-        source_url:
-  $("resourceUrl")
-    .value
-    .trim(),
-
-       pdf_url:
-       "",
-
-        
-        tags:
-          $("tags")
-            .value
-            .trim(),
-
-        image_url:
-          $("image_url")
-            .value
-            .trim(),
-
-        status:
-          $("status")
-            .value,
-
-        featured:
-          $("featured")
-            .checked
-
-      };
-
+      msg.textContent =
+        "⏳ Saving...";
 
       try{
+
+        /* UPLOAD PDF */
+
+        let pdfURL =
+          $("pdf_url").value
+            .trim();
+
+        const pdfFile =
+          $("resourcePdf")
+            .files[0];
+
+        if(pdfFile){
+
+          msg.textContent =
+            "⏳ Uploading PDF...";
+
+          pdfURL =
+            await uploadResource(
+              pdfFile
+            );
+
+          $("pdf_url").value =
+            pdfURL;
+
+        }
+
+
+        /* UPLOAD HTML QUIZ */
+
+        let quizURL =
+          $("quiz_url").value
+            .trim();
+
+        const quizFile =
+          $("resourceQuiz")
+            .files[0];
+
+        if(quizFile){
+
+          msg.textContent =
+            "⏳ Uploading HTML quiz...";
+
+          quizURL =
+            await uploadResource(
+              quizFile
+            );
+
+          $("quiz_url").value =
+            quizURL;
+
+        }
+
+
+        const article = {
+
+          title:
+            $("title")
+              .value
+              .trim(),
+
+          author:
+            $("author")
+              .value
+              .trim(),
+
+          content:
+            $("content")
+              .value
+              .trim(),
+
+          excerpt:
+            $("excerpt")
+              .value
+              .trim(),
+
+          category:
+            $("category")
+              .value
+              .trim(),
+
+          month:
+            $("currentAffairsMonth")
+              .value
+              .trim(),
+
+          source_url:
+            $("resourceUrl")
+              .value
+              .trim(),
+
+          pdf_url:
+            pdfURL,
+
+          quiz_url:
+            quizURL,
+
+          tags:
+            $("tags")
+              .value
+              .trim(),
+
+          image_url:
+            $("image_url")
+              .value
+              .trim(),
+
+          status:
+            $("status")
+              .value,
+
+          featured:
+            $("featured")
+              .checked
+
+        };
+
+
+        msg.textContent =
+          id
+            ? "⏳ Updating article..."
+            : "⏳ Publishing article...";
+
 
         if(id){
 
           await api(
-            "/api/articles/" + id,
+            "/api/articles/" +
+            id,
             {
               method:"PUT",
               body:
-                JSON.stringify(article)
+                JSON.stringify(
+                  article
+                )
             }
           );
 
-
-          $("msg")
-            .textContent =
+          msg.textContent =
             "✅ Article updated.";
 
         }else{
@@ -1303,13 +1450,13 @@ $("articleForm")
             {
               method:"POST",
               body:
-                JSON.stringify(article)
+                JSON.stringify(
+                  article
+                )
             }
           );
 
-
-          $("msg")
-            .textContent =
+          msg.textContent =
             "✅ Article published.";
 
         }
@@ -1322,8 +1469,7 @@ $("articleForm")
 
       }catch(error){
 
-        $("msg")
-          .textContent =
+        msg.textContent =
           "❌ " +
           error.message;
 
@@ -1479,6 +1625,26 @@ function renderArticles(articles){
                 ? `
                   <span class="badge badgeFeatured">
                     ⭐ Featured
+                  </span>
+                `
+                : ""
+              }
+
+              ${
+                article.pdf_url
+                ? `
+                  <span class="badge">
+                    📄 PDF
+                  </span>
+                `
+                : ""
+              }
+
+              ${
+                article.quiz_url
+                ? `
+                  <span class="badge">
+                    🧩 Quiz
                   </span>
                 `
                 : ""
@@ -1669,6 +1835,23 @@ window.startEdit =
     $("featured").checked =
       !!article.featured;
 
+    $("currentAffairsMonth").value =
+      article.month || "";
+
+    $("resourceUrl").value =
+      article.source_url || "";
+
+    $("pdf_url").value =
+      article.pdf_url || "";
+
+    $("quiz_url").value =
+      article.quiz_url || "";
+
+    $("resourcePdf").value = "";
+    $("resourceQuiz").value = "";
+
+    renderExistingResources();
+
 
     if(article.image_url){
 
@@ -1734,6 +1917,25 @@ function resetForm(){
 
   $("status")
     .value = "published";
+
+  $("currentAffairsMonth").value = "";
+  $("resourceUrl").value = "";
+  $("resourcePdf").value = "";
+  $("resourceQuiz").value = "";
+  $("pdf_url").value = "";
+  $("quiz_url").value = "";
+
+  if($("pdfName")){
+    $("pdfName").style.display = "none";
+    $("pdfName").textContent = "";
+  }
+
+  if($("quizName")){
+    $("quizName").style.display = "none";
+    $("quizName").textContent = "";
+  }
+
+  renderExistingResources();
 
   $("contentEditor").innerHTML =
     "Write your complete article here...";
@@ -1861,68 +2063,255 @@ const categorySelect =
   document.getElementById("category");
 
 const currentAffairsOptions =
-  document.getElementById("currentAffairsOptions");
+  document.getElementById(
+    "currentAffairsOptions"
+  );
 
 const resourcePdf =
-  document.getElementById("resourcePdf");
+  document.getElementById(
+    "resourcePdf"
+  );
+
+const resourceQuiz =
+  document.getElementById(
+    "resourceQuiz"
+  );
 
 const pdfName =
-  document.getElementById("pdfName");
+  document.getElementById(
+    "pdfName"
+  );
+
+const quizName =
+  document.getElementById(
+    "quizName"
+  );
+
+const pdfURLInput =
+  document.getElementById(
+    "pdf_url"
+  );
+
+const quizURLInput =
+  document.getElementById(
+    "quiz_url"
+  );
+
+
+const CURRENT_AFFAIRS_CATEGORIES =
+  new Set([
+    "Current Affairs",
+    "National",
+    "International",
+    "Sports",
+    "Awards",
+    "Appointments",
+    "Government",
+    "Economy",
+    "Science & Technology",
+    "Defence",
+    "Important Days"
+  ]);
+
+
+function isCurrentAffairsCategory(){
+
+  return CURRENT_AFFAIRS_CATEGORIES
+    .has(
+      categorySelect.value
+    );
+
+}
+
 
 function updateCurrentAffairsFields(){
 
-  if(categorySelect.value === "Current Affairs"){
+  if(
+    isCurrentAffairsCategory()
+  ){
 
-    currentAffairsOptions.style.display = "block";
+    currentAffairsOptions
+      .style
+      .display =
+      "block";
 
   }else{
 
-    currentAffairsOptions.style.display = "none";
+    currentAffairsOptions
+      .style
+      .display =
+      "none";
 
   }
 
 }
+
 
 categorySelect.addEventListener(
   "change",
   updateCurrentAffairsFields
 );
 
+
 resourcePdf.addEventListener(
   "change",
   function(){
 
-    const file = this.files[0];
+    const file =
+      this.files[0];
 
     if(!file){
 
-      pdfName.style.display = "none";
-      pdfName.textContent = "";
+      pdfName.style.display =
+        "none";
+
+      pdfName.textContent =
+        "";
 
       return;
+
     }
 
-    if(file.type !== "application/pdf"){
+    const valid =
+      file.type ===
+        "application/pdf" ||
+      /\.pdf$/i.test(
+        file.name
+      );
 
-      alert("❌ Sirf PDF file select karo.");
+    if(!valid){
+
+      alert(
+        "❌ Sirf PDF file select karo."
+      );
 
       this.value = "";
 
-      pdfName.style.display = "none";
+      pdfName.style.display =
+        "none";
 
       return;
+
     }
 
     pdfName.textContent =
-      "📎 " + file.name;
+      "📎 " +
+      file.name;
 
-    pdfName.style.display = "block";
+    pdfName.style.display =
+      "block";
 
   }
 );
 
+
+resourceQuiz.addEventListener(
+  "change",
+  function(){
+
+    const file =
+      this.files[0];
+
+    if(!file){
+
+      quizName.style.display =
+        "none";
+
+      quizName.textContent =
+        "";
+
+      return;
+
+    }
+
+    const valid =
+      file.type ===
+        "text/html" ||
+      /\.html?$/i.test(
+        file.name
+      );
+
+    if(!valid){
+
+      alert(
+        "❌ Sirf HTML quiz file select karo."
+      );
+
+      this.value = "";
+
+      quizName.style.display =
+        "none";
+
+      return;
+
+    }
+
+    quizName.textContent =
+      "🧩 " +
+      file.name;
+
+    quizName.style.display =
+      "block";
+
+  }
+);
+
+
+function renderExistingResources(){
+
+  const box =
+    document.getElementById(
+      "existingResources"
+    );
+
+  if(!box){
+    return;
+  }
+
+  const links=[];
+
+  if(
+    pdfURLInput &&
+    pdfURLInput.value.trim()
+  ){
+
+    links.push(
+      '<a href="' +
+      escapeHTML(
+        pdfURLInput.value
+      ) +
+      '" target="_blank" rel="noopener">📄 Open existing PDF</a>'
+    );
+
+  }
+
+  if(
+    quizURLInput &&
+    quizURLInput.value.trim()
+  ){
+
+    links.push(
+      '<a href="' +
+      escapeHTML(
+        quizURLInput.value
+      ) +
+      '" target="_blank" rel="noopener">🧩 Open existing HTML Quiz</a>'
+    );
+
+  }
+
+  box.innerHTML =
+    links.length
+      ? "Existing resources: " +
+        links.join(" &nbsp; | &nbsp; ")
+      : "";
+
+}
+
+
 updateCurrentAffairsFields();
-  
+renderExistingResources();
+
 </script>
 
 </body>
