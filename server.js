@@ -1,4 +1,4 @@
-const express=require('express'),cookieParser=require('cookie-parser'),bcrypt=require('bcryptjs'),jwt=require('jsonwebtoken'),{Pool}=require('pg'),fs=require('fs'),path=require('path'),crypto=require('crypto'),webpush=require('web-push');
+const express=require('express'),cookieParser=require('cookie-parser'),bcrypt=require('bcryptjs'),jwt=require('jsonwebtoken'),{Pool}=require('pg'),fs=require('fs'),path=require('path'),crypto=require('crypto'),webpush=require('web-push'),multer=require('multer');
 
 const app=express();
 const PORT=process.env.PORT||10000;
@@ -349,7 +349,221 @@ function auth(req,res,next){
 
 }
 
+/* =========================
+   FILE UPLOADS
+========================= */
 
+const upload=multer({
+  storage:multer.memoryStorage(),
+  limits:{
+    fileSize:10*1024*1024
+  },
+  fileFilter:(req,file,cb)=>{
+
+    const allowed=[
+      'application/pdf',
+      'text/html'
+    ];
+
+    if(!allowed.includes(file.mimetype)){
+      return cb(
+        new Error(
+          'Only PDF or HTML files are allowed'
+        )
+      );
+    }
+
+    cb(null,true);
+  }
+});
+
+
+app.post(
+  '/api/admin/upload-resource',
+  auth,
+  upload.single('file'),
+  async(req,res)=>{
+
+    try{
+
+      if(!req.file){
+
+        return res
+          .status(400)
+          .json({
+            error:'Please select a PDF or HTML file.'
+          });
+
+      }
+
+      const SUPABASE_URL=
+        String(
+          process.env.SUPABASE_URL||''
+        ).replace(/\/$/,'');
+
+      const SERVICE_KEY=
+        process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+      const BUCKET=
+        process.env.SUPABASE_STORAGE_BUCKET||
+        'current-affairs-pdfs';
+
+      if(
+        !SUPABASE_URL||
+        !SERVICE_KEY
+      ){
+
+        return res
+          .status(500)
+          .json({
+            error:
+              'Supabase Storage is not configured.'
+          });
+
+      }
+
+      const isPDF=
+        req.file.mimetype===
+        'application/pdf';
+
+      if(isPDF){
+
+        const header=
+          req.file.buffer
+            .subarray(0,5)
+            .toString();
+
+        if(header!=='%PDF-'){
+
+          return res
+            .status(400)
+            .json({
+              error:'Invalid PDF file.'
+            });
+
+        }
+
+      }
+
+      const extension=
+        isPDF
+          ?'pdf'
+          :'html';
+
+      const fileName=
+        'current-affairs/'+
+        Date.now()+
+        '-'+
+        crypto
+          .randomBytes(8)
+          .toString('hex')+
+        '.'+
+        extension;
+
+      const encodedPath=
+        fileName
+          .split('/')
+          .map(
+            encodeURIComponent
+          )
+          .join('/');
+
+      const uploadURL=
+        SUPABASE_URL+
+        '/storage/v1/object/'+
+        encodeURIComponent(BUCKET)+
+        '/'+
+        encodedPath;
+
+      const response=
+        await fetch(
+          uploadURL,
+          {
+            method:'POST',
+
+            headers:{
+              Authorization:
+                'Bearer '+SERVICE_KEY,
+
+              apikey:
+                SERVICE_KEY,
+
+              'Content-Type':
+                req.file.mimetype,
+
+              'x-upsert':
+                'true'
+            },
+
+            body:
+              req.file.buffer
+          }
+        );
+
+      const data=
+        await response
+          .json()
+          .catch(
+            ()=>({})
+          );
+
+      if(!response.ok){
+
+        console.error(
+          'Supabase upload failed:',
+          data
+        );
+
+        return res
+          .status(500)
+          .json({
+            error:
+              'Could not upload file to Supabase Storage.'
+          });
+
+      }
+
+      const publicURL=
+        SUPABASE_URL+
+        '/storage/v1/object/public/'+
+        encodeURIComponent(BUCKET)+
+        '/'+
+        encodedPath;
+
+      res.json({
+
+        ok:true,
+
+        url:publicURL,
+
+        name:req.file.originalname,
+
+        type:
+          isPDF
+            ?'pdf'
+            :'html'
+
+      });
+
+    }catch(e){
+
+      console.error(
+        'Resource upload error:',
+        e
+      );
+
+      res
+        .status(500)
+        .json({
+          error:
+            e.message||
+            'Upload failed.'
+        });
+
+    }
+
+  }
+);
 /* =========================
    COMMENT SECURITY
 ========================= */
