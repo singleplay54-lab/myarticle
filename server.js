@@ -3399,22 +3399,25 @@ function valid(b){
         ''
       ).trim(),
 
-    image_url:
-      String(
-        b.image_url||
-        ''
-      ).trim(),
+image_url:
+  String(b.image_url||'').trim(),
 
-    status:    
+status:
+  b.status==='draft'
+    ?'draft'
+    :'published',
 
-    month:
+featured:
+  !!b.featured,
+
+month:
   String(b.month||'').trim(),
 
 source_url:
   String(b.source_url||'').trim(),
 
 pdf_url:
-  String(b.pdf_url||'').trim(),
+  String(b.pdf_url||'').trim()
       
       b.status===
       'draft'
