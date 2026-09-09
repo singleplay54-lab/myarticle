@@ -1245,39 +1245,51 @@ async function uploadResource(file){
     return "";
   }
 
-  const formData =
-    new FormData();
+  const formData = new FormData();
+  formData.append("file", file);
 
-  formData.append(
-    "file",
-    file
+  const response = await fetch(
+    "/api/admin/upload-resource",
+    {
+      method:"POST",
+      body:formData
+    }
   );
 
-  const response =
-    await fetch(
-      "/api/admin/upload-resource",
-      {
-        method:"POST",
-        body:formData
-      }
-    );
+  const raw = await response.text();
 
-  const data =
-    await response
-      .json()
-      .catch(() => ({}));
+  let data = {};
+
+  try{
+    data = JSON.parse(raw);
+  }catch{
+    data = {
+      error: raw || "Server returned an empty response."
+    };
+  }
 
   if(!response.ok){
 
-    throw new Error(
-      data.error ||
-      "File upload failed."
+    console.error(
+      "UPLOAD ERROR:",
+      response.status,
+      data
     );
 
+    throw new Error(
+      data.error ||
+      data.message ||
+      `Upload failed (${response.status})`
+    );
   }
 
-  return data.url || "";
+  if(!data.url){
+    throw new Error(
+      "Upload successful but URL was not returned."
+    );
+  }
 
+  return data.url;
 }
 
 
