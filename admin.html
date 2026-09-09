@@ -2152,6 +2152,49 @@ categorySelect.addEventListener(
   updateCurrentAffairsFields
 );
 
+  const resourceQuiz =
+  document.getElementById("resourceQuiz");
+
+const quizName =
+  document.getElementById("quizName");
+
+resourceQuiz.addEventListener(
+  "change",
+  function(){
+
+    const file = this.files[0];
+
+    if(!file){
+
+      quizName.style.display = "none";
+      quizName.textContent = "";
+
+      return;
+    }
+
+    const valid =
+      file.name.toLowerCase().endsWith(".html") ||
+      file.name.toLowerCase().endsWith(".htm");
+
+    if(!valid){
+
+      alert("❌ Sirf HTML quiz file select karo.");
+
+      this.value = "";
+
+      quizName.style.display = "none";
+      quizName.textContent = "";
+
+      return;
+    }
+
+    quizName.textContent =
+      "🧩 " + file.name;
+
+    quizName.style.display = "block";
+
+  }
+);
 
 resourcePdf.addEventListener(
   "change",
