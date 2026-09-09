@@ -3363,75 +3363,66 @@ function valid(b){
 
     title:
       String(
-        b.title||''
+        b.title || ''
       ).trim(),
 
     content:
       String(
-        b.content||''
+        b.content || ''
       ).trim(),
 
     author:
       String(
-        b.author||
-        'Admin'
-      )
-      .trim()||
-      'Admin',
+        b.author || 'Admin'
+      ).trim() || 'Admin',
 
     category:
       String(
-        b.category||
-        'Technology'
-      )
-      .trim()||
-      'Technology',
+        b.category || 'Technology'
+      ).trim() || 'Technology',
 
     excerpt:
       String(
-        b.excerpt||
-        ''
+        b.excerpt || ''
       ).trim(),
 
     tags:
       String(
-        b.tags||
-        ''
+        b.tags || ''
       ).trim(),
 
-image_url:
-  String(b.image_url||'').trim(),
+    image_url:
+      String(
+        b.image_url || ''
+      ).trim(),
 
-status:
-  b.status==='draft'
-    ?'draft'
-    :'published',
-
-featured:
-  !!b.featured,
-
-month:
-  String(b.month||'').trim(),
-
-source_url:
-  String(b.source_url||'').trim(),
-
-pdf_url:
-  String(b.pdf_url||'').trim()
-      
-      b.status===
-      'draft'
-        ?'draft'
-        :'published',
+    status:
+      b.status === 'draft'
+        ? 'draft'
+        : 'published',
 
     featured:
-      !!b.featured
+      !!b.featured,
+
+    month:
+      String(
+        b.month || ''
+      ).trim(),
+
+    source_url:
+      String(
+        b.source_url || ''
+      ).trim(),
+
+    pdf_url:
+      String(
+        b.pdf_url || ''
+      ).trim()
 
   };
 
-
   if(
-    !a.title||
+    !a.title ||
     !a.content
   ){
 
@@ -3440,7 +3431,6 @@ pdf_url:
     );
 
   }
-
 
   return a;
 
