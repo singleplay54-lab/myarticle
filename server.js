@@ -158,6 +158,12 @@ async function init(){
 
     `ALTER TABLE articles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`
 
+    `ALTER TABLE articles ADD COLUMN IF NOT EXISTS month TEXT DEFAULT ''`,
+    
+    `ALTER TABLE articles ADD COLUMN IF NOT EXISTS source_url TEXT DEFAULT ''`,
+    
+    `ALTER TABLE articles ADD COLUMN IF NOT EXISTS pdf_url TEXT DEFAULT ''`,
+    
   ]){
     await pool.query(q);
   }
@@ -3399,7 +3405,17 @@ function valid(b){
         ''
       ).trim(),
 
-    status:
+    status:    
+
+    month:
+  String(b.month||'').trim(),
+
+source_url:
+  String(b.source_url||'').trim(),
+
+pdf_url:
+  String(b.pdf_url||'').trim(),
+      
       b.status===
       'draft'
         ?'draft'
@@ -3461,37 +3477,29 @@ app.post(
       const x=
         await pool.query(
           `
-          INSERT INTO articles(
-
-            title,
-            content,
-            author,
-            category,
-            excerpt,
-            tags,
-            image_url,
-            status,
-            featured,
-            slug,
-            updated_at
-
-          )
+        INSERT INTO articles(
+  title,
+  content,
+  author,
+  category,
+  excerpt,
+  tags,
+  image_url,
+  status,
+  featured,
+  month,
+  source_url,
+  pdf_url,
+  slug,
+  updated_at
+)
 
           VALUES(
-
-            $1,
-            $2,
-            $3,
-            $4,
-            $5,
-            $6,
-            $7,
-            $8,
-            $9,
-            $10,
-            NOW()
-
-          )
+  $1,$2,$3,$4,$5,
+  $6,$7,$8,$9,$10,
+  $11,$12,$13,
+  NOW()
+)
 
           RETURNING *
           `,
@@ -3504,9 +3512,12 @@ app.post(
             a.excerpt,
             a.tags,
             a.image_url,
-            a.status,
-            a.featured,
-            slug
+          a.status,
+           a.featured,
+  a.month,
+a.source_url,
+a.pdf_url,
+slug
 
           ]
         );
@@ -3640,14 +3651,14 @@ app.put(
             tags=$6,
 
             image_url=$7,
+status=$8,
+featured=$9,
+month=$10,
+source_url=$11,
+pdf_url=$12,
+updated_at=NOW()
 
-            status=$8,
-
-            featured=$9,
-
-            updated_at=NOW()
-
-          WHERE id=$10
+          WHERE id=$13
 
           RETURNING *
           `,
@@ -3660,9 +3671,12 @@ app.put(
             a.excerpt,
             a.tags,
             a.image_url,
-            a.status,
-            a.featured,
-            id
+a.status,
+a.featured,
+a.month,
+a.source_url,
+a.pdf_url,
+id
 
           ]
         );
