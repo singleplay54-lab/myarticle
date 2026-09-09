@@ -514,14 +514,16 @@ app.post(
           data
         );
 
-        return res
-          .status(500)
-          .json({
-            error:
-              'Could not upload file to Supabase Storage.'
-          });
-
-      }
+         return res
+    .status(response.status)
+    .json({
+      error:
+        data?.message ||
+        data?.error ||
+        data?.statusCode ||
+        'Could not upload file to Supabase Storage.'
+    });
+}
 
       const publicURL=
         SUPABASE_URL+
