@@ -355,22 +355,34 @@ function auth(req,res,next){
 
 const upload=multer({
   storage:multer.memoryStorage(),
+
   limits:{
     fileSize:10*1024*1024
   },
+
   fileFilter:(req,file,cb)=>{
 
-    const allowed=[
-      'application/pdf',
-      'text/html'
-    ];
+    const name =
+      String(file.originalname || '')
+        .toLowerCase();
 
-    if(!allowed.includes(file.mimetype)){
+    const isPDF =
+      file.mimetype === 'application/pdf' ||
+      name.endsWith('.pdf');
+
+    const isHTML =
+      file.mimetype === 'text/html' ||
+      name.endsWith('.html') ||
+      name.endsWith('.htm');
+
+    if(!isPDF && !isHTML){
+
       return cb(
         new Error(
           'Only PDF or HTML files are allowed'
         )
       );
+
     }
 
     cb(null,true);
@@ -381,7 +393,36 @@ const upload=multer({
 app.post(
   '/api/admin/upload-resource',
   auth,
-  upload.single('file'),
+  (req,res,next)=>{
+
+  upload.single('file')(
+    req,
+    res,
+    error=>{
+
+      if(error){
+
+        console.error(
+          'FILE UPLOAD ERROR:',
+          error
+        );
+
+        return res
+          .status(400)
+          .json({
+            error:
+              error.message ||
+              'File upload failed.'
+          });
+
+      }
+
+      next();
+
+    }
+  );
+
+},
   async(req,res)=>{
 
     try{
