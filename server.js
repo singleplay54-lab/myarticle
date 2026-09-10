@@ -530,7 +530,10 @@ app.post(
                 SERVICE_KEY,
 
               'Content-Type':
-                req.file.mimetype,
+  req.file.originalname.toLowerCase().endsWith('.html') ||
+  req.file.originalname.toLowerCase().endsWith('.htm')
+    ? 'text/html'
+    : 'application/pdf',
 
               'x-upsert':
                 'true'
