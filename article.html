@@ -89,6 +89,58 @@ footer{text-align:center;padding:30px 20px;color:#64748b;font-size:.9rem}
 }
 
 .comments-title-row{display:flex;justify-content:space-between;align-items:center;gap:12px}.comment-count{display:inline-flex;min-width:30px;height:30px;align-items:center;justify-content:center;border-radius:999px;background:#e0f2fe;color:#0369a1;font-size:.85rem}.comment-replying{display:none;margin:0 0 12px;padding:10px 12px;border-radius:10px;background:#f0f9ff;color:#0369a1;font-size:.88rem}.comment-replying.show{display:flex;justify-content:space-between;align-items:center;gap:10px}.cancel-reply{border:0;background:transparent;color:#0369a1;font-weight:800;cursor:pointer}.comment-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.comment-action{border:1px solid #cbd5e1;background:#fff;border-radius:8px;padding:7px 10px;cursor:pointer;font:inherit;font-size:.82rem}.comment-action:hover{background:#f8fafc}.comment-like.liked{font-weight:800}.comment-replies{margin:12px 0 0 26px;padding-left:14px;border-left:2px solid #e2e8f0}.comment-avatar{width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:#e0f2fe;color:#0369a1;font-weight:800;margin-right:8px}.comment-head{display:flex;align-items:center}.report-menu{padding:8px;border:1px solid #e2e8f0;border-radius:8px;background:#fff}.comment-notice{font-size:.78rem;color:#64748b;margin-top:8px}@media(max-width:650px){.comment-actions{display:grid;grid-template-columns:1fr 1fr}.comment-replies{margin-left:12px}.comment-action{width:100%}}
+
+/* CURRENT AFFAIRS RESOURCE BUTTONS */
+
+.resource-box{
+  margin:25px 0;
+  padding:22px;
+  border:1px solid #dbeafe;
+  border-radius:16px;
+  background:#f8fbff;
+}
+
+.resource-box h2{
+  margin:0 0 15px;
+  font-size:1.1rem;
+}
+
+.resource-buttons{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+}
+
+.resource-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:12px 18px;
+  border-radius:10px;
+  text-decoration:none;
+  font-weight:700;
+  background:#0284c7;
+  color:white;
+  transition:.2s;
+}
+
+.resource-btn:hover{
+  transform:translateY(-2px);
+}
+
+@media(max-width:520px){
+
+  .resource-buttons{
+    display:grid;
+    grid-template-columns:1fr;
+  }
+
+  .resource-btn{
+    width:100%;
+  }
+
+}
+
 </style>
 <link rel="manifest" href="/manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
@@ -129,7 +181,40 @@ footer{text-align:center;padding:30px 20px;color:#64748b;font-size:.9rem}
 
       <div id="tags" class="tags hidden"></div>
 
+    <!-- CURRENT AFFAIRS RESOURCES -->
+<section id="resourceBox" class="resource-box hidden">
 
+  <h2>📚 Study Resources</h2>
+
+  <div class="resource-buttons">
+
+    <a id="sourceBtn"
+       class="resource-btn"
+       href="#"
+       target="_blank"
+       rel="noopener noreferrer">
+      🔗 Source
+    </a>
+
+    <a id="pdfBtn"
+       class="resource-btn"
+       href="#"
+       target="_blank"
+       rel="noopener noreferrer">
+      📄 PDF
+    </a>
+
+    <a id="quizBtn"
+       class="resource-btn"
+       href="#"
+       target="_blank"
+       rel="noopener noreferrer">
+      🧩 Take Quiz
+    </a>
+
+  </div>
+
+</section>
 
       <!-- COMMENTS -->
       <section class="comments-box" aria-label="Comments">
@@ -577,6 +662,59 @@ function renderArticle(article){
 
   }
 
+/* CURRENT AFFAIRS RESOURCES */
+
+const resourceBox =
+  $("resourceBox");
+
+const sourceBtn =
+  $("sourceBtn");
+
+const pdfBtn =
+  $("pdfBtn");
+
+const quizBtn =
+  $("quizBtn");
+
+let hasResource = false;
+
+if(article.source_url){
+  sourceBtn.href =
+    article.source_url;
+
+  sourceBtn.classList.remove("hidden");
+
+  hasResource = true;
+}else{
+  sourceBtn.classList.add("hidden");
+}
+
+if(article.pdf_url){
+  pdfBtn.href =
+    article.pdf_url;
+
+  pdfBtn.classList.remove("hidden");
+
+  hasResource = true;
+}else{
+  pdfBtn.classList.add("hidden");
+}
+
+if(article.quiz_url){
+  quizBtn.href =
+    article.quiz_url;
+
+  quizBtn.classList.remove("hidden");
+
+  hasResource = true;
+}else{
+  quizBtn.classList.add("hidden");
+}
+
+if(hasResource){
+  resourceBox.classList.remove("hidden");
+}
+  
   setupShare(article);
   setupComments(getSlug());
 }
