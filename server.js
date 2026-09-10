@@ -532,8 +532,14 @@ app.post(
               'Content-Type':
   req.file.originalname.toLowerCase().endsWith('.html') ||
   req.file.originalname.toLowerCase().endsWith('.htm')
-    ? 'text/html'
+    ? 'text/html; charset=utf-8'
     : 'application/pdf',
+
+'Cache-Control':
+  'no-cache',
+
+'Content-Disposition':
+  'inline',
 
               'x-upsert':
                 'true'
