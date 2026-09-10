@@ -350,6 +350,81 @@ function auth(req,res,next){
 }
 
 /* =========================
+   QUIZ VIEWER
+========================= */
+
+app.get('/quiz', async (req,res)=>{
+
+  try{
+
+    const filePath =
+      String(req.query.path || '');
+
+    if(!filePath){
+      return res
+        .status(400)
+        .send('Quiz file not specified.');
+    }
+
+    const SUPABASE_URL =
+      String(
+        process.env.SUPABASE_URL || ''
+      ).replace(/\/$/,'');
+
+    const BUCKET =
+      process.env.SUPABASE_STORAGE_BUCKET ||
+      'current-affairs-pdfs';
+
+    const SERVICE_KEY =
+      process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    const url =
+      SUPABASE_URL +
+      '/storage/v1/object/public/' +
+      encodeURIComponent(BUCKET) +
+      '/' +
+      filePath;
+
+    const response =
+      await fetch(url);
+
+    if(!response.ok){
+      return res
+        .status(404)
+        .send('Quiz not found.');
+    }
+
+    const html =
+      await response.text();
+
+    res.setHeader(
+      'Content-Type',
+      'text/html; charset=utf-8'
+    );
+
+    res.setHeader(
+      'Content-Disposition',
+      'inline'
+    );
+
+    res.send(html);
+
+  }catch(error){
+
+    console.error(
+      'Quiz viewer error:',
+      error
+    );
+
+    res
+      .status(500)
+      .send('Unable to load quiz.');
+
+  }
+
+});
+
+/* =========================
    FILE UPLOADS
 ========================= */
 
@@ -575,27 +650,26 @@ app.post(
     });
 }
 
-      const publicURL=
-        SUPABASE_URL+
-        '/storage/v1/object/public/'+
-        encodeURIComponent(BUCKET)+
-        '/'+
-        encodedPath;
+      const publicURL =
+  isPDF
+    ? SUPABASE_URL +
+      '/storage/v1/object/public/' +
+      encodeURIComponent(BUCKET) +
+      '/' +
+      encodedPath
+    : SITE_URL +
+      '/quiz?path=' +
+      encodeURIComponent(fileName);
 
-      res.json({
-
-        ok:true,
-
-        url:publicURL,
-
-        name:req.file.originalname,
-
-        type:
-          isPDF
-            ?'pdf'
-            :'html'
-
-      });
+res.json({
+  ok:true,
+  url:publicURL,
+  name:req.file.originalname,
+  type:
+    isPDF
+      ? 'pdf'
+      : 'html'
+});
 
     }catch(e){
 
