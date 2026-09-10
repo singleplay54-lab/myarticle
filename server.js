@@ -2061,6 +2061,7 @@ app.get(
             excerpt,
             author,
             category,
+            month,
             tags,
             image_url,
             featured,
